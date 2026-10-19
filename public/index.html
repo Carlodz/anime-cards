@@ -41,7 +41,7 @@ html:root body .jump a.navprof::before{display:none}
 .cutepk .mc::after{inset:0;border-radius:0;background:linear-gradient(180deg,rgba(0,0,0,.3),transparent 38%,transparent 62%,rgba(0,0,0,.6)),repeating-linear-gradient(90deg,#16264a 0 7px,#22366a 7px 14px) top/100% 5% no-repeat,repeating-linear-gradient(90deg,#16264a 0 7px,#22366a 7px 14px) bottom/100% 5% no-repeat}
 .cutepk .mc .q{visibility:hidden}
 .cutepk .mc small{background:#16264a;border-radius:6px;padding:2px 12px;color:#fff;font-weight:600;text-transform:none;letter-spacing:0;font-size:.85rem;position:absolute;bottom:12%;left:50%;transform:translateX(-50%);white-space:nowrap;padding-inline:12px}
-</style>
+.bpre{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px}.bpb{height:52px;border-radius:10px;border:2px solid var(--line);background-size:cover;background-position:center;cursor:pointer;padding:0}.bpb.on,.bpb:hover{border-color:#e070ff}</style>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WAYANIME</title>
@@ -1236,7 +1236,7 @@ var PRT={ar:{h:"مكتبتي",n6:"مكتبتي",tot:"بطاقة",uni:"مختلف
 en:{h:"My Library",n6:"Library",tot:"cards",uni:"unique",pct:"complete",empty:"No cards yet. Open today's pack!",leg:"Legendary",chg:"Change photo",bn:"Change banner",bnr:"No banner",bpk:"Pick a card to use as your profile banner",dis:"Default photo",pk:"Pick a card to use as your profile photo"}};
 function PL(k){return PRT[LANG==="en"?"en":"ar"][k]}
 var DEFAV="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%238c919c'/%3E%3Ccircle cx='32' cy='25' r='11' fill='%23c9ccd3'/%3E%3Cpath d='M10 64c2-15 12-22 22-22s20 7 22 22z' fill='%23c9ccd3'/%3E%3C/svg%3E";
-function navProfile(a){var s=(USER.banner&&USER.banner.a)?fimg(USER.banner):"";
+function navProfile(a){var s=bnImg(USER.banner);
   a.classList.add("navprof");if(s)a.style.setProperty("--bn","url('"+s+"')");else a.style.removeProperty("--bn");
   a.innerHTML='<img alt="" src="'+esc(avSrc(USER))+'" onerror="this.onerror=null;this.src=DEFAV"><span>'+esc(USER.username)+stz(USER)+'</span>'}
 function renderProfile(){
@@ -1253,7 +1253,7 @@ function renderProfile(){
   var chips=RS.map(function(r,k){return cnt[k]?'<span style="border-color:'+r.c+'">'+rn(r)+'<i>'+cnt[k]+'</i></span>':""}).join("")+(cnt[4]?'<span style="border-color:#ffb800">'+PL("leg")+'<i>'+cnt[4]+'</i></span>':"");
   var t=items.map(function(x){
     return'<div class="tile" data-pa="'+x.a+'" data-pi="'+x.i+'" style="border-color:'+x.col+';--tc:'+x.col+'"><div class="ph"><span class="bd" style="color:'+x.col+'">'+"\u2605".repeat(x.st)+'</span><img alt="'+esc(x.nm)+'" src="'+x.img+'"></div><b>'+esc(x.nm)+'</b><span class="sub">'+esc(x.an)+' \u00b7 '+esc(x.rn)+'</span>'+(x.n>1?'<div class="pips"><u class="on" style="background:'+x.col+'">'+x.n+'</u></div>':"")+'</div>'}).join("");
-  var av=avSrc(USER),bsrc=(USER.banner&&USER.banner.a)?fimg(USER.banner):"",ban='<div class="pban">'+(bsrc?'<img alt="" src="'+esc(bsrc)+'">':"")+'<button class="fb g" data-pf="bpick">'+PL("bn")+'</button></div>';
+  var av=avSrc(USER),bsrc=bnImg(USER.banner),ban='<div class="pban">'+(bsrc?'<img alt="" src="'+esc(bsrc)+'">':"")+'<button class="fb g" data-pf="bpick">'+PL("bn")+'</button></div>';
   el.style.display="";if(j6){j6.style.display="";j6.textContent=PL("n6")}var j7=$("j7"),j8=$("j8");if(j7){j7.style.display="";navProfile(j7)}if(j8)j8.style.display="none";
   el.innerHTML='<h2>'+(LANG==="en"?"Profile":"\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a")+'</h2>'+ban+'<div class="ph0"><img alt="" src="'+esc(av)+'" onerror="this.onerror=null;this.src=DEFAV"><div><b>'+esc(USER.username)+stz(USER)+'</b><small>'+""+'</small></div><button class="fb g" data-pf="pick" style="margin-inline-start:auto">'+PL("chg")+'</button></div>'+pickerHtml()+'<div class="stats"><span>'+tot+'<i>'+PL("tot")+'</i></span><span>'+uni+'<i>'+PL("uni")+'</i></span><span>'+Math.round(uni*100/all)+'%<i>'+PL("pct")+'</i></span>'+chips+'<span>'+(USER.trades||0)+'/100<i>'+(LANG==="en"?"trades":"\u062a\u0628\u062f\u064a\u0644")+'</i></span></div>';var lb=$("library");if(lb){lb.style.display="";lb.innerHTML='<h2>'+PL("h")+' <span>'+uni+' / '+all+'</span></h2>'+(items.length?'<div class="grid">'+t+'</div>':'<p class="empty">'+PL("empty")+'</p>')}}
 var _pc=function(e){var pb=e.target.closest("[data-pf]");if(pb){pfAct(pb);return}var t=e.target.closest(".tile[data-pa]");if(t)cvOpen(t.getAttribute("data-pa"),+t.getAttribute("data-pi"))};$("profile").addEventListener("click",_pc);$("library").addEventListener("click",_pc);
@@ -1275,7 +1275,9 @@ function fparse(k){var p=k.split("|");return{a:p[0],i:+p[1],r:p[2]}}
 function myCards(){var out=[];Object.keys(S.a||{}).forEach(function(a){var g=(S.a[a]||{}).got||{};Object.keys(g).forEach(function(i){var o=g[i]||{};Object.keys(o).forEach(function(r){if(o[r]>0)out.push({a:a,i:+i,r:r,n:o[r]})})})});return out}
 function pcBtn(c,act,on){return'<button class="pc'+(on?" on":"")+'" data-ft="'+act+'" data-k="'+fkey(c)+'" style="--c:'+fcol(c.r)+'" title="'+esc(cardTxt(c.a,c.i,c.r))+'"><img alt="" src="'+fimg(c)+'">'+(c.n>1?"<i>\u00d7"+c.n+"</i>":"")+'</button>'}
 function stz(u){return(u&&u.leg?' <span class="lstar" title="Legendary">\u2605</span>':"")+(u&&u.ver?' <img class="vchk" src="/verified.png" alt="Verified" title="Verified">':"")}
-function bnSt(u){var s=(u&&u.banner&&u.banner.a)?fimg(u.banner):"";return s?' hb" style="--bn:url(\''+esc(s)+'\')"':'"'}
+var BN={sky:"/banners/sky.jpg",night:"/banners/night.jpg",eyes:"/banners/eyes.gif"};
+function bnImg(b){if(!b)return"";if(b.p&&BN[b.p])return BN[b.p];return b.a?fimg(b):""}
+function bnSt(u){var s=u?bnImg(u.banner):"";return s?' hb" style="--bn:url(\''+esc(s)+'\')"':'"'}
 function uRow(u,btns){var q=bnSt(u);return'<div class="frow'+q+'><img class="fa" alt="" src="'+esc(avSrc(u))+'" onerror="this.onerror=null;this.src=DEFAV"><b>'+esc(u.username)+stz(u)+'</b>'+btns+'</div>'}
 function oMini(c){return'<img class="oc" alt="" style="--c:'+fcol(c.r)+'" title="'+esc(cardTxt(c.a,c.i,c.r))+'" src="'+fimg(c)+'">'}
 function resHtml(){if(!FR.res)return"";if(!FR.res.length)return'<p class="ftag">'+FL("nf")+'</p>';
@@ -1357,11 +1359,13 @@ function avSrc(u){if(u&&u.pic&&u.pic.a){var im=fimg(u.pic);if(im)return im}retur
 function pickerHtml(){var isB=PF.bpick;if(!PF.pick&&!isB)return"";var m={};
   myCards().forEach(function(c){var k=c.a+"|"+c.i,r=rkOf(c.r);if(!m[k]||m[k].rk<r)m[k]={a:c.a,i:c.i,r:c.r,rk:r,n:1}});
   var l=Object.keys(m).map(function(k){return m[k]}).sort(function(x,y){return y.rk-x.rk}),cur=(isB?USER.banner:USER.pic)?(isB?USER.banner:USER.pic).a+"|"+(isB?USER.banner:USER.pic).i:"";
-  return'<div class="tpanel"><p class="ftag" style="margin:0 0 8px">'+PL(isB?"bpk":"pk")+'</p><div class="pcs">'+(l.length?l.map(function(c){return pcBtn(c,"x",(c.a+"|"+c.i)===cur).replace('data-ft="x"','data-pf="'+(isB?"bset":"set")+'"')}).join(""):'<p class="ftag">'+PL("empty")+'</p>')+'</div><div style="margin-top:10px;display:flex;gap:8px"><button class="fb g" data-pf="'+(isB?"breset":"reset")+'">'+PL(isB?"bnr":"dis")+'</button><button class="fb g" data-pf="cancel">'+FL("close")+'</button></div></div>'}
+  var pre=isB?'<div class="bpre">'+Object.keys(BN).map(function(k){return'<button class="bpb'+(USER.banner&&USER.banner.p===k?" on":"")+'" data-pf="bpre" data-p="'+k+'" style="background-image:url('+BN[k]+')"></button>'}).join("")+'</div>':"";
+  return'<div class="tpanel">'+pre+'<p class="ftag" style="margin:0 0 8px">'+PL(isB?"bpk":"pk")+'</p><div class="pcs">'+(l.length?l.map(function(c){return pcBtn(c,"x",(c.a+"|"+c.i)===cur).replace('data-ft="x"','data-pf="'+(isB?"bset":"set")+'"')}).join(""):'<p class="ftag">'+PL("empty")+'</p>')+'</div><div style="margin-top:10px;display:flex;gap:8px"><button class="fb g" data-pf="'+(isB?"breset":"reset")+'">'+PL(isB?"bnr":"dis")+'</button><button class="fb g" data-pf="cancel">'+FL("close")+'</button></div></div>'}
 function pfAct(b){var a=b.getAttribute("data-pf");
   if(a==="pick"){PF.pick=!PF.pick;PF.bpick=false;renderProfile();return}
   if(a==="bpick"){PF.bpick=!PF.bpick;PF.pick=false;renderProfile();return}
   if(a==="cancel"){PF.pick=false;PF.bpick=false;renderProfile();return}
+  if(a==="bpre"){fpost("POST","/api/profile/banner",{p:b.getAttribute("data-p")}).then(function(x){if(!x.ok)return;USER.banner=x.j.banner||null;PF.bpick=false;renderProfile()});return}
   if(a==="bset"||a==="breset"){var bb=a==="bset"?(function(){var c=fparse(b.getAttribute("data-k"));return{a:c.a,i:c.i}})():{a:null};fpost("POST","/api/profile/banner",bb).then(function(x){if(!x.ok)return;USER.banner=x.j.banner||null;PF.bpick=false;renderProfile()});return}
   var body;if(a==="set"){var c=fparse(b.getAttribute("data-k"));body={a:c.a,i:c.i}}else if(a==="reset")body={a:null};else return;
   fpost("POST","/api/profile/pic",body).then(function(x){if(!x.ok)return;USER.pic=x.j.pic||null;PF.pick=false;renderProfile();navAvatar();loadSocial()})}

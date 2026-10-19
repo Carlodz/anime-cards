@@ -155,7 +155,7 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, local: !!db[id].local } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT, trades: db[id].trades || 0, local: !!db[id].local } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -341,7 +341,12 @@ app.post('/api/cute', (req, res) => {
 // ---- Friends + trade offers (swap one card for one card, friends only) ----
 const isId = (x) => typeof x === 'string' && /^\d{5,25}$/.test(x);
 function socOf(id) { const u = db[id]; if (!u.soc) u.soc = { f: [], i: [], o: [] }; return u.soc; }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null } : null; }
+const VERIFY_AT = 100; // completed trades needed for the verified badge
+function hasLeg(u) {
+  const g = (((u.state || {}).a || {}).leg || {}).got || {};
+  return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
+}
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -462,6 +467,7 @@ app.post('/api/offer/:oid/accept', (req, res) => {
   takeCard(them, o.give); takeCard(me, o.want);
   addCard(them, o.want.a, o.want.i, o.want.r);
   addCard(me, o.give.a, o.give.i, o.give.r);
+  db[id].trades = (db[id].trades || 0) + 1; db[o.from].trades = (db[o.from].trades || 0) + 1; // every completed trade counts for both sides
   delete offers[oid];
   persist();
   res.json({ ok: true, state: me });
@@ -530,6 +536,19 @@ app.delete('/api/box/:bid', (req, res) => { // the sender takes an unopened box 
   delete box[bid];
   persist();
   res.json({ ok: true, state: st });
+});
+
+app.post('/api/profile/banner', (req, res) => {
+  // Use one of your own cards as profile banner (a: null removes the banner).
+  const id = need(req, res); if (!id) return;
+  const b = req.body || {};
+  if (b.a === null || b.a === undefined) { delete db[id].banner; persist(); return res.json({ ok: true, banner: null }); }
+  if (typeof b.a !== 'string' || !/^[\w-]{1,20}$/.test(b.a) || !Number.isInteger(b.i) || b.i < 0 || b.i > 99) return res.status(400).json({ error: 'bad card' });
+  const G = ((stateOf(db[id]).a[b.a] || {}).got || {})[b.i] || {};
+  if (!Object.values(G).some((n) => n > 0)) return res.status(400).json({ error: 'you do not own that card' });
+  db[id].banner = { a: b.a, i: b.i };
+  persist();
+  res.json({ ok: true, banner: db[id].banner });
 });
 
 app.post('/api/profile/pic', (req, res) => {

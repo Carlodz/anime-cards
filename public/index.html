@@ -594,6 +594,93 @@ body.gated{overflow:hidden}
 @keyframes wlSpin{0%,100%{transform:rotate(0) scale(1)}50%{transform:rotate(8deg) scale(1.12)}}
 @media (prefers-reduced-motion:reduce){#gate .gimg,#gate .gr::after,#gate .gember,.wname,#gate .gbrand,.wlogo,#gmark{animation:none!important}}
 </style>
+
+<style id="pink-theme-override">
+/* ===== Modern Pink Theme (screenshot style) ===== */
+:root {
+  --pink: #ff6b9d !important;
+  --pink-light: #ff8fb3 !important;
+  --pink-soft: #ffe4ef !important;
+  --pink-dark: #e84a7f !important;
+  --bg: #f8f6f9 !important;
+  --panel: #ffffff !important;
+  --text: #2d2a32 !important;
+  --muted: #8a8490 !important;
+  --line: #f0e4ec !important;
+  --org: #ff6b9d !important;
+  --org2: #ff8fb3 !important;
+}
+html, body {
+  background: #f8f6f9 !important;
+  color: #2d2a32 !important;
+}
+/* Hero */
+html .hero, .hero {
+  background: linear-gradient(120deg, #ff7aab 0%, #ff9ec0 45%, #ffb8d1 100%) !important;
+  border: none !important;
+  border-radius: 28px !important;
+  box-shadow: 0 10px 30px rgba(255, 107, 157, 0.18) !important;
+  color: #fff !important;
+}
+html .hero h1, .hero h1, .hero .status, .hfoot p, .hfoot .hint {
+  color: #fff !important;
+}
+html .hero h1 span {
+  background: none !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+/* Nav */
+html .nav, .nav {
+  background: rgba(255,255,255,0.25) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  backdrop-filter: blur(8px);
+}
+html .nav button, .nav button, .nav a {
+  color: #fff !important;
+}
+/* Cards / tiles */
+.tile, .front, .char-card {
+  border-radius: 16px !important;
+}
+.tile {
+  background: #fff !important;
+  border-color: #f0e4ec !important;
+  box-shadow: 0 6px 18px rgba(255,107,157,0.08) !important;
+}
+/* Pack button soft pink */
+.pack .body {
+  background: linear-gradient(160deg, #ff6b9d, #ff9ec0 45%, #ffc2d6) !important;
+}
+/* Search */
+.search input, .navq input {
+  background: #fff !important;
+  border-radius: 999px !important;
+  color: #2d2a32 !important;
+}
+/* Buttons primary */
+.gbtn, #gbtn, button.btn-primary, .tools button {
+  border-radius: 999px !important;
+}
+/* Collection title */
+#h2 {
+  color: #2d2a32 !important;
+}
+/* Soft overall cards */
+.vault, .grid {
+  gap: 12px;
+}
+/* Make gate also pink-ish */
+#gate .gimg {
+  background: url(/kushina.jpg) center 22%/cover no-repeat !important;
+  filter: saturate(1.1);
+}
+#gate {
+  background: linear-gradient(160deg, #1a0610, #2d0a18) !important;
+}
+</style>
+
 </head>
 <body>
 <div id="gate" aria-live="polite"><div class="gl"><i class="gdot" style="width:90px;height:90px;left:8%;top:62%"></i><i class="gdot" style="width:46px;height:46px;left:70%;top:18%;animation-delay:-3s"></i><i class="gdot" style="width:130px;height:130px;left:55%;top:78%;animation-delay:-5s;opacity:.6"></i><div class="gtop"><span class="gbrand"><span id="gmark"><svg class="wlogo on-dark" viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp p1" x1="697" y1="900" x2="1068" y2="422"/><line class="wp p2" x1="1164" y1="900" x2="1535" y2="422"/></svg></span><span id="gbrand"></span></span><span><span id="gq"></span> <a id="gsw"></a></span></div>

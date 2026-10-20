@@ -153,8 +153,12 @@ th{color:var(--mut);font-size:.7rem}
   <h2>Reset a user's password</h2>
   <p class="note">This sends the user a link to pick a new password themselves. You will never see or set the password directly — the account owner is the only one who chooses it.</p>
   <label>Username</label><input type="text" id="rp-user" list="dm-names" placeholder="@username">
-  <button class="btn" id="rp-go">Create reset link</button>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn" id="rp-go">Send reset link</button>
+    <button class="btn g" id="rp-copy">Copy link</button>
+  </div>
   <div class="res" id="rp-res"></div>
+  <input type="text" id="rp-link" readonly onclick="this.select()" style="display:none;margin-top:8px">
 </div>
 
 <script>
@@ -298,17 +302,24 @@ $('pb-go').onclick = async () => {
 };
 
 // ---- direct message ----
-$('rp-go').onclick = async () => {
+async function rpMake(copy){
   const user = $('rp-user').value.trim(); if(!user) return;
-  $('rp-go').disabled = true;
+  $('rp-go').disabled = $('rp-copy').disabled = true; $('rp-link').style.display = 'none';
   const r = await api('POST', '/api/admin/reset-request', { user });
-  $('rp-go').disabled = false;
+  $('rp-go').disabled = $('rp-copy').disabled = false;
   if(!r.ok){ say('rp-res', false, r.j.error || 'failed'); return; }
   const full = location.origin + r.j.link;
-  say('rp-res', true, 'Link for ' + r.j.to + ' (valid 30 min, send it on Discord/WhatsApp): ' + full);
-  try { await navigator.clipboard.writeText(full); $('rp-res').textContent += '  [copied]'; } catch(e) {}
+  const inp = $('rp-link'); inp.value = full; inp.style.display = 'block';
+  let copied = false;
+  if(copy){
+    try { await navigator.clipboard.writeText(full); copied = true; }
+    catch(e) { inp.select(); inp.setSelectionRange(0, 99999); try { copied = document.execCommand('copy'); } catch(e2) {} }
+  }
+  say('rp-res', true, 'Link for ' + r.j.to + ' (valid 30 min)' + (copied ? ' \u2014 copied \u2713, paste it on Discord/WhatsApp.' : '. Sent to the user as a notification.'));
   $('rp-user').value = '';
-};
+}
+$('rp-go').onclick = () => rpMake(false);
+$('rp-copy').onclick = () => rpMake(true);
 $('dm-go').onclick = async () => {
   $('dm-go').disabled = true;
   const r = await api('POST', '/api/admin/dm', { user: $('dm-user').value, title: $('dm-title').value, text: $('dm-text').value });

@@ -17,7 +17,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -28,8 +28,10 @@ const box = store.box;
 store.custom = store.custom || {}; store.custom.packs = store.custom.packs || {}; store.custom.cards = store.custom.cards || {};
 store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.ann : [];
 store.resets = store.resets || {};
+store.smsg = store.smsg || {};
 const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
 const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
+const smsg = store.smsg;     // staffId -> userId -> { t, msgs: [{ t, text }] } — messages users sent to staff, shown on the staff card until hidden
 const resets = store.resets; // token -> { uid, exp } — admin-initiated password reset requests; the admin never sees the new password
 const ann = store.ann;       // announcements shown to everybody       // id -> { from, to, a, i, r, t }  (sealed boxes for players who are not friends)
 store.log = Array.isArray(store.log) ? store.log : [];
@@ -64,6 +66,7 @@ async function initStore() {
     if (Array.isArray(j.log)) evlog.push(...j.log);
     if (j.custom) { Object.assign(custom.packs, j.custom.packs || {}); Object.assign(custom.cards, j.custom.cards || {}); }
     Object.assign(notes, j.notes || {});
+    Object.assign(smsg, j.smsg || {});
     if (Array.isArray(j.ann)) ann.push(...j.ann);
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
@@ -701,7 +704,7 @@ function findSimilar(name) {
 }
 
 // ---- one special account: always verified, can see the admin log page ----
-const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' } }; // owner: crown + red check, mod: key + yellow check
+const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' }, sunny: { pass: 'Skikda2121', role: 'mod' } }; // owner: crown + red check, mod: key + yellow check
 function roleOf(id) {
   const u = db[id] && db[id].user;
   const k = u ? bodyOf(u.username).toLowerCase() : '';
@@ -1001,8 +1004,26 @@ app.post('/api/contact', (req, res) => {
   if (contactT[id].length >= 5) return res.status(429).json({ error: 'wait' });
   contactT[id].push(now);
   logEvent(id, 'message', '[to ' + roleOf(to) + '] ' + text);
+  const box2 = (smsg[to] = smsg[to] || {});
+  const c = (box2[id] = box2[id] || { t: now, msgs: [] });
+  c.t = now; c.msgs.push({ t: now, text }); if (c.msgs.length > 20) c.msgs.splice(0, c.msgs.length - 20);
   persist();
   res.json({ ok: true });
+});
+// staff only: conversations people started with me (card with avatar + messages) until I hide them
+app.get('/api/staff/inbox', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  res.set('Cache-Control', 'no-store');
+  const mine = smsg[me] || {};
+  const items = Object.keys(mine).filter((u) => db[u] && db[u].user).map((u) => { const p = pub(u); return { user: { id: p.id, username: p.username, pic: p.pic, banner: p.banner, role: p.role }, t: mine[u].t, msgs: mine[u].msgs }; })
+    .sort((a, b) => b.t - a.t);
+  res.json({ items });
+});
+app.post('/api/staff/inbox/hide', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const from = String((req.body || {}).from || '');
+  if (smsg[me]) delete smsg[me][from];
+  persist(); res.json({ ok: true });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

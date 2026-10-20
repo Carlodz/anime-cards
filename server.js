@@ -17,14 +17,19 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [] } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
 store.offers = store.offers || {};
 const offers = store.offers; // id -> { from, to, give, want, t }
 store.box = store.box || {};
-const box = store.box;       // id -> { from, to, a, i, r, t }  (sealed boxes for players who are not friends)
+const box = store.box;
+store.custom = store.custom || {}; store.custom.packs = store.custom.packs || {}; store.custom.cards = store.custom.cards || {};
+store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.ann : [];
+const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
+const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
+const ann = store.ann;       // announcements shown to everybody       // id -> { from, to, a, i, r, t }  (sealed boxes for players who are not friends)
 store.log = Array.isArray(store.log) ? store.log : [];
 const evlog = store.log;     // activity log for the admin page: { t, id, u, type, text }
 function logEvent(id, type, text) {
@@ -55,6 +60,9 @@ async function initStore() {
     Object.assign(offers, j.offers || {});
     Object.assign(box, j.box || {});
     if (Array.isArray(j.log)) evlog.push(...j.log);
+    if (j.custom) { Object.assign(custom.packs, j.custom.packs || {}); Object.assign(custom.cards, j.custom.cards || {}); }
+    Object.assign(notes, j.notes || {});
+    if (Array.isArray(j.ann)) ann.push(...j.ann);
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
     await saveNow(); // first run: migrate whatever came from data/users.json
@@ -115,7 +123,7 @@ function sessionId(req) {
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '200kb' }));
+app.use(express.json({ limit: '700kb' }));
 
 // ---- Discord OAuth2 ----
 app.get('/auth/login', (req, res) => {
@@ -164,7 +172,7 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -181,7 +189,7 @@ app.put('/api/state', (req, res) => {
   if (cur && (Number(b.rev) || 0) !== (cur.rev || 0)) return res.status(409).json({ state: cur });
   // The client may only change cosmetic fields. Cards, streaks and weekly rolls are written by the server alone.
   const bg = b.bg && typeof b.bg.id === 'string' && /^[\w-]{1,20}$/.test(b.bg.id) && Number.isInteger(b.bg.i) ? { id: b.bg.id, i: b.bg.i } : null;
-  db[id].state = { off: 0, cur: Math.max(0, Math.min(9, Number(b.cur) | 0)), bg, a: cur ? cur.a : {}, d: cur ? cur.d : undefined, rev: (cur ? cur.rev || 0 : 0) + 1 };
+  db[id].state = { off: 0, cur: Math.max(0, Math.min(99, Number(b.cur) | 0)), bg, a: cur ? cur.a : {}, d: cur ? cur.d : undefined, rev: (cur ? cur.rev || 0 : 0) + 1 };
   persist();
   res.json({ ok: true, rev: db[id].state.rev });
 });
@@ -268,7 +276,12 @@ app.post('/api/redeem', (req, res) => {
 // ---- Server-side game logic (cannot be faked from the browser console) ----
 const COUNTS = { naruto: 8, dbz: 8, ds: 8, bb: 6, bc: 8, hxh: 8, mha: 8, jjk: 7, op: 8, aot: 7 };
 const CUTE_COUNT = 15;
-const LEG_COUNT = 10, LEG_NOTHING = 40; // percent chance of getting nothing in the weekly legendary card
+const LEG_COUNT = 10, LEG_NOTHING = 90;   // percent chance of getting nothing in the weekly legendary card (boys only) -> 10% to win
+const CUTE_NOTHING = 75;                    // percent chance of getting nothing in the weekly cute pack (girls only) -> 25% to win
+function countOf(a) { // base cards shipped with the site + cards added from the admin page
+  const base = a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0);
+  return base + (custom.cards[a] || []).length;
+}
 const TZ = 'Africa/Algiers';
 const dfmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric' });
 function dstr(off = 0) {
@@ -298,9 +311,9 @@ app.post('/api/open', (req, res) => {
   if (D.last === dstr()) return res.status(409).json({ error: 'already opened', state: st });
   const ns = D.last === dstr(-1) ? (D.streak || 0) + 1 : 1;
   const boost = ns >= 7;
-  const ids = Object.keys(COUNTS);
+  const ids = Object.keys(COUNTS).concat(Object.keys(custom.packs)).filter((k) => countOf(k) > 0);
   const a = ids[crypto.randomInt(ids.length)];
-  const r = RAR[pickRarity(boost)], i = crypto.randomInt(COUNTS[a]);
+  const r = RAR[pickRarity(boost)], i = crypto.randomInt(countOf(a));
   D.last = dstr();
   D.streak = boost ? 0 : ns;
   const A = (st.a[a] = st.a[a] || { last: '', streak: 0, got: {} });
@@ -315,6 +328,7 @@ app.post('/api/open', (req, res) => {
 app.post('/api/legendary', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
+  if (db[id].gender !== 'm' && !isAdmin(id)) return res.status(403).json({ error: 'boys only' });
   const st = stateOf(db[id]);
   const L = (st.a.leg = st.a.leg || { last: '', streak: 0, got: {} });
   L.got = L.got || {};
@@ -323,7 +337,7 @@ app.post('/api/legendary', (req, res) => {
   L.last = wk;
   let card = null;
   if (crypto.randomInt(100) >= LEG_NOTHING) {
-    const i = crypto.randomInt(LEG_COUNT);
+    const i = crypto.randomInt(countOf('leg'));
     const G = (L.got[i] = L.got[i] || {});
     G.legendary = (G.legendary || 0) + 1;
     card = { i };
@@ -335,16 +349,23 @@ app.post('/api/legendary', (req, res) => {
 });
 
 app.post('/api/cute', (req, res) => {
-  // Weekly cute pack: one pack per week, always one card (from the 15 cute cards).
+  // Weekly cute pack (girls only): one pack per week, low chance (100 - CUTE_NOTHING %) to get a cute card.
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
+  if (db[id].gender !== 'f' && !isAdmin(id)) return res.status(403).json({ error: 'girls only' });
   const st = stateOf(db[id]);
   const C = (st.a.cute = st.a.cute || { last: '', streak: 0, got: {} });
   C.got = C.got || {};
   const wk = weekKey();
   if (C.last === wk) return res.status(409).json({ error: 'already opened this week', state: st });
   C.last = wk;
-  const i = crypto.randomInt(CUTE_COUNT), r = RAR[pickRarity(false, W_CUTE)];
+  if (crypto.randomInt(100) < CUTE_NOTHING) {
+    st.rev = (st.rev || 0) + 1;
+    logEvent(id, 'pack', 'Opened weekly cute pack: nothing');
+    persist();
+    return res.json({ ok: true, state: st, card: null });
+  }
+  const i = crypto.randomInt(countOf('cute')), r = RAR[pickRarity(false, W_CUTE)];
   const G = (C.got[i] = C.got[i] || {});
   G[r] = (G[r] || 0) + 1;
   st.rev = (st.rev || 0) + 1;
@@ -362,7 +383,11 @@ function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function hasCute(u) {
+  const g = (((u.state || {}).a || {}).cute || {}).got || {};
+  return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
+}
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -624,19 +649,25 @@ function findSimilar(name) {
 }
 
 // ---- one special account: always verified, can see the admin log page ----
-const ADMIN_NAME = 'carlodz';
-const ADMIN_PASS = 'Skikda2121';
+const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' } }; // owner: crown + red check, mod: key + yellow check
+function roleOf(id) {
+  const u = db[id] && db[id].user;
+  const k = u ? bodyOf(u.username).toLowerCase() : '';
+  return Object.prototype.hasOwnProperty.call(ADMINS, k) ? ADMINS[k].role : null;
+}
 function isAdmin(id) {
   const u = db[id] && db[id].user;
-  return !!(u && bodyOf(u.username).toLowerCase() === ADMIN_NAME);
+  return !!roleOf(id);
 }
 async function ensureAdminAccount() {
-  if (findLocal('@' + ADMIN_NAME)) return; // already exists, don't touch its password
-  let id;
-  do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
-  db[id] = { user: { id, username: '@' + ADMIN_NAME, avatar: null }, state: null, pw: hashPw(ADMIN_PASS), local: true, created: Date.now() };
-  persist();
-  console.log('Admin account @' + ADMIN_NAME + ' created');
+  for (const name of Object.keys(ADMINS)) {
+    if (findLocal('@' + name)) continue; // already exists, don't touch its password
+    let id;
+    do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
+    db[id] = { user: { id, username: '@' + name, avatar: null }, state: null, pw: hashPw(ADMINS[name].pass), local: true, created: Date.now() };
+    persist();
+    console.log('Admin account @' + name + ' created');
+  }
 }
 function adminId(req, res) {
   const id = need(req, res); if (!id) return null;
@@ -661,6 +692,14 @@ function tooMany(req, name) {
   authFail[k] = (authFail[k] || []).filter((t) => t > now - 600000);
   return { k, over: authFail[k].length >= 10 };
 }
+app.post('/api/gender', (req, res) => { // old / Discord accounts pick once
+  const id = need(req, res); if (!id) return;
+  const g = (req.body || {}).gender;
+  if (g !== 'f' && g !== 'm') return res.status(400).json({ error: 'bad gender' });
+  if (db[id].gender) return res.status(409).json({ error: 'already set', gender: db[id].gender });
+  db[id].gender = g; logEvent(id, 'gender', 'Chose gender: ' + g); persist();
+  res.json({ ok: true, gender: g });
+});
 app.get('/api/config', (req, res) => res.json({ discord: DISCORD_ON }));
 
 app.post('/auth/register', (req, res) => {
@@ -668,12 +707,13 @@ app.post('/auth/register', (req, res) => {
   if (!UNAME.test(body)) return res.status(400).json({ error: 'bad username' });
   if (pw.length < 6 || pw.length > 72) return res.status(400).json({ error: 'bad password' });
   if (pw !== String(b.confirm === undefined ? '' : b.confirm)) return res.status(400).json({ error: 'mismatch' });
+  if (b.gender !== 'f' && b.gender !== 'm') return res.status(400).json({ error: 'bad gender' });
   const name = '@' + body;
   if (findLocal(name) || findSimilar(name)) return res.status(409).json({ error: 'taken' });
   if (Object.keys(db).length >= 50000) return res.status(503).json({ error: 'full' });
   let id;
   do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
-  db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), local: true, created: Date.now(), lastLogin: Date.now() };
+  db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), gender: b.gender, local: true, created: Date.now(), lastLogin: Date.now() };
   logEvent(id, 'register', 'New account created');
   persist();
   startSession(res, id);
@@ -717,6 +757,131 @@ app.get('/api/admin/log', (req, res) => {
   const me = adminId(req, res); if (!me) return;
   const since = Number(req.query.since) || 0;
   res.json({ events: evlog.filter((e) => e.t > since).slice(-500).reverse(), total: evlog.length });
+});
+
+
+// ---- admin: packs, cards, notifications, announcements, direct messages ----
+const IMG_RE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
+const okImg = (x) => typeof x === 'string' && x.length < 450000 && IMG_RE.test(x);
+const txt = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
+const baseOf = (a) => (a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0));
+const rid = () => crypto.randomBytes(6).toString('hex');
+const byName = (q) => { const k = bodyOf(String(q || '')).toLowerCase(); return k ? Object.keys(db).find((id) => db[id].user && bodyOf(db[id].user.username).toLowerCase() === k) : undefined; };
+function pushNote(uid, type, title, text) {
+  const L = (notes[uid] = notes[uid] || []);
+  L.push({ id: rid(), t: Date.now(), type, title, text, read: false });
+  if (L.length > 100) L.splice(0, L.length - 100);
+}
+
+app.get('/api/custom', (req, res) => { // public: the client merges this into its built-in packs
+  res.set('Cache-Control', 'no-cache');
+  res.json({ packs: Object.values(custom.packs), cards: custom.cards, base: { cute: CUTE_COUNT, leg: LEG_COUNT } });
+});
+
+app.post('/api/admin/pack', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const ar = txt(b.ar, 40), en = txt(b.en, 40);
+  const old = b.id ? custom.packs[b.id] : null;
+  if (b.id && !old) return res.status(404).json({ error: 'pack not found' });
+  if (!ar || !en) return res.status(400).json({ error: 'Arabic and English names are required' });
+  if (!old && !okImg(b.logo)) return res.status(400).json({ error: 'logo image required (png/jpeg/webp, small)' });
+  if (b.logo && !okImg(b.logo)) return res.status(400).json({ error: 'bad logo image' });
+  let id = old ? old.id : '';
+  while (!id || custom.packs[id] || COUNTS[id]) id = 'p' + crypto.randomBytes(3).toString('hex');
+  const g = Array.isArray(b.g) && b.g.length === 3 && b.g.every((c) => /^#[0-9a-f]{6}$/i.test(c)) ? b.g : (old ? old.g : ['#2a0f4d', '#7c3aed', '#ff7ad9']);
+  custom.packs[id] = { id, ar, en, logo: b.logo || old.logo, g };
+  logEvent(me, 'admin', (old ? 'Pack updated: ' : 'Pack created: ') + en);
+  persist(); res.json({ ok: true, pack: custom.packs[id] });
+});
+
+app.post('/api/admin/card', (req, res) => { // add a card to a pack (or edit one that was added from here)
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const pack = String(b.pack || '');
+  if (!(COUNTS[pack] || custom.packs[pack] || pack === 'cute' || pack === 'leg')) return res.status(400).json({ error: 'unknown pack' });
+  const ar = txt(b.ar, 40), en = txt(b.en, 40);
+  const base = baseOf(pack);
+  const L = custom.cards[pack] || [];
+  if (Number.isInteger(b.idx)) { // edit
+    const c = L[b.idx - base];
+    if (!c) return res.status(404).json({ error: 'only cards added from the admin page can be edited' });
+    if (ar) c.ar = ar; if (en) c.en = en;
+    if (b.img) { if (!okImg(b.img)) return res.status(400).json({ error: 'bad image' }); c.img = b.img; }
+    logEvent(me, 'admin', 'Card edited: ' + pack + '#' + b.idx); persist();
+    return res.json({ ok: true, idx: b.idx });
+  }
+  if (!ar || !en || !okImg(b.img)) return res.status(400).json({ error: 'image + Arabic name + English name required' });
+  if (base + L.length >= 100) return res.status(400).json({ error: 'a pack holds 100 cards at most' });
+  custom.cards[pack] = L;
+  L.push({ img: b.img, ar, en });
+  logEvent(me, 'admin', 'Card added to ' + pack + ': ' + en);
+  persist(); res.json({ ok: true, idx: base + L.length - 1 });
+});
+
+app.post('/api/admin/notify', (req, res) => { // notification to everybody or to a chosen group
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const title = txt(b.title, 80), text = txt(b.text, 500);
+  if (!title || !text) return res.status(400).json({ error: 'title and text required' });
+  let ids = [], missing = [];
+  if (b.to === 'all') ids = Object.keys(db).filter((id) => db[id].user);
+  else {
+    const raw = [].concat(Array.isArray(b.ids) ? b.ids : [], Array.isArray(b.names) ? b.names : []).slice(0, 500);
+    raw.forEach((q) => { const id = db[q] && db[q].user ? q : byName(q); if (id) { if (!ids.includes(id)) ids.push(id); } else missing.push(String(q).slice(0, 30)); });
+  }
+  ids.forEach((id) => pushNote(id, 'notice', title, text));
+  logEvent(me, 'admin', 'Notification "' + title + '" sent to ' + ids.length + ' user(s)');
+  persist(); res.json({ ok: true, sent: ids.length, missing });
+});
+
+app.post('/api/admin/dm', (req, res) => { // custom message to one user
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const text = txt(b.text, 500), title = txt(b.title, 80) || 'Message from admin';
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id) return res.status(404).json({ error: 'user not found' });
+  if (!text) return res.status(400).json({ error: 'message required' });
+  pushNote(id, 'dm', title, text);
+  logEvent(me, 'admin', 'Message sent to ' + db[id].user.username);
+  persist(); res.json({ ok: true, to: db[id].user.username });
+});
+
+app.get('/api/announcements', (req, res) => {
+  const now = Date.now();
+  res.set('Cache-Control', 'no-cache');
+  res.json({ items: ann.filter((a) => !a.until || a.until > now).slice(-5).reverse() });
+});
+app.get('/api/admin/announce', (req, res) => { const me = adminId(req, res); if (!me) return; res.json({ items: ann.slice().reverse() }); });
+app.post('/api/admin/announce', (req, res) => { // a "pub": banner shown to every visitor (e.g. a new pack is coming)
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const title = txt(b.title, 80), text = txt(b.text, 300);
+  if (!title) return res.status(400).json({ error: 'title required' });
+  if (b.img && !okImg(b.img)) return res.status(400).json({ error: 'bad image' });
+  const days = Math.max(0, Math.min(365, Number(b.days) || 0));
+  const a = { id: rid(), t: Date.now(), title, text, img: b.img || null, until: days ? Date.now() + days * 864e5 : null };
+  ann.push(a); if (ann.length > 50) ann.splice(0, ann.length - 50);
+  logEvent(me, 'admin', 'Announcement: ' + title);
+  persist(); res.json({ ok: true, item: a });
+});
+app.delete('/api/admin/announce/:id', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const i = ann.findIndex((a) => a.id === req.params.id);
+  if (i < 0) return res.status(404).json({ error: 'not found' });
+  ann.splice(i, 1); persist(); res.json({ ok: true });
+});
+
+app.get('/api/inbox', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const L = notes[id] || [];
+  res.set('Cache-Control', 'no-store');
+  res.json({ items: L.slice(-50).reverse(), unread: L.filter((n) => !n.read).length });
+});
+app.post('/api/inbox/read', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  (notes[id] || []).forEach((n) => { n.read = true; });
+  persist(); res.json({ ok: true });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

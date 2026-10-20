@@ -767,9 +767,9 @@ const txt = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
 const baseOf = (a) => (a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0));
 const rid = () => crypto.randomBytes(6).toString('hex');
 const byName = (q) => { const k = bodyOf(String(q || '')).toLowerCase(); return k ? Object.keys(db).find((id) => db[id].user && bodyOf(db[id].user.username).toLowerCase() === k) : undefined; };
-function pushNote(uid, type, title, text) {
+function pushNote(uid, type, title, text, from) {
   const L = (notes[uid] = notes[uid] || []);
-  L.push({ id: rid(), t: Date.now(), type, title, text, read: false });
+  L.push({ id: rid(), t: Date.now(), type, title, text, from: from || null, read: false });
   if (L.length > 100) L.splice(0, L.length - 100);
 }
 
@@ -830,7 +830,7 @@ app.post('/api/admin/notify', (req, res) => { // notification to everybody or to
     const raw = [].concat(Array.isArray(b.ids) ? b.ids : [], Array.isArray(b.names) ? b.names : []).slice(0, 500);
     raw.forEach((q) => { const id = db[q] && db[q].user ? q : byName(q); if (id) { if (!ids.includes(id)) ids.push(id); } else missing.push(String(q).slice(0, 30)); });
   }
-  ids.forEach((id) => pushNote(id, 'notice', title, text));
+  ids.forEach((id) => pushNote(id, 'notice', title, text, roleOf(me)));
   logEvent(me, 'admin', 'Notification "' + title + '" sent to ' + ids.length + ' user(s)');
   persist(); res.json({ ok: true, sent: ids.length, missing });
 });
@@ -842,7 +842,7 @@ app.post('/api/admin/dm', (req, res) => { // custom message to one user
   const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
   if (!id) return res.status(404).json({ error: 'user not found' });
   if (!text) return res.status(400).json({ error: 'message required' });
-  pushNote(id, 'dm', title, text);
+  pushNote(id, 'dm', title, text, roleOf(me));
   logEvent(me, 'admin', 'Message sent to ' + db[id].user.username);
   persist(); res.json({ ok: true, to: db[id].user.username });
 });

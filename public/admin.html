@@ -19,12 +19,23 @@
   .adm{background:var(--org);color:#fff;margin-inline-start:6px}
   .muted{color:var(--muted)}
   #msg{padding:40px;text-align:center;color:var(--muted)}
+  h2{margin:28px 0 10px;font-size:1.1rem}
+  .ev{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-height:420px;overflow:auto}
+  .ev div{display:flex;gap:10px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.85rem}
+  .ev div:last-child{border-bottom:none}
+  .ev time{color:var(--muted);font-size:.74rem;white-space:nowrap}
+  .tag{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#2b3c68;white-space:nowrap}
+  .t-trade{background:#1f9d55}.t-register{background:var(--org)}.t-pack{background:#8a4fff}.t-login_fail{background:#d64545}.t-gift,.t-send{background:#c98a10}
+  .new{animation:fl 2s}@keyframes fl{from{background:#2b4a8a}to{background:transparent}}
   .refresh{float:right;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:.8rem}
 </style>
 </head>
 <body>
 <h1>Admin — user log <button class="refresh" onclick="load()">Refresh</button></h1>
 <p class="sub">Read-only list of every local account (username + password).</p>
+<h2>Live activity <span class="muted" id="evinfo" style="font-weight:400;font-size:.8rem"></span></h2>
+<div class="ev" id="ev"><div class="muted">Loading…</div></div>
+<h2>Accounts</h2>
 <div id="msg">Loading…</div>
 <table id="tbl" style="display:none">
   <thead><tr><th>User</th><th>Trades</th><th>Cards</th><th>Created</th><th>Last login</th></tr></thead>
@@ -52,6 +63,24 @@ async function load(){
   }catch(e){ msg.textContent = 'Erreur réseau.'; }
 }
 load();
+let lastT = 0, seen = new Set();
+const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function loadLog(){
+  try{
+    const r = await fetch('/api/admin/log', { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const { events } = await r.json();
+    const box = document.getElementById('ev'), first = !seen.size;
+    box.innerHTML = events.map(e => {
+      const k = e.t + '|' + e.type + '|' + e.text, isNew = !first && !seen.has(k);
+      return `<div class="${isNew ? 'new' : ''}"><time>${fmt(e.t)}</time><span class="tag t-${esc(e.type)}">${esc(e.type)}</span><b>${esc(e.u || '—')}</b><span>${esc(e.text)}</span></div>`;
+    }).join('') || '<div class="muted">No activity yet.</div>';
+    events.forEach(e => seen.add(e.t + '|' + e.type + '|' + e.text));
+    document.getElementById('evinfo').textContent = '· auto-refresh 5s';
+  }catch(e){}
+}
+loadLog();
+setInterval(() => { loadLog(); load(); }, 5000);
 </script>
 </body>
 </html>

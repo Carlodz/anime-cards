@@ -17,7 +17,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {} } : { users: j, gifts: {}, offers: {}, box: {} };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [] } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -25,6 +25,14 @@ store.offers = store.offers || {};
 const offers = store.offers; // id -> { from, to, give, want, t }
 store.box = store.box || {};
 const box = store.box;       // id -> { from, to, a, i, r, t }  (sealed boxes for players who are not friends)
+store.log = Array.isArray(store.log) ? store.log : [];
+const evlog = store.log;     // activity log for the admin page: { t, id, u, type, text }
+function logEvent(id, type, text) {
+  const u = id && db[id] && db[id].user ? db[id].user.username : null;
+  evlog.push({ t: Date.now(), id: id || null, u, type, text });
+  if (evlog.length > 2000) evlog.splice(0, evlog.length - 2000);
+}
+const cname = (a, i, r) => a + '#' + i + (r ? ' (' + r + ')' : '');
 let timer = null;
 
 // ---- optional Postgres (set DATABASE_URL) so cards survive redeploys; otherwise the JSON file is used ----
@@ -46,6 +54,7 @@ async function initStore() {
     Object.assign(gifts, j.gifts || {});
     Object.assign(offers, j.offers || {});
     Object.assign(box, j.box || {});
+    if (Array.isArray(j.log)) evlog.push(...j.log);
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
     await saveNow(); // first run: migrate whatever came from data/users.json
@@ -155,7 +164,7 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -213,6 +222,7 @@ app.post('/api/gift', (req, res) => {
   st.rev = (st.rev || 0) + 1;
   const code = newCode();
   gifts[code] = { from: id, a, i, r, t: Date.now() };
+  logEvent(id, 'gift', 'Created gift code ' + code + ' with ' + cname(a, i, r));
   persist();
   res.json({ code, state: st });
 });
@@ -232,6 +242,7 @@ app.delete('/api/gift/:code', (req, res) => {
   const st = stateOf(db[id]);
   addCard(st, g.a, g.i, g.r);
   delete gifts[code];
+  logEvent(id, 'gift', 'Cancelled gift code ' + code);
   persist();
   res.json({ state: st });
 });
@@ -249,6 +260,7 @@ app.post('/api/redeem', (req, res) => {
   const st = stateOf(db[id]);
   addCard(st, g.a, g.i, g.r);
   delete gifts[code];
+  logEvent(id, 'gift', 'Redeemed code ' + code + ' (' + cname(g.a, g.i, g.r) + ') from ' + (db[g.from] && db[g.from].user ? db[g.from].user.username : '?'));
   persist();
   res.json({ state: st, card: { a: g.a, i: g.i, r: g.r } });
 });
@@ -296,6 +308,7 @@ app.post('/api/open', (req, res) => {
   const G = (A.got[i] = A.got[i] || {});
   G[r] = (G[r] || 0) + 1;
   st.rev = (st.rev || 0) + 1;
+  logEvent(id, 'pack', 'Opened daily pack: ' + cname(a, i, r) + (boost ? ' [boost]' : ''));
   persist();
   res.json({ ok: true, state: st, card: { a, i, r, boost } });
 });
@@ -316,6 +329,7 @@ app.post('/api/legendary', (req, res) => {
     card = { i };
   }
   st.rev = (st.rev || 0) + 1;
+  logEvent(id, 'pack', 'Opened weekly legendary pack: ' + (card ? 'leg#' + card.i : 'nothing'));
   persist();
   res.json({ ok: true, state: st, card });
 });
@@ -334,6 +348,7 @@ app.post('/api/cute', (req, res) => {
   const G = (C.got[i] = C.got[i] || {});
   G[r] = (G[r] || 0) + 1;
   st.rev = (st.rev || 0) + 1;
+  logEvent(id, 'pack', 'Opened weekly cute pack: ' + cname('cute', i, r));
   persist();
   res.json({ ok: true, state: st, card: { a: 'cute', i, r } });
 });
@@ -347,7 +362,7 @@ function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -405,6 +420,7 @@ app.post('/api/friend/add', (req, res) => {
     if (!a.o.includes(t)) a.o.push(t);
     if (!b.i.includes(id)) b.i.push(id);
   }
+  logEvent(id, 'friend', 'Friend request / add -> ' + db[t].user.username);
   persist();
   res.json({ ok: true });
 });
@@ -414,6 +430,7 @@ app.post('/api/friend/accept', (req, res) => {
   const t = String((req.body || {}).id || '');
   if (!isId(t) || !db[t] || !socOf(id).i.includes(t)) return res.status(404).json({ error: 'no request' });
   befriend(id, t);
+  logEvent(id, 'friend', 'Accepted friend ' + db[t].user.username);
   persist();
   res.json({ ok: true });
 });
@@ -425,6 +442,7 @@ app.post('/api/friend/remove', (req, res) => { // also used to decline / cancel 
   const A = socOf(id), B = socOf(t);
   for (const k of ['f', 'i', 'o']) { A[k] = A[k].filter((x) => x !== t); B[k] = B[k].filter((x) => x !== id); }
   dropOffers(id, t);
+  logEvent(id, 'friend', 'Removed / declined ' + db[t].user.username);
   persist();
   res.json({ ok: true });
 });
@@ -451,6 +469,7 @@ app.post('/api/offer', (req, res) => {
   if (Object.values(offers).filter((o) => o.from === id).length >= 10) return res.status(400).json({ error: 'too many pending offers' });
   const oid = crypto.randomBytes(6).toString('hex');
   offers[oid] = { from: id, to, give: clean(give), want: clean(want), t: Date.now() };
+  logEvent(id, 'offer', 'Trade offer to ' + db[to].user.username + ': gives ' + cname(give.a, give.i, give.r) + ' for ' + cname(want.a, want.i, want.r));
   persist();
   res.json({ ok: true });
 });
@@ -469,6 +488,7 @@ app.post('/api/offer/:oid/accept', (req, res) => {
   addCard(them, o.want.a, o.want.i, o.want.r);
   addCard(me, o.give.a, o.give.i, o.give.r);
   db[id].trades = (db[id].trades || 0) + 1; db[o.from].trades = (db[o.from].trades || 0) + 1; // every completed trade counts for both sides
+  logEvent(id, 'trade', 'TRADE completed with ' + db[o.from].user.username + ': got ' + cname(o.give.a, o.give.i, o.give.r) + ', gave ' + cname(o.want.a, o.want.i, o.want.r));
   delete offers[oid];
   persist();
   res.json({ ok: true, state: me });
@@ -478,6 +498,7 @@ app.delete('/api/offer/:oid', (req, res) => {
   const id = need(req, res); if (!id) return;
   const oid = String(req.params.oid), o = offers[oid];
   if (!o || (o.from !== id && o.to !== id)) return res.status(404).json({ error: 'not found' });
+  logEvent(id, 'offer', 'Trade offer ' + (o.from === id ? 'cancelled' : 'declined'));
   delete offers[oid]; persist();
   res.json({ ok: true });
 });
@@ -503,6 +524,7 @@ app.post('/api/send', (req, res) => {
     const bid = crypto.randomBytes(6).toString('hex');
     box[bid] = { from: id, to, a: card.a, i: card.i, r: card.r, t: Date.now() };
   }
+  logEvent(id, 'send', 'Sent ' + cname(card.a, card.i, card.r) + ' to ' + db[to].user.username + (friends ? '' : ' (sealed box)'));
   persist();
   res.json({ ok: true, direct: friends, state: mine });
 });
@@ -524,6 +546,7 @@ app.post('/api/box/:bid/open', (req, res) => {
   const st = stateOf(db[id]);
   addCard(st, b.a, b.i, b.r);
   delete box[bid];
+  logEvent(id, 'send', 'Opened box with ' + cname(b.a, b.i, b.r) + ' from ' + (db[b.from] && db[b.from].user ? db[b.from].user.username : '?'));
   persist();
   res.json({ ok: true, state: st, card: { a: b.a, i: b.i, r: b.r }, from: pub(b.from) });
 });
@@ -651,6 +674,7 @@ app.post('/auth/register', (req, res) => {
   let id;
   do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
   db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), local: true, created: Date.now(), lastLogin: Date.now() };
+  logEvent(id, 'register', 'New account created');
   persist();
   startSession(res, id);
   res.json({ ok: true });
@@ -661,8 +685,9 @@ app.post('/auth/loginpw', (req, res) => {
   const t = tooMany(req, name);
   if (t.over) return res.status(429).json({ error: 'too many' });
   const id = name && pw.length <= 72 ? findLocal(name) : null;
-  if (!id || !checkPw(pw, db[id].pw)) { authFail[t.k].push(Date.now()); return res.status(401).json({ error: 'invalid' }); }
+  if (!id || !checkPw(pw, db[id].pw)) { authFail[t.k].push(Date.now()); logEvent(id || null, 'login_fail', 'Failed login attempt for @' + name); persist(); return res.status(401).json({ error: 'invalid' }); }
   db[id].lastLogin = Date.now();
+  logEvent(id, 'login', 'Logged in');
   persist();
   startSession(res, id);
   res.json({ ok: true });
@@ -686,6 +711,12 @@ app.get('/api/admin/users', (req, res) => {
     };
   }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
   res.json({ users: rows });
+});
+
+app.get('/api/admin/log', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const since = Number(req.query.since) || 0;
+  res.json({ events: evlog.filter((e) => e.t > since).slice(-500).reverse(), total: evlog.length });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

@@ -341,6 +341,7 @@ app.post('/api/cute', (req, res) => {
 // ---- Friends + trade offers (swap one card for one card, friends only) ----
 const isId = (x) => typeof x === 'string' && /^\d{5,25}$/.test(x);
 function socOf(id) { const u = db[id]; if (!u.soc) u.soc = { f: [], i: [], o: [] }; return u.soc; }
+const BANNER_PRESETS = ['sky', 'night', 'eyes']; // files in public/banners
 const VERIFY_AT = 100; // completed trades needed for the verified badge
 function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
@@ -542,7 +543,11 @@ app.post('/api/profile/banner', (req, res) => {
   // Use one of your own cards as profile banner (a: null removes the banner).
   const id = need(req, res); if (!id) return;
   const b = req.body || {};
-  if (b.a === null || b.a === undefined) { delete db[id].banner; persist(); return res.json({ ok: true, banner: null }); }
+  if (typeof b.p !== 'string' && (b.a === null || b.a === undefined)) { delete db[id].banner; persist(); return res.json({ ok: true, banner: null }); }
+  if (typeof b.p === 'string') { // ready-made banner
+    if (!BANNER_PRESETS.includes(b.p)) return res.status(400).json({ error: 'bad banner' });
+    db[id].banner = { p: b.p }; persist(); return res.json({ ok: true, banner: db[id].banner });
+  }
   if (typeof b.a !== 'string' || !/^[\w-]{1,20}$/.test(b.a) || !Number.isInteger(b.i) || b.i < 0 || b.i > 99) return res.status(400).json({ error: 'bad card' });
   const G = ((stateOf(db[id]).a[b.a] || {}).got || {})[b.i] || {};
   if (!Object.values(G).some((n) => n > 0)) return res.status(400).json({ error: 'you do not own that card' });

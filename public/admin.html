@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — WAYANIME</title>
+<style>
+  :root{--bg:#0f1a30;--panel:#17254a;--text:#f2f5fb;--muted:#9fb0d0;--line:#2b3c68;--gold:#f4b82e;--org:#2d6fff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;padding:24px}
+  h1{margin:0 0 4px;font-size:1.6rem}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:.9rem}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;font-size:.88rem;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.72rem;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+  .ver{background:var(--gold);color:#16264a}
+  .adm{background:var(--org);color:#fff;margin-inline-start:6px}
+  .muted{color:var(--muted)}
+  #msg{padding:40px;text-align:center;color:var(--muted)}
+  .refresh{float:right;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:.8rem}
+</style>
+</head>
+<body>
+<h1>Admin — user log <button class="refresh" onclick="load()">Refresh</button></h1>
+<p class="sub">Read-only list of every local account (username + password).</p>
+<div id="msg">Loading…</div>
+<table id="tbl" style="display:none">
+  <thead><tr><th>User</th><th>Trades</th><th>Cards</th><th>Created</th><th>Last login</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script>
+function fmt(t){ return t ? new Date(t).toLocaleString() : '—'; }
+async function load(){
+  const msg = document.getElementById('msg'), tbl = document.getElementById('tbl'), rows = document.getElementById('rows');
+  msg.style.display = 'block'; tbl.style.display = 'none'; msg.textContent = 'Loading…';
+  try{
+    const r = await fetch('/api/admin/users', { credentials: 'same-origin' });
+    if (r.status === 401) { msg.textContent = 'Connecte-toi d\'abord.'; return; }
+    if (r.status === 403) { msg.textContent = 'Ce compte n\'a pas accès à cette page.'; return; }
+    if (!r.ok) { msg.textContent = 'Erreur serveur.'; return; }
+    const { users } = await r.json();
+    rows.innerHTML = users.map(u => `<tr>
+      <td>${u.username}${u.verified ? '<span class="badge ver">verified</span>' : ''}${u.admin ? '<span class="badge adm">admin</span>' : ''}</td>
+      <td>${u.trades}</td>
+      <td>${u.cards}</td>
+      <td class="muted">${fmt(u.created)}</td>
+      <td class="muted">${fmt(u.lastLogin)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted">No accounts yet.</td></tr>';
+    msg.style.display = 'none'; tbl.style.display = 'table';
+  }catch(e){ msg.textContent = 'Erreur réseau.'; }
+}
+load();
+</script>
+</body>
+</html>

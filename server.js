@@ -155,7 +155,7 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT, trades: db[id].trades || 0, local: !!db[id].local } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, leg: hasLeg(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -347,7 +347,7 @@ function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, leg: hasLeg(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -599,6 +599,27 @@ function findSimilar(name) {
   const k = skel(name);
   return Object.keys(db).some((id) => db[id].user && skel(db[id].user.username) === k);
 }
+
+// ---- one special account: always verified, can see the admin log page ----
+const ADMIN_NAME = 'carlodz';
+const ADMIN_PASS = 'Skikda2121';
+function isAdmin(id) {
+  const u = db[id] && db[id].user;
+  return !!(u && bodyOf(u.username).toLowerCase() === ADMIN_NAME);
+}
+async function ensureAdminAccount() {
+  if (findLocal('@' + ADMIN_NAME)) return; // already exists, don't touch its password
+  let id;
+  do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
+  db[id] = { user: { id, username: '@' + ADMIN_NAME, avatar: null }, state: null, pw: hashPw(ADMIN_PASS), local: true, created: Date.now() };
+  persist();
+  console.log('Admin account @' + ADMIN_NAME + ' created');
+}
+function adminId(req, res) {
+  const id = need(req, res); if (!id) return null;
+  if (!isAdmin(id)) { res.status(403).json({ error: 'not admin' }); return null; }
+  return id;
+}
 // One-time migration: accounts made before the "@" rule get it added to their name.
 function addAtToOldNames() {
   let n = 0;
@@ -629,7 +650,7 @@ app.post('/auth/register', (req, res) => {
   if (Object.keys(db).length >= 50000) return res.status(503).json({ error: 'full' });
   let id;
   do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
-  db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), local: true };
+  db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), local: true, created: Date.now(), lastLogin: Date.now() };
   persist();
   startSession(res, id);
   res.json({ ok: true });
@@ -641,12 +662,34 @@ app.post('/auth/loginpw', (req, res) => {
   if (t.over) return res.status(429).json({ error: 'too many' });
   const id = name && pw.length <= 72 ? findLocal(name) : null;
   if (!id || !checkPw(pw, db[id].pw)) { authFail[t.k].push(Date.now()); return res.status(401).json({ error: 'invalid' }); }
+  db[id].lastLogin = Date.now();
+  persist();
   startSession(res, id);
   res.json({ ok: true });
 });
 
+// ---- admin log page: read-only list of every local account ----
+app.get('/api/admin/users', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const rows = Object.keys(db).filter((id) => db[id].local).map((id) => {
+    const u = db[id];
+    const cards = Object.values((u.state && u.state.a) || {}).reduce((n, A) => n + Object.values(A.got || {}).reduce((m, G) => m + Object.values(G).reduce((k, c) => k + c, 0), 0), 0);
+    return {
+      id,
+      username: u.user.username,
+      trades: u.trades || 0,
+      verified: (u.trades || 0) >= VERIFY_AT || isAdmin(id),
+      admin: isAdmin(id),
+      cards,
+      created: u.created || null,
+      lastLogin: u.lastLogin || null,
+    };
+  }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+  res.json({ users: rows });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 initStore()
-  .then(() => { addAtToOldNames(); })
+  .then(() => { addAtToOldNames(); return ensureAdminAccount(); })
   .then(() => app.listen(PORT, () => console.log('Running on port ' + PORT)))
   .catch((e) => { console.error('Database init failed:', e.message); process.exit(1); });

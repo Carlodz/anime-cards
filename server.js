@@ -176,7 +176,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -307,7 +307,8 @@ function pickRarity(boost, weights) {
   return 0;
 }
 app.post('/api/open', (req, res) => {
-  // One pack per day in total. Luck picks the anime, the character and the rarity.
+  // One pack per day in total. Each pack holds 3 cards; luck picks the anime, the character and the rarity of each one, and the same card can drop twice.
+  // Day 7 of a streak: the first card is guaranteed Gold or Diamond.
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
   const st = stateOf(db[id]);
@@ -316,18 +317,19 @@ app.post('/api/open', (req, res) => {
   const ns = D.last === dstr(-1) ? (D.streak || 0) + 1 : 1;
   const boost = ns >= 7;
   const ids = Object.keys(COUNTS).concat(Object.keys(custom.packs)).filter((k) => countOf(k) > 0);
-  const a = ids[crypto.randomInt(ids.length)];
-  const r = RAR[pickRarity(boost)], i = crypto.randomInt(countOf(a));
   D.last = dstr();
   D.streak = boost ? 0 : ns;
-  const A = (st.a[a] = st.a[a] || { last: '', streak: 0, got: {} });
-  A.got = A.got || {};
-  const G = (A.got[i] = A.got[i] || {});
-  G[r] = (G[r] || 0) + 1;
-  st.rev = (st.rev || 0) + 1;
-  logEvent(id, 'pack', 'Opened daily pack: ' + cname(a, i, r) + (boost ? ' [boost]' : ''));
+  const cards = [];
+  for (let n = 0; n < 3; n++) {
+    const a = ids[crypto.randomInt(ids.length)];
+    const b = boost && n === 0;
+    const r = RAR[pickRarity(b)], i = crypto.randomInt(countOf(a));
+    addCard(st, a, i, r);
+    cards.push({ a, i, r, boost: b });
+  }
+  logEvent(id, 'pack', 'Opened daily pack (3 cards): ' + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : ''));
   persist();
-  res.json({ ok: true, state: st, card: { a, i, r, boost } });
+  res.json({ ok: true, state: st, card: cards[0], cards });
 });
 app.post('/api/legendary', (req, res) => {
   const id = sessionId(req);
@@ -391,7 +393,7 @@ function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -646,6 +648,17 @@ async function autoCountry(req, id) {
   } catch (e) {} finally { ipBusy.delete(id); }
 }
 const COUNTRIES = new Set('AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ')); // ISO 3166-1 alpha-2 codes a player can show as a flag next to their name
+app.post('/api/profile/status', (req, res) => {
+  // Short profile status (text + emoji), max 60 characters. Empty string clears it.
+  const id = need(req, res); if (!id) return;
+  const raw = (req.body || {}).s;
+  if (raw !== null && raw !== undefined && typeof raw !== 'string') return res.status(400).json({ error: 'bad status' });
+  const t = Array.from(String(raw || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 60).join('').trim();
+  if (t) db[id].status = t; else delete db[id].status;
+  persist();
+  res.json({ ok: true, status: db[id].status || '' });
+});
+
 app.post('/api/profile/country', (req, res) => {
   const id = need(req, res); if (!id) return;
   const c = (req.body || {}).c;

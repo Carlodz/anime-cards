@@ -27,8 +27,10 @@ store.box = store.box || {};
 const box = store.box;
 store.custom = store.custom || {}; store.custom.packs = store.custom.packs || {}; store.custom.cards = store.custom.cards || {};
 store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.ann : [];
+store.resets = store.resets || {};
 const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
 const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
+const resets = store.resets; // token -> { uid, exp } — admin-initiated password reset requests; the admin never sees the new password
 const ann = store.ann;       // announcements shown to everybody       // id -> { from, to, a, i, r, t }  (sealed boxes for players who are not friends)
 store.log = Array.isArray(store.log) ? store.log : [];
 const evlog = store.log;     // activity log for the admin page: { t, id, u, type, text }
@@ -767,11 +769,53 @@ const txt = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
 const baseOf = (a) => (a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0));
 const rid = () => crypto.randomBytes(6).toString('hex');
 const byName = (q) => { const k = bodyOf(String(q || '')).toLowerCase(); return k ? Object.keys(db).find((id) => db[id].user && bodyOf(db[id].user.username).toLowerCase() === k) : undefined; };
-function pushNote(uid, type, title, text, from) {
+function pushNote(uid, type, title, text, from, link) {
   const L = (notes[uid] = notes[uid] || []);
-  L.push({ id: rid(), t: Date.now(), type, title, text, from: from || null, read: false });
+  L.push({ id: rid(), t: Date.now(), type, title, text, from: from || null, link: link || null, read: false });
   if (L.length > 100) L.splice(0, L.length - 100);
 }
+
+// ---- admin-initiated password reset: admin only triggers it, the user picks the new password themselves ----
+const RESET_TTL = 30 * 60 * 1000; // 30 minutes
+function cleanResets() {
+  const now = Date.now();
+  for (const t of Object.keys(resets)) if (resets[t].exp < now) delete resets[t];
+}
+app.post('/api/admin/reset-request', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id || !db[id].local) return res.status(404).json({ error: 'user not found' });
+  cleanResets();
+  const token = crypto.randomBytes(24).toString('hex');
+  resets[token] = { uid: id, exp: Date.now() + RESET_TTL };
+  const link = '/reset.html?token=' + token;
+  pushNote(id, 'reset', 'Password reset requested', 'An admin requested a password reset for your account. If this was you, open the link below within 30 minutes and choose a new password. If it was not you, ignore this message — your password stays the same.', roleOf(me), link);
+  logEvent(me, 'admin', 'Password reset link sent to ' + db[id].user.username);
+  persist();
+  res.json({ ok: true, to: db[id].user.username });
+});
+app.get('/api/auth/reset-check', (req, res) => {
+  cleanResets();
+  const r = resets[String(req.query.token || '')];
+  if (!r || !db[r.uid]) return res.status(404).json({ error: 'invalid or expired link' });
+  res.json({ ok: true, username: db[r.uid].user.username });
+});
+app.post('/api/auth/reset-confirm', (req, res) => {
+  cleanResets();
+  const b = req.body || {};
+  const token = String(b.token || '');
+  const r = resets[token];
+  if (!r || !db[r.uid]) return res.status(404).json({ error: 'invalid or expired link' });
+  const pw = String(b.password || '');
+  if (pw.length < 6 || pw.length > 72) return res.status(400).json({ error: 'bad password' });
+  if (pw !== String(b.confirm === undefined ? '' : b.confirm)) return res.status(400).json({ error: 'mismatch' });
+  db[r.uid].pw = hashPw(pw); // the admin never receives or sees this value
+  delete resets[token];
+  logEvent(r.uid, 'reset', 'Password changed via admin-initiated reset link');
+  persist();
+  res.json({ ok: true });
+});
 
 app.get('/api/custom', (req, res) => { // public: the client merges this into its built-in packs
   res.set('Cache-Control', 'no-cache');

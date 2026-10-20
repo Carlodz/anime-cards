@@ -153,7 +153,7 @@ th{color:var(--mut);font-size:.7rem}
   <h2>Reset a user's password</h2>
   <p class="note">This sends the user a link to pick a new password themselves. You will never see or set the password directly — the account owner is the only one who chooses it.</p>
   <label>Username</label><input type="text" id="rp-user" list="dm-names" placeholder="@username">
-  <button class="btn" id="rp-go">Send reset link</button>
+  <button class="btn" id="rp-go">Create reset link</button>
   <div class="res" id="rp-res"></div>
 </div>
 
@@ -303,8 +303,11 @@ $('rp-go').onclick = async () => {
   $('rp-go').disabled = true;
   const r = await api('POST', '/api/admin/reset-request', { user });
   $('rp-go').disabled = false;
-  say('rp-res', r.ok, r.ok ? ('Reset link sent to ' + r.j.to + '. They must open it themselves to set a new password.') : (r.j.error || 'failed'));
-  if(r.ok) $('rp-user').value = '';
+  if(!r.ok){ say('rp-res', false, r.j.error || 'failed'); return; }
+  const full = location.origin + r.j.link;
+  say('rp-res', true, 'Link for ' + r.j.to + ' (valid 30 min, send it on Discord/WhatsApp): ' + full);
+  try { await navigator.clipboard.writeText(full); $('rp-res').textContent += '  [copied]'; } catch(e) {}
+  $('rp-user').value = '';
 };
 $('dm-go').onclick = async () => {
   $('dm-go').disabled = true;

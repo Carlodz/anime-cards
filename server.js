@@ -155,6 +155,7 @@ app.get('/auth/callback', async (req, res) => {
     const user = { id: u.id, username: u.global_name || u.username, avatar: u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=128` : null };
     db[u.id] = Object.assign(db[u.id] || {}, { user, state: (db[u.id] && db[u.id].state) || null });
     persist();
+    autoCountry(req, u.id);
     const exp = Date.now() + 30 * 24 * 3600 * 1000;
     setCookie(res, 'sid', `${u.id}.${exp}.${sign(u.id + '.' + exp)}`, 30 * 24 * 3600);
     setCookie(res, 'oauth_state', '', 0);
@@ -174,7 +175,8 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -389,7 +391,7 @@ function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -619,6 +621,41 @@ app.post('/api/profile/pic', (req, res) => {
   res.json({ ok: true, pic: db[id].pic });
 });
 
+// ---- automatic country: from the visitor's IP (CDN header if present, else a free IP->country lookup). The IP itself is never stored. ----
+const ipCache = new Map(), ipBusy = new Set(), ipTried = {}; // ip -> code, users being looked up, uid -> last attempt time
+function privateIp(ip) { return !ip || ip === '::1' || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|f[cd]|fe80)/i.test(ip); }
+async function lookupCountry(ip) {
+  if (ipCache.has(ip)) return ipCache.get(ip);
+  const tries = [
+    async () => { const r = await fetch('https://api.country.is/' + encodeURIComponent(ip), { signal: AbortSignal.timeout(3000) }); return r.ok ? (await r.json()).country : null; },
+    async () => { const r = await fetch('https://ipwho.is/' + encodeURIComponent(ip) + '?fields=success,country_code', { signal: AbortSignal.timeout(3000) }); const j = r.ok ? await r.json() : null; return j && j.success ? j.country_code : null; },
+  ];
+  for (const t of tries) {
+    try { const c = String(await t() || '').toUpperCase(); if (/^[A-Z]{2}$/.test(c)) { if (ipCache.size > 5000) ipCache.clear(); ipCache.set(ip, c); return c; } } catch (e) {}
+  }
+  return null;
+}
+async function autoCountry(req, id) {
+  try {
+    const u = db[id]; if (!u || u.country || u.countryManual || ipBusy.has(id)) return;
+    if (Date.now() - (ipTried[id] || 0) < 6 * 3600 * 1000) return; // retry at most every 6h
+    ipTried[id] = Date.now(); ipBusy.add(id);
+    let c = String(req.headers['cf-ipcountry'] || '').toUpperCase();
+    if (!/^[A-Z]{2}$/.test(c) || c === 'XX' || c === 'T1') c = privateIp(req.ip) ? null : await lookupCountry(req.ip.replace(/^::ffff:/, ''));
+    if (c && COUNTRIES.has(c) && db[id] && !db[id].country && !db[id].countryManual) { db[id].country = c; persist(); }
+  } catch (e) {} finally { ipBusy.delete(id); }
+}
+const COUNTRIES = new Set('AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ')); // ISO 3166-1 alpha-2 codes a player can show as a flag next to their name
+app.post('/api/profile/country', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const c = (req.body || {}).c;
+  if (c === null || c === undefined || c === '') { delete db[id].country; delete db[id].countryManual; persist(); autoCountry(req, id); return res.json({ ok: true, country: null }); } // cleared: go back to auto-detect
+  if (typeof c !== 'string' || !COUNTRIES.has(c.toUpperCase())) return res.status(400).json({ error: 'bad country' });
+  db[id].country = c.toUpperCase(); db[id].countryManual = true; // a manual choice is never overwritten by auto-detect
+  persist();
+  res.json({ ok: true, country: db[id].country });
+});
+
 // ---- Username + password accounts (no external service needed) ----
 const authFail = {};
 function hashPw(pw) {
@@ -718,6 +755,7 @@ app.post('/auth/register', (req, res) => {
   db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), gender: b.gender, local: true, created: Date.now(), lastLogin: Date.now() };
   logEvent(id, 'register', 'New account created');
   persist();
+  autoCountry(req, id);
   startSession(res, id);
   res.json({ ok: true });
 });
@@ -731,6 +769,7 @@ app.post('/auth/loginpw', (req, res) => {
   db[id].lastLogin = Date.now();
   logEvent(id, 'login', 'Logged in');
   persist();
+  autoCountry(req, id);
   startSession(res, id);
   res.json({ ok: true });
 });
@@ -793,7 +832,7 @@ app.post('/api/admin/reset-request', (req, res) => {
   pushNote(id, 'reset', 'Password reset requested', 'An admin requested a password reset for your account. If this was you, open the link below within 30 minutes and choose a new password. If it was not you, ignore this message — your password stays the same.', roleOf(me), link);
   logEvent(me, 'admin', 'Password reset link sent to ' + db[id].user.username);
   persist();
-  res.json({ ok: true, to: db[id].user.username });
+  res.json({ ok: true, to: db[id].user.username, link });
 });
 app.get('/api/auth/reset-check', (req, res) => {
   cleanResets();
@@ -926,6 +965,31 @@ app.post('/api/inbox/read', (req, res) => {
   const id = need(req, res); if (!id) return;
   (notes[id] || []).forEach((n) => { n.read = true; });
   persist(); res.json({ ok: true });
+});
+
+// ---- staff contact: every user sees the owner + admin profiles (photo, banner, role only) and can message them; the message shows in the admin log ----
+const contactT = {}; // user id -> timestamps of recent messages (anti-spam)
+function staffList() { return Object.keys(ADMINS).map((n) => findLocal('@' + n)).filter(Boolean); }
+app.get('/api/staff', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  res.set('Cache-Control', 'no-store');
+  const staff = staffList().filter((s) => s !== id).map((s) => { const u = pub(s); return { id: u.id, pic: u.pic, banner: u.banner, role: u.role }; })
+    .sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1));
+  res.json({ staff });
+});
+app.post('/api/contact', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const b = req.body || {};
+  const to = String(b.to || ''), text = txt(b.text, 500);
+  if (!staffList().includes(to) || to === id) return res.status(404).json({ error: 'not found' });
+  if (!text) return res.status(400).json({ error: 'message required' });
+  const now = Date.now();
+  contactT[id] = (contactT[id] || []).filter((t) => t > now - 10 * 60 * 1000);
+  if (contactT[id].length >= 5) return res.status(429).json({ error: 'wait' });
+  contactT[id].push(now);
+  logEvent(id, 'message', '[to ' + roleOf(to) + '] ' + text);
+  persist();
+  res.json({ ok: true });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

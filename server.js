@@ -267,7 +267,7 @@ app.post('/api/redeem', (req, res) => {
 
 // ---- Server-side game logic (cannot be faked from the browser console) ----
 const COUNTS = { naruto: 8, dbz: 8, ds: 8, bb: 6, bc: 8, hxh: 8, mha: 8, jjk: 7, op: 8, aot: 7 };
-const CUTE_COUNT = 9;
+const CUTE_COUNT = 15;
 const LEG_COUNT = 10, LEG_NOTHING = 40; // percent chance of getting nothing in the weekly legendary card
 const TZ = 'Africa/Algiers';
 const dfmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric' });
@@ -335,7 +335,7 @@ app.post('/api/legendary', (req, res) => {
 });
 
 app.post('/api/cute', (req, res) => {
-  // Weekly cute pack: one pack per week, always one card (from the 9 cute cards).
+  // Weekly cute pack: one pack per week, always one card (from the 15 cute cards).
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
   const st = stateOf(db[id]);
@@ -356,7 +356,7 @@ app.post('/api/cute', (req, res) => {
 // ---- Friends + trade offers (swap one card for one card, friends only) ----
 const isId = (x) => typeof x === 'string' && /^\d{5,25}$/.test(x);
 function socOf(id) { const u = db[id]; if (!u.soc) u.soc = { f: [], i: [], o: [] }; return u.soc; }
-const BANNER_PRESETS = ['sky', 'night', 'eyes', 'meadow']; // files in public/banners
+const BANNER_PRESETS = ['sky', 'night', 'eyes', 'meadow', 'ban01', 'ban02', 'ban03', 'ban04', 'ban05', 'ban06', 'ban07', 'ban08', 'ban09', 'ban10', 'ban11', 'ban12', 'ban13']; // files in public/banners
 const VERIFY_AT = 100; // completed trades needed for the verified badge
 function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};

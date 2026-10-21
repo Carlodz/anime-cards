@@ -17,7 +17,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -30,6 +30,10 @@ store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.an
 store.resets = store.resets || {};
 store.smsg = store.smsg || {};
 store.removed = store.removed || {}; // lowercase staff name -> true: staff the owner removed (they lose admin + staff card)
+store.shop = store.shop || { items: {} }; store.shop.items = store.shop.items || {};
+const shop = store.shop; // admin store: items { id -> {id,type:'banner'|'pic',img,price,t,off} }
+const PTS = { iron: 5, silver: 10, gold: 15, diamond: 20, legendary: 50, cute: 25, aura: 100 }; // points won per card
+function addPts(id, n) { if (db[id] && n > 0) db[id].pts = (db[id].pts || 0) + n; }
 const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
 const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
 const smsg = store.smsg;     // staffId -> userId -> { t, msgs: [{ t, text }] } — messages users sent to staff, shown on the staff card until hidden
@@ -180,7 +184,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { pts: db[id].pts || 0, ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', theme: db[id].theme || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -330,7 +334,7 @@ app.post('/api/open', (req, res) => {
     const a = ids[crypto.randomInt(ids.length)];
     const b = boost && n === 0;
     const r = RAR[pickRarity(b)], i = crypto.randomInt(countOf(a));
-    addCard(st, a, i, r);
+    addCard(st, a, i, r); addPts(id, PTS[r]);
     cards.push({ a, i, r, boost: b });
   }
   logEvent(id, 'pack', 'Opened daily pack (3 cards): ' + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : ''));
@@ -351,7 +355,7 @@ app.post('/api/legendary', (req, res) => {
   if (crypto.randomInt(100) >= LEG_NOTHING) {
     const i = crypto.randomInt(countOf('leg'));
     const G = (L.got[i] = L.got[i] || {});
-    G.legendary = (G.legendary || 0) + 1;
+    G.legendary = (G.legendary || 0) + 1; addPts(id, PTS.legendary);
     card = { i };
   }
   st.rev = (st.rev || 0) + 1;
@@ -374,7 +378,7 @@ app.post('/api/aura', (req, res) => {
   if (crypto.randomInt(100) < AURA_WIN) {
     const i = crypto.randomInt(AURA_COUNT);
     const G = (A.got[i] = A.got[i] || {});
-    G.aura = (G.aura || 0) + 1;
+    G.aura = (G.aura || 0) + 1; addPts(id, PTS.aura);
     card = { i };
   }
   st.rev = (st.rev || 0) + 1;
@@ -402,7 +406,7 @@ app.post('/api/cute', (req, res) => {
   }
   const i = crypto.randomInt(countOf('cute')), r = RAR[pickRarity(false, W_CUTE)];
   const G = (C.got[i] = C.got[i] || {});
-  G[r] = (G[r] || 0) + 1;
+  G[r] = (G[r] || 0) + 1; addPts(id, PTS.cute);
   st.rev = (st.rev || 0) + 1;
   logEvent(id, 'pack', 'Opened weekly cute pack: ' + cname('cute', i, r));
   persist();
@@ -811,6 +815,85 @@ app.post('/api/gender', (req, res) => { // old / Discord accounts pick once
   db[id].gender = g; logEvent(id, 'gender', 'Chose gender: ' + g); persist();
   res.json({ ok: true, gender: g });
 });
+// ---- STORE: players spend points (won from pack cards) on profile photos / banners that the admin adds ----
+app.get('/shop/img/:id', (req, res) => {
+  const it = shop.items[req.params.id]; const m = it && /^data:(image\/[a-z]+);base64,(.+)$/.exec(it.img);
+  if (!m) return res.status(404).end();
+  res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
+});
+// Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
+const THEMES = { blue: 300, red: 300, pink: 300 };
+app.get('/api/store', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const own = db[id].owned || [];
+  const items = Object.values(shop.items).filter((x) => !x.off || own.includes(x.id)).sort((a, b) => b.t - a.t)
+    .map((x) => ({ id: x.id, type: x.type, price: x.price, owned: own.includes(x.id), off: !!x.off }));
+  const pic = db[id].pic && db[id].pic.s, ban = db[id].banner && db[id].banner.s;
+  const themes = Object.keys(THEMES).map((k) => ({ id: 'theme-' + k, key: k, price: THEMES[k], owned: own.includes('theme-' + k) }));
+  res.json({ pts: db[id].pts || 0, items, themes, theme: db[id].theme || null, pic: pic || null, banner: ban || null, rates: PTS });
+});
+app.post('/api/store/buy', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const bid = String((req.body || {}).id);
+  const it = /^theme-/.test(bid) ? (THEMES[bid.slice(6)] !== undefined ? { id: bid, type: 'theme', price: THEMES[bid.slice(6)] } : null) : shop.items[bid];
+  if (!it || it.off) return res.status(404).json({ error: 'not found' });
+  const u = db[id]; u.owned = u.owned || [];
+  if (u.owned.includes(it.id)) return res.status(409).json({ error: 'already owned' });
+  if ((u.pts || 0) < it.price) return res.status(402).json({ error: 'not enough points', pts: u.pts || 0 });
+  u.pts -= it.price; u.owned.push(it.id);
+  logEvent(id, 'store', 'Bought ' + it.type + ' ' + it.id + ' for ' + it.price + ' points');
+  persist(); res.json({ ok: true, pts: u.pts });
+});
+app.post('/api/store/equip', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const b = req.body || {}, u = db[id], eid = String(b.id);
+  if (eid === 'theme-default') { delete u.theme; persist(); return res.json({ ok: true, pic: u.pic || null, banner: u.banner || null, theme: null }); }
+  if (/^theme-/.test(eid)) {
+    const k = eid.slice(6);
+    if (THEMES[k] === undefined || !(u.owned || []).includes(eid)) return res.status(403).json({ error: 'not owned' });
+    u.theme = k; persist();
+    return res.json({ ok: true, pic: u.pic || null, banner: u.banner || null, theme: k });
+  }
+  const it = shop.items[eid];
+  if (!it || !(u.owned || []).includes(it.id)) return res.status(403).json({ error: 'not owned' });
+  if (it.type === 'pic') u.pic = { s: it.id }; else u.banner = { s: it.id };
+  persist(); res.json({ ok: true, pic: u.pic || null, banner: u.banner || null, theme: u.theme || null });
+});
+app.get('/api/admin/shop', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  res.json({ items: Object.values(shop.items).sort((a, b) => b.t - a.t).map((x) => ({ id: x.id, type: x.type, price: x.price, off: !!x.off })) });
+});
+app.post('/api/admin/shop', (req, res) => { // add a profile photo or banner with its price in points
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {}, price = Number(b.price);
+  if (b.type !== 'pic' && b.type !== 'banner') return res.status(400).json({ error: 'type must be pic or banner' });
+  if (!okImg(b.img)) return res.status(400).json({ error: 'image required (png/jpeg/webp/gif, small)' });
+  if (!Number.isInteger(price) || price < 0 || price > 100000) return res.status(400).json({ error: 'bad price' });
+  let id; do { id = 's' + crypto.randomBytes(4).toString('hex'); } while (shop.items[id]);
+  shop.items[id] = { id, type: b.type, img: b.img, price, t: Date.now() };
+  logEvent(me, 'admin', 'Store item added: ' + b.type + ' ' + id + ' (' + price + ' pts)');
+  persist(); res.json({ ok: true, id });
+});
+app.post('/api/admin/points', (req, res) => { // give (or remove with a negative number) points to one user
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {}, n = Number(b.amount);
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id) return res.status(404).json({ error: 'user not found' });
+  if (!Number.isInteger(n) || n === 0 || Math.abs(n) > 100000) return res.status(400).json({ error: 'amount must be a whole number (not 0)' });
+  db[id].pts = Math.max(0, (db[id].pts || 0) + n);
+  if (n > 0) pushNote(id, 'dm', 'Points', 'You received ' + n + ' points from the admin.', roleOf(me));
+  logEvent(me, 'admin', (n > 0 ? 'Sent ' : 'Removed ') + Math.abs(n) + ' points ' + (n > 0 ? 'to ' : 'from ') + db[id].user.username);
+  persist(); res.json({ ok: true, to: db[id].user.username, pts: db[id].pts });
+});
+app.post('/api/admin/shop/:id', (req, res) => { // change price or hide / show an item (owners keep it)
+  const me = adminId(req, res); if (!me) return;
+  const it = shop.items[req.params.id]; if (!it) return res.status(404).json({ error: 'not found' });
+  const b = req.body || {};
+  if (b.price !== undefined) { const p = Number(b.price); if (!Number.isInteger(p) || p < 0 || p > 100000) return res.status(400).json({ error: 'bad price' }); it.price = p; }
+  if (b.off !== undefined) it.off = !!b.off;
+  logEvent(me, 'admin', 'Store item updated: ' + it.id); persist(); res.json({ ok: true });
+});
+
 app.get('/api/config', (req, res) => res.json({ discord: DISCORD_ON }));
 
 app.post('/auth/register', (req, res) => {
@@ -1002,6 +1085,22 @@ app.post('/api/admin/dm', (req, res) => { // custom message to one user
   pushNote(id, 'dm', title, text, roleOf(me));
   logEvent(me, 'admin', 'Message sent to ' + db[id].user.username);
   persist(); res.json({ ok: true, to: db[id].user.username });
+});
+
+const AURA_NAMES = ['Madara', 'Kira', 'Sukuna', 'Shanks', 'Jinwoo', 'Itachi']; // same order as the aura cards in the client (index 0..5)
+app.post('/api/admin/aura-card', (req, res) => { // give one Aura card (chosen character) to one user
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id) return res.status(404).json({ error: 'user not found' });
+  const i = Number(b.i);
+  if (!Number.isInteger(i) || i < 0 || i >= AURA_COUNT) return res.status(400).json({ error: 'pick a character' });
+  addCard(stateOf(db[id]), 'aura', i, 'aura');
+  const note = txt(b.text, 300);
+  pushNote(id, 'dm', 'Aura card', 'You received the Aura card ' + AURA_NAMES[i] + ' from the admin.' + (note ? ' ' + note : ''), roleOf(me));
+  logEvent(me, 'admin', 'Gave Aura card ' + AURA_NAMES[i] + ' to ' + db[id].user.username);
+  logEvent(id, 'gift', 'Received Aura card ' + AURA_NAMES[i] + ' from the admin');
+  persist(); res.json({ ok: true, to: db[id].user.username, card: AURA_NAMES[i] });
 });
 
 app.get('/api/announcements', (req, res) => {

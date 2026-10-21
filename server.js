@@ -179,7 +179,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -284,6 +284,7 @@ app.post('/api/redeem', (req, res) => {
 const COUNTS = { naruto: 8, dbz: 8, ds: 8, bb: 6, bc: 8, hxh: 8, mha: 8, jjk: 7, op: 8, aot: 7 };
 const CUTE_COUNT = 15;
 const LEG_COUNT = 10, LEG_NOTHING = 90;   // percent chance of getting nothing in the weekly legendary card (boys only) -> 10% to win
+const AURA_COUNT = 6, AURA_WIN = 1;         // monthly Aura card (everyone): AURA_WIN % chance (1 in 100) to win one of the 6 aura cards
 const CUTE_NOTHING = 75;                    // percent chance of getting nothing in the weekly cute pack (girls only) -> 25% to win
 function countOf(a) { // base cards shipped with the site + cards added from the admin page
   const base = a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0);
@@ -296,6 +297,7 @@ function dstr(off = 0) {
   dfmt.formatToParts(new Date(Date.now() + off * 864e5)).forEach((x) => (m[x.type] = x.value));
   return `${m.year}-${m.month}-${m.day}`;
 }
+function monthKey() { return dstr().split('-').slice(0, 2).join('-'); }
 function weekKey() {
   const [y, m, d] = dstr().split('-').map(Number);
   const t = Date.UTC(y, m - 1, d), dow = new Date(t).getUTCDay();
@@ -357,6 +359,29 @@ app.post('/api/legendary', (req, res) => {
   res.json({ ok: true, state: st, card });
 });
 
+app.post('/api/aura', (req, res) => {
+  // Monthly Aura roll: one try per calendar month, 1% (1 in 100) chance to win one of the aura cards. Rolled on the server only.
+  const id = sessionId(req);
+  if (!id) return res.status(401).json({});
+  const st = stateOf(db[id]);
+  const A = (st.a.aura = st.a.aura || { last: '', streak: 0, got: {} });
+  A.got = A.got || {};
+  const mk = monthKey();
+  if (A.last === mk) return res.status(409).json({ error: 'already opened this month', state: st });
+  A.last = mk;
+  let card = null;
+  if (crypto.randomInt(100) < AURA_WIN) {
+    const i = crypto.randomInt(AURA_COUNT);
+    const G = (A.got[i] = A.got[i] || {});
+    G.aura = (G.aura || 0) + 1;
+    card = { i };
+  }
+  st.rev = (st.rev || 0) + 1;
+  logEvent(id, 'pack', 'Opened monthly aura pack: ' + (card ? 'aura#' + card.i : 'nothing'));
+  persist();
+  res.json({ ok: true, state: st, card });
+});
+
 app.post('/api/cute', (req, res) => {
   // Weekly cute pack (girls only): one pack per week, low chance (100 - CUTE_NOTHING %) to get a cute card.
   const id = sessionId(req);
@@ -392,11 +417,15 @@ function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
+function hasAura(u) {
+  const g = (((u.state || {}).a || {}).aura || {}).got || {};
+  return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
+}
 function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -989,7 +1018,7 @@ function staffList() { return Object.keys(ADMINS).map((n) => findLocal('@' + n))
 app.get('/api/staff', (req, res) => {
   const id = need(req, res); if (!id) return;
   res.set('Cache-Control', 'no-store');
-  const staff = staffList().filter((s) => s !== id).map((s) => { const u = pub(s); return { id: u.id, pic: u.pic, banner: u.banner, role: u.role }; })
+  const staff = staffList().filter((s) => s !== id).map((s) => { const u = pub(s); return { id: u.id, username: u.username, pic: u.pic, banner: u.banner, role: u.role }; })
     .sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1));
   res.json({ staff });
 });

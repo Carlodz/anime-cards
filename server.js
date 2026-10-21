@@ -17,7 +17,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -29,6 +29,7 @@ store.custom = store.custom || {}; store.custom.packs = store.custom.packs || {}
 store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.ann : [];
 store.resets = store.resets || {};
 store.smsg = store.smsg || {};
+store.removed = store.removed || {}; // lowercase staff name -> true: staff the owner removed (they lose admin + staff card)
 const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
 const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
 const smsg = store.smsg;     // staffId -> userId -> { t, msgs: [{ t, text }] } — messages users sent to staff, shown on the staff card until hidden
@@ -179,7 +180,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -411,7 +412,8 @@ app.post('/api/cute', (req, res) => {
 // ---- Friends + trade offers (swap one card for one card, friends only) ----
 const isId = (x) => typeof x === 'string' && /^\d{5,25}$/.test(x);
 function socOf(id) { const u = db[id]; if (!u.soc) u.soc = { f: [], i: [], o: [] }; return u.soc; }
-const BANNER_PRESETS = ['sky', 'night', 'eyes', 'meadow', 'ban01', 'ban02', 'ban03', 'ban04', 'ban05', 'ban06', 'ban07', 'ban08', 'ban09', 'ban10', 'ban11', 'ban12', 'ban13']; // files in public/banners
+const BG_KEYS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8']; // popup background colours (the client draws them)
+const BANNER_PRESETS = ['sky', 'night', 'eyes', 'meadow', 'ban01', 'ban02', 'ban03', 'ban04', 'ban05', 'ban06', 'ban07', 'ban08', 'ban09', 'ban10', 'ban11', 'ban12', 'ban13', 'pf01', 'pf02', 'pf03', 'pf04', 'pf05', 'pf06', 'pf07', 'pf08', 'pf09', 'pf10', 'pf11', 'pf12', 'pf13', 'pf14']; // files in public/banners
 const VERIFY_AT = 100; // completed trades needed for the verified badge
 function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
@@ -425,7 +427,7 @@ function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
 function validCard(c) {
   return c && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -625,6 +627,20 @@ app.delete('/api/box/:bid', (req, res) => { // the sender takes an unopened box 
   res.json({ ok: true, state: st });
 });
 
+app.post('/api/profile/bg', (req, res) => {
+  // Profile popup background, separate from the banner: { g: 'g1'..'g8' } colour, { p: preset } picture, {} = same as banner.
+  const id = need(req, res); if (!id) return;
+  const b = req.body || {};
+  if (typeof b.g === 'string') {
+    if (!BG_KEYS.includes(b.g)) return res.status(400).json({ error: 'bad background' });
+    db[id].bg = { g: b.g };
+  } else if (typeof b.p === 'string') {
+    if (!BANNER_PRESETS.includes(b.p)) return res.status(400).json({ error: 'bad background' });
+    db[id].bg = { p: b.p };
+  } else delete db[id].bg;
+  persist(); res.json({ ok: true, bg: db[id].bg || null });
+});
+
 app.post('/api/profile/banner', (req, res) => {
   // Use one of your own cards as profile banner (a: null removes the banner).
   const id = need(req, res); if (!id) return;
@@ -646,6 +662,10 @@ app.post('/api/profile/pic', (req, res) => {
   // Use one of your own cards as profile picture (a: null goes back to the Discord avatar).
   const id = need(req, res); if (!id) return;
   const b = req.body || {};
+  if (typeof b.p === 'string') { // ready-made profile photo (same files as the banner presets)
+    if (!BANNER_PRESETS.includes(b.p)) return res.status(400).json({ error: 'bad photo' });
+    db[id].pic = { p: b.p }; persist(); return res.json({ ok: true, pic: db[id].pic });
+  }
   if (b.a === null || b.a === undefined) { delete db[id].pic; persist(); return res.json({ ok: true, pic: null }); }
   if (typeof b.a !== 'string' || !/^[\w-]{1,20}$/.test(b.a) || !Number.isInteger(b.i) || b.i < 0 || b.i > 99) return res.status(400).json({ error: 'bad card' });
   const G = ((stateOf(db[id]).a[b.a] || {}).got || {})[b.i] || {};
@@ -737,7 +757,14 @@ const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass:
 function roleOf(id) {
   const u = db[id] && db[id].user;
   const k = u ? bodyOf(u.username).toLowerCase() : '';
-  return Object.prototype.hasOwnProperty.call(ADMINS, k) ? ADMINS[k].role : null;
+  if (!Object.prototype.hasOwnProperty.call(ADMINS, k)) return null;
+  if (ADMINS[k].role !== 'owner' && store.removed[k]) return null;
+  return ADMINS[k].role;
+}
+function ownerId(req, res) { // owner-only actions (carlodz): password reset links, removing / restoring staff
+  const id = adminId(req, res); if (!id) return null;
+  if (roleOf(id) !== 'owner') { res.status(403).json({ error: 'owner only' }); return null; }
+  return id;
 }
 function isAdmin(id) {
   const u = db[id] && db[id].user;
@@ -836,13 +863,15 @@ app.get('/api/admin/users', (req, res) => {
       lastLogin: u.lastLogin || null,
     };
   }).sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
-  res.json({ users: rows });
+  res.json({ users: rows, me: roleOf(me) });
 });
 
 app.get('/api/admin/log', (req, res) => {
   const me = adminId(req, res); if (!me) return;
   const since = Number(req.query.since) || 0;
-  res.json({ events: evlog.filter((e) => e.t > since).slice(-500).reverse(), total: evlog.length });
+  const owner = roleOf(me) === 'owner';
+  const hide = (e) => !owner && (e.type === 'reset' || /password reset/i.test(e.text || ''));
+  res.json({ events: evlog.filter((e) => e.t > since && !hide(e)).slice(-500).reverse(), total: evlog.length });
 });
 
 
@@ -866,7 +895,7 @@ function cleanResets() {
   for (const t of Object.keys(resets)) if (resets[t].exp < now) delete resets[t];
 }
 app.post('/api/admin/reset-request', (req, res) => {
-  const me = adminId(req, res); if (!me) return;
+  const me = ownerId(req, res); if (!me) return;
   const b = req.body || {};
   const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
   if (!id || !db[id].local) return res.status(404).json({ error: 'user not found' });
@@ -1012,9 +1041,27 @@ app.post('/api/inbox/read', (req, res) => {
   persist(); res.json({ ok: true });
 });
 
+// ---- owner only: list / remove / restore staff ----
+app.get('/api/admin/staff', (req, res) => {
+  const me = ownerId(req, res); if (!me) return;
+  res.json({ staff: Object.keys(ADMINS).filter((n) => ADMINS[n].role !== 'owner').map((n) => ({ name: n, active: !store.removed[n] })) });
+});
+app.post('/api/admin/staff/remove', (req, res) => {
+  const me = ownerId(req, res); if (!me) return;
+  const k = bodyOf(String((req.body || {}).name || '')).toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(ADMINS, k) || ADMINS[k].role === 'owner') return res.status(400).json({ error: 'not removable' });
+  store.removed[k] = true; logEvent(me, 'admin', 'Removed staff @' + k); persist(); res.json({ ok: true });
+});
+app.post('/api/admin/staff/restore', (req, res) => {
+  const me = ownerId(req, res); if (!me) return;
+  const k = bodyOf(String((req.body || {}).name || '')).toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(ADMINS, k)) return res.status(400).json({ error: 'unknown' });
+  delete store.removed[k]; logEvent(me, 'admin', 'Restored staff @' + k); persist(); res.json({ ok: true });
+});
+
 // ---- staff contact: every user sees the owner + admin profiles (photo, banner, role only) and can message them; the message shows in the admin log ----
 const contactT = {}; // user id -> timestamps of recent messages (anti-spam)
-function staffList() { return Object.keys(ADMINS).map((n) => findLocal('@' + n)).filter(Boolean); }
+function staffList() { return Object.keys(ADMINS).map((n) => findLocal('@' + n)).filter((x) => x && roleOf(x)); }
 app.get('/api/staff', (req, res) => {
   const id = need(req, res); if (!id) return;
   res.set('Cache-Control', 'no-store');

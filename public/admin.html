@@ -28,6 +28,11 @@ input[type=color]{width:54px;height:36px;border:1px solid var(--line);background
 .btn:disabled{opacity:.5;cursor:default}
 .note{font-size:.8rem;color:var(--mut);margin:8px 0 0}
 .res{margin-top:12px;font-size:.85rem;min-height:1.2em}.res.ok{color:#5be39a}.res.bad{color:#ff8a8a}
+.aupick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.aupick label{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--tx);cursor:pointer;font-size:.85rem}
+.aupick input{position:absolute;opacity:0;pointer-events:none}
+.aupick img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px}
+.aupick label.on{border-color:#ff2d3d;box-shadow:0 0 0 1px #ff2d3d,0 0 18px -4px rgba(255,45,61,.7)}
 .prev{margin-top:8px;max-height:200px;max-width:100%;border-radius:10px;display:none;border:1px solid var(--line)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px}
 .cd{background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.74rem}
@@ -57,8 +62,10 @@ th{color:var(--mut);font-size:.7rem}
   <button data-t="ov" class="on">Overview</button>
   <button data-t="nt">Notify users</button>
   <button data-t="pk">Packs &amp; cards</button>
+  <button data-t="st">Store</button>
   <button data-t="pb">Announcements</button>
   <button data-t="dm">Message a user</button>
+  <button data-t="au">Aura card</button>
   <button data-t="rp" id="tab-rp" style="display:none">Reset password</button>
   <button data-t="sf" id="tab-sf" style="display:none">Staff</button>
 </div>
@@ -89,6 +96,26 @@ th{color:var(--mut);font-size:.7rem}
   <div class="res" id="nt-res"></div>
 </div>
 
+<!-- STORE -->
+<div class="sec" id="s-st">
+  <h3>Send points to a user</h3>
+  <label>Username</label><input type="text" id="pt-user" list="dm-names" placeholder="@username">
+  <label>Points (use a negative number to remove)</label><input type="number" id="pt-n" step="1" value="100">
+  <button class="btn" id="pt-go">Send points</button>
+  <div class="res" id="pt-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h2>Add to the Store</h2>
+  <label>Type</label>
+  <select id="st-type"><option value="pic">Profile photo</option><option value="banner">Banner</option></select>
+  <label>Image</label>
+  <input type="file" id="st-img" accept="image/*"><img class="prev" id="st-prev" alt="">
+  <label>Price (points)</label>
+  <input type="number" id="st-price" min="0" step="1" value="50">
+  <button class="btn" id="st-go">Add to Store</button>
+  <div class="res" id="st-res"></div>
+  <h3>Store items</h3>
+  <div id="st-list" class="muted">None yet.</div>
+</div>
 <!-- PACKS & CARDS -->
 <div class="sec" id="s-pk">
   <h2>New pack</h2>
@@ -147,6 +174,24 @@ th{color:var(--mut);font-size:.7rem}
   <label>Message</label><textarea id="dm-text" maxlength="500" dir="auto"></textarea>
   <button class="btn" id="dm-go">Send message</button>
   <div class="res" id="dm-res"></div>
+</div>
+
+<!-- AURA CARD -->
+<div class="sec" id="s-au">
+  <h2>Give an Aura card</h2>
+  <label>Username</label><input type="text" id="au-user" list="dm-names" placeholder="@username">
+  <label>Character</label>
+  <div class="aupick" id="au-pick">
+    <label data-i="0"><input type="radio" name="au-c" value="0"><img src="/aura/madara.jpg" alt=""><span>Madara</span></label>
+    <label data-i="1"><input type="radio" name="au-c" value="1"><img src="/aura/kira.jpg" alt=""><span>Kira</span></label>
+    <label data-i="2"><input type="radio" name="au-c" value="2"><img src="/aura/sukuna.jpg" alt=""><span>Sukuna</span></label>
+    <label data-i="3"><input type="radio" name="au-c" value="3"><img src="/aura/shanks.jpg" alt=""><span>Shanks</span></label>
+    <label data-i="4"><input type="radio" name="au-c" value="4"><img src="/aura/jinwoo.jpg" alt=""><span>Jinwoo</span></label>
+    <label data-i="5"><input type="radio" name="au-c" value="5"><img src="/aura/itachi.jpg" alt=""><span>Itachi</span></label>
+  </div>
+  <label>Message (optional)</label><textarea id="au-text" maxlength="300" dir="auto" placeholder="Shown to the player with the notification"></textarea>
+  <button class="btn" id="au-go">Send Aura card</button>
+  <div class="res" id="au-res"></div>
 </div>
 
 <!-- STAFF (owner only) -->
@@ -214,6 +259,7 @@ $('tabs').onclick = e => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
   document.querySelectorAll('.sec').forEach(x => x.classList.toggle('on', x.id === 's-' + b.dataset.t));
   if(b.dataset.t === 'pk') loadCustom();
+  if(b.dataset.t === 'st') loadShop();
   if(b.dataset.t === 'pb') loadAnn();
   if(b.dataset.t === 'sf') loadStaff();
 };
@@ -331,6 +377,17 @@ async function rpMake(copy){
 }
 $('rp-go').onclick = () => rpMake(false);
 $('rp-copy').onclick = () => rpMake(true);
+// ---- Aura card ----
+$('au-pick').onchange = () => document.querySelectorAll('#au-pick label').forEach(l => l.classList.toggle('on', l.querySelector('input').checked));
+$('au-go').onclick = async () => {
+  const c = document.querySelector('input[name="au-c"]:checked');
+  if(!$('au-user').value.trim()) return say('au-res', false, 'Enter a username.');
+  if(!c) return say('au-res', false, 'Pick a character.');
+  $('au-go').disabled = true;
+  const r = await api('POST', '/api/admin/aura-card', { user: $('au-user').value, i: Number(c.value), text: $('au-text').value });
+  $('au-go').disabled = false;
+  if(r.ok){ say('au-res', true, 'Aura card ' + r.j.card + ' sent to ' + r.j.to + '.'); $('au-text').value = ''; loadLog() } else say('au-res', false, r.j.error || 'Failed.');
+};
 $('dm-go').onclick = async () => {
   $('dm-go').disabled = true;
   const r = await api('POST', '/api/admin/dm', { user: $('dm-user').value, title: $('dm-title').value, text: $('dm-text').value });
@@ -348,6 +405,32 @@ $('sf-list').onclick = async e => {
   if(b.dataset.a === 'remove' && !confirm('Remove @' + b.dataset.n + ' from staff?')) return;
   const r = await api('POST', '/api/admin/staff/' + b.dataset.a, { name: b.dataset.n });
   say('sf-res', r.ok, r.ok ? 'Done.' : (r.j.error || 'Failed.')); loadStaff();
+};
+
+// ---- store ----
+const simg = {};
+bindImg('st-img', 'st-prev', 900, 'image/jpeg', simg);
+async function loadShop(){
+  const r = await api('GET', '/api/admin/shop'); if(!r.ok) return;
+  $('st-list').innerHTML = r.j.items.length ? r.j.items.map(x => `<div class="li"><img src="/shop/img/${esc(x.id)}" alt="" style="${x.type==='pic'?'border-radius:50%;':''}width:56px;height:56px;object-fit:cover"><div class="t"><b>${x.type==='pic'?'Profile photo':'Banner'}</b>${x.off?' <span class="muted">(hidden)</span>':''}<div class="muted">${x.price} points</div></div><input type="number" min="0" value="${x.price}" style="width:90px" data-sp="${esc(x.id)}"><button class="btn" data-sv="${esc(x.id)}">Save</button><button class="btn" data-sh="${esc(x.id)}" data-off="${x.off?0:1}">${x.off?'Show':'Hide'}</button></div>`).join('') : 'None yet.';
+}
+$('st-list').onclick = async e => {
+  const sv = e.target.closest('[data-sv]'), sh = e.target.closest('[data-sh]');
+  if(sv){ const id = sv.dataset.sv, v = document.querySelector('[data-sp="'+id+'"]').value; await api('POST', '/api/admin/shop/' + id, { price: Number(v) }); loadShop() }
+  if(sh){ await api('POST', '/api/admin/shop/' + sh.dataset.sh, { off: sh.dataset.off === '1' }); loadShop() }
+};
+$('st-go').onclick = async () => {
+  if(!simg.v) return say('st-res', false, 'Choose an image first.');
+  const r = await api('POST', '/api/admin/shop', { type: $('st-type').value, img: simg.v, price: Number($('st-price').value) });
+  if(r.ok){ say('st-res', true, 'Added to the Store.'); $('st-img').value = ''; $('st-prev').style.display = 'none'; simg.v = null; loadShop() }
+  else say('st-res', false, r.j.error || 'Error');
+};
+
+$('pt-go').onclick = async () => {
+  $('pt-go').disabled = true;
+  const r = await api('POST', '/api/admin/points', { user: $('pt-user').value, amount: Number($('pt-n').value) });
+  $('pt-go').disabled = false;
+  if(r.ok) say('pt-res', true, r.j.to + ' now has ' + r.j.pts + ' points.'); else say('pt-res', false, r.j.error || 'Failed.');
 };
 </script>
 </body>

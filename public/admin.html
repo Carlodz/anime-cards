@@ -59,7 +59,8 @@ th{color:var(--mut);font-size:.7rem}
   <button data-t="pk">Packs &amp; cards</button>
   <button data-t="pb">Announcements</button>
   <button data-t="dm">Message a user</button>
-  <button data-t="rp">Reset password</button>
+  <button data-t="rp" id="tab-rp" style="display:none">Reset password</button>
+  <button data-t="sf" id="tab-sf" style="display:none">Staff</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -148,6 +149,14 @@ th{color:var(--mut);font-size:.7rem}
   <div class="res" id="dm-res"></div>
 </div>
 
+<!-- STAFF (owner only) -->
+<div class="sec" id="s-sf">
+  <h2>Staff</h2>
+  <p class="note">Only the owner can remove or restore staff. A removed staff member loses admin access and disappears from the staff card.</p>
+  <div id="sf-list"></div>
+  <div class="res" id="sf-res"></div>
+</div>
+
 <!-- RESET PASSWORD -->
 <div class="sec" id="s-rp">
   <h2>Reset a user's password</h2>
@@ -206,6 +215,7 @@ $('tabs').onclick = e => {
   document.querySelectorAll('.sec').forEach(x => x.classList.toggle('on', x.id === 's-' + b.dataset.t));
   if(b.dataset.t === 'pk') loadCustom();
   if(b.dataset.t === 'pb') loadAnn();
+  if(b.dataset.t === 'sf') loadStaff();
 };
 
 // ---- overview ----
@@ -216,6 +226,7 @@ async function loadUsers(){
   if(r.status === 403){ $('msg').textContent = 'This account has no access to this page.'; return }
   if(!r.ok){ $('msg').textContent = 'Server error.'; return }
   USERS = r.j.users;
+  if(r.j.me === 'owner'){ $('tab-rp').style.display = ''; $('tab-sf').style.display = '' }
   $('rows').innerHTML = USERS.map(u => `<tr><td>${esc(u.username)}${u.admin ? '<span class="badge">admin</span>' : ''}</td><td>${u.trades}</td><td>${u.cards}</td><td class="muted">${fmt(u.lastLogin)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">No accounts yet.</td></tr>';
   $('msg').style.display = 'none'; $('tbl').style.display = 'table';
   $('dm-names').innerHTML = USERS.map(u => `<option value="${esc(u.username)}">`).join('');
@@ -325,6 +336,18 @@ $('dm-go').onclick = async () => {
   const r = await api('POST', '/api/admin/dm', { user: $('dm-user').value, title: $('dm-title').value, text: $('dm-text').value });
   $('dm-go').disabled = false;
   if(r.ok){ say('dm-res', true, 'Sent to ' + r.j.to + '.'); $('dm-text').value = '' } else say('dm-res', false, r.j.error || 'Failed.');
+};
+
+// ---- staff (owner only) ----
+async function loadStaff(){
+  const r = await api('GET', '/api/admin/staff'); if(!r.ok) return;
+  $('sf-list').innerHTML = r.j.staff.map(s => `<div class="li"><span class="t"><b>@${esc(s.name)}</b> <span class="muted">${s.active ? 'active' : 'removed'}</span></span><button class="btn ${s.active ? 'g' : ''}" data-n="${esc(s.name)}" data-a="${s.active ? 'remove' : 'restore'}">${s.active ? 'Remove' : 'Restore'}</button></div>`).join('');
+}
+$('sf-list').onclick = async e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.a === 'remove' && !confirm('Remove @' + b.dataset.n + ' from staff?')) return;
+  const r = await api('POST', '/api/admin/staff/' + b.dataset.a, { name: b.dataset.n });
+  say('sf-res', r.ok, r.ok ? 'Done.' : (r.j.error || 'Failed.')); loadStaff();
 };
 </script>
 </body>

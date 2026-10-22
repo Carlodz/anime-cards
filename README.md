@@ -14,3 +14,6 @@ PC-only Node + Express site with username/password login (Discord optional).
 5. Optional: BASE_URL = your https site URL (needed only for Discord login).
 
 GitHub Pages cannot run this project: it needs a Node server.
+
+## Discord webhook (optional)
+Set `DISCORD_WEBHOOK_URL` (Channel settings > Integrations > Webhooks) and every notification, DM, points gift, Aura card and announcement sent from the admin panel is also posted to that channel. The owner can also paste/remove the URL in the admin panel (Notifications tab).

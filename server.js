@@ -30,7 +30,7 @@ store.notes = store.notes || {}; store.ann = Array.isArray(store.ann) ? store.an
 store.resets = store.resets || {};
 store.smsg = store.smsg || {};
 store.removed = store.removed || {}; // lowercase staff name -> true: staff the owner removed (they lose admin + staff card)
-store.shop = store.shop || { items: {} }; store.shop.items = store.shop.items || {};
+store.shop = store.shop || { items: {} }; store.shop.items = store.shop.items || {}; store.shop.names = store.shop.names || {}; store.shop.cfg = store.shop.cfg || {};
 const shop = store.shop; // admin store: items { id -> {id,type:'banner'|'pic',img,price,t,off} }
 const PTS = { iron: 5, silver: 10, gold: 15, diamond: 20, legendary: 50, cute: 25, aura: 100 }; // points won per card
 function addPts(id, n) { if (db[id] && n > 0) db[id].pts = (db[id].pts || 0) + n; }
@@ -825,18 +825,37 @@ app.post('/api/gender', (req, res) => { // old / Discord accounts pick once
   res.json({ ok: true, gender: g });
 });
 // ---- STORE: players spend points (won from pack cards) on profile photos / banners that the admin adds ----
+// Built-in animated profile photos (public/pfp/aNN.webp), sold in the Store for ANIM_PRICE points. Owned id = 'anim-NN'.
+const ANIM_PRICE = 150, ANIM_COUNT = 8;
+const ANIM_IDS = Array.from({ length: ANIM_COUNT }, (_, i) => 'anim-' + String(i + 1).padStart(2, '0'));
+const animItem = (id) => ANIM_IDS.includes(id) ? { id, type: 'pic', price: ANIM_PRICE, anim: true } : null;
+// Built-in animated banners (public/bnr/bNN.webp), sold in the Store for BNR_PRICE points. Owned id = 'bnr-NN'.
+const BNR_PRICE = 200, BNR_COUNT = 6;
+const BNR_IDS = Array.from({ length: BNR_COUNT }, (_, i) => 'bnr-' + String(i + 1).padStart(2, '0'));
+const bnrItem = (id) => BNR_IDS.includes(id) ? { id, type: 'banner', price: BNR_PRICE, anim: true } : null;
+// Default names of the built-in items; the admin can rename any item (stored in shop.names / item.name).
+const DEFAULT_NAMES = {
+  'bnr-01': 'Blush Hearts', 'bnr-02': 'Zero Two', 'bnr-03': 'Teal Eye', 'bnr-04': 'Pink Gaze', 'bnr-05': 'Pink Petals', 'bnr-06': 'Zero Two Montage',
+  'anim-01': 'Shy Peek', 'anim-02': 'Choker Girl', 'anim-03': 'Golden Calm', 'anim-04': 'Pink Stare', 'anim-05': 'Soft Smile', 'anim-06': 'Sleepy Blush', 'anim-07': 'Green Eyes', 'anim-08': 'Quiet Gaze',
+};
+const cleanName = (v) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 40);
+const nameOf = (id) => (shop.names && shop.names[id]) || (shop.items[id] && shop.items[id].name) || DEFAULT_NAMES[id] || '';
 app.get('/shop/img/:id', (req, res) => {
+  if (bnrItem(req.params.id)) return res.set('Cache-Control', 'public, max-age=86400').type('image/webp').sendFile(path.join(__dirname, 'public', 'bnr', 'b' + req.params.id.slice(4) + '.webp'));
+  if (animItem(req.params.id)) return res.set('Cache-Control', 'public, max-age=86400').type('image/webp').sendFile(path.join(__dirname, 'public', 'pfp', 'a' + req.params.id.slice(5) + '.webp'));
   const it = shop.items[req.params.id]; const m = it && /^data:(image\/[a-z]+);base64,(.+)$/.exec(it.img);
   if (!m) return res.status(404).end();
   res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
 });
 // Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
-const THEMES = { blue: 300, red: 300, pink: 300 };
+const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500 };
 app.get('/api/store', (req, res) => {
   const id = need(req, res); if (!id) return;
   const own = db[id].owned || [];
   const items = Object.values(shop.items).filter((x) => !x.off || own.includes(x.id)).sort((a, b) => b.t - a.t)
-    .map((x) => ({ id: x.id, type: x.type, price: x.price, owned: own.includes(x.id), off: !!x.off }));
+    .map((x) => ({ id: x.id, type: x.type, name: nameOf(x.id), price: x.price, owned: own.includes(x.id), off: !!x.off }));
+  ANIM_IDS.forEach((aid) => items.push({ id: aid, type: 'pic', name: nameOf(aid), price: ANIM_PRICE, owned: own.includes(aid), off: false, anim: true }));
+  BNR_IDS.forEach((bid) => items.push({ id: bid, type: 'banner', name: nameOf(bid), price: BNR_PRICE, owned: own.includes(bid), off: false, anim: true }));
   const pic = db[id].pic && db[id].pic.s, ban = db[id].banner && db[id].banner.s;
   const themes = Object.keys(THEMES).map((k) => ({ id: 'theme-' + k, key: k, price: THEMES[k], owned: own.includes('theme-' + k) }));
   res.json({ pts: db[id].pts || 0, items, themes, theme: db[id].theme || null, pic: pic || null, banner: ban || null, rates: PTS });
@@ -844,7 +863,7 @@ app.get('/api/store', (req, res) => {
 app.post('/api/store/buy', (req, res) => {
   const id = need(req, res); if (!id) return;
   const bid = String((req.body || {}).id);
-  const it = /^theme-/.test(bid) ? (THEMES[bid.slice(6)] !== undefined ? { id: bid, type: 'theme', price: THEMES[bid.slice(6)] } : null) : shop.items[bid];
+  const it = /^theme-/.test(bid) ? (THEMES[bid.slice(6)] !== undefined ? { id: bid, type: 'theme', price: THEMES[bid.slice(6)] } : null) : (animItem(bid) || bnrItem(bid) || shop.items[bid]);
   if (!it || it.off) return res.status(404).json({ error: 'not found' });
   const u = db[id]; u.owned = u.owned || [];
   if (u.owned.includes(it.id)) return res.status(409).json({ error: 'already owned' });
@@ -863,14 +882,16 @@ app.post('/api/store/equip', (req, res) => {
     u.theme = k; persist();
     return res.json({ ok: true, pic: u.pic || null, banner: u.banner || null, theme: k });
   }
-  const it = shop.items[eid];
+  const it = animItem(eid) || bnrItem(eid) || shop.items[eid];
   if (!it || !(u.owned || []).includes(it.id)) return res.status(403).json({ error: 'not owned' });
   if (it.type === 'pic') u.pic = { s: it.id }; else u.banner = { s: it.id };
   persist(); res.json({ ok: true, pic: u.pic || null, banner: u.banner || null, theme: u.theme || null });
 });
 app.get('/api/admin/shop', (req, res) => {
   const me = adminId(req, res); if (!me) return;
-  res.json({ items: Object.values(shop.items).sort((a, b) => b.t - a.t).map((x) => ({ id: x.id, type: x.type, price: x.price, off: !!x.off })) });
+  const mine = Object.values(shop.items).sort((a, b) => b.t - a.t).map((x) => ({ id: x.id, type: x.type, name: nameOf(x.id), price: x.price, off: !!x.off }));
+  const built = BNR_IDS.map(bnrItem).concat(ANIM_IDS.map(animItem)).map((x) => ({ id: x.id, type: x.type, name: nameOf(x.id), price: x.price, off: false, builtin: true }));
+  res.json({ items: mine.concat(built) });
 });
 app.post('/api/admin/shop', (req, res) => { // add a profile photo or banner with its price in points
   const me = adminId(req, res); if (!me) return;
@@ -880,6 +901,7 @@ app.post('/api/admin/shop', (req, res) => { // add a profile photo or banner wit
   if (!Number.isInteger(price) || price < 0 || price > 100000) return res.status(400).json({ error: 'bad price' });
   let id; do { id = 's' + crypto.randomBytes(4).toString('hex'); } while (shop.items[id]);
   shop.items[id] = { id, type: b.type, img: b.img, price, t: Date.now() };
+  const nm0 = cleanName(b.name); if (nm0) shop.items[id].name = nm0;
   logEvent(me, 'admin', 'Store item added: ' + b.type + ' ' + id + ' (' + price + ' pts)');
   persist(); res.json({ ok: true, id });
 });
@@ -892,12 +914,20 @@ app.post('/api/admin/points', (req, res) => { // give (or remove with a negative
   db[id].pts = Math.max(0, (db[id].pts || 0) + n);
   if (n > 0) pushNote(id, 'dm', 'Points', 'You received ' + n + ' points from the admin.', roleOf(me));
   logEvent(me, 'admin', (n > 0 ? 'Sent ' : 'Removed ') + Math.abs(n) + ' points ' + (n > 0 ? 'to ' : 'from ') + db[id].user.username);
+  hookSend({ title: n > 0 ? 'Points sent' : 'Points removed', description: '**' + Math.abs(n) + '** points ' + (n > 0 ? 'to ' : 'from ') + hcut(db[id].user.username, 60), color: 0xf0b232, fields: [hby(me)] });
   persist(); res.json({ ok: true, to: db[id].user.username, pts: db[id].pts });
 });
 app.post('/api/admin/shop/:id', (req, res) => { // change price or hide / show an item (owners keep it)
   const me = adminId(req, res); if (!me) return;
-  const it = shop.items[req.params.id]; if (!it) return res.status(404).json({ error: 'not found' });
+  const rid = req.params.id, it = shop.items[rid], built = !it && (animItem(rid) || bnrItem(rid));
+  if (!it && !built) return res.status(404).json({ error: 'not found' });
   const b = req.body || {};
+  if (b.name !== undefined) {
+    const nm = cleanName(b.name);
+    if (it) { if (nm) it.name = nm; else delete it.name; } else if (nm) shop.names[rid] = nm; else delete shop.names[rid];
+    if (b.price === undefined && b.off === undefined) { logEvent(me, 'admin', 'Store item renamed: ' + rid + ' -> ' + (nm || '(default)')); persist(); return res.json({ ok: true, name: nameOf(rid) }); }
+  }
+  if (built) return res.status(400).json({ error: 'built-in items: only the name can be changed' });
   if (b.price !== undefined) { const p = Number(b.price); if (!Number.isInteger(p) || p < 0 || p > 100000) return res.status(400).json({ error: 'bad price' }); it.price = p; }
   if (b.off !== undefined) it.off = !!b.off;
   logEvent(me, 'admin', 'Store item updated: ' + it.id); persist(); res.json({ ok: true });
@@ -939,6 +969,17 @@ app.post('/auth/loginpw', (req, res) => {
 });
 
 // ---- admin log page: read-only list of every local account ----
+app.post('/api/admin/gender', (req, res) => { // fix a user's gender when they picked the wrong one
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {}, g = b.gender;
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id) return res.status(404).json({ error: 'user not found' });
+  if (g !== 'f' && g !== 'm') return res.status(400).json({ error: 'bad gender' });
+  const old = db[id].gender || null;
+  db[id].gender = g;
+  logEvent(me, 'admin', 'Changed gender of ' + db[id].user.username + ': ' + (old || 'none') + ' -> ' + g);
+  persist(); res.json({ ok: true, to: db[id].user.username, gender: g, was: old });
+});
 app.get('/api/admin/users', (req, res) => {
   const me = adminId(req, res); if (!me) return;
   const rows = Object.keys(db).filter((id) => db[id].local).map((id) => {
@@ -971,6 +1012,48 @@ app.get('/api/admin/log', (req, res) => {
 const IMG_RE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
 const okImg = (x) => typeof x === 'string' && x.length < 450000 && IMG_RE.test(x);
 const txt = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
+// ---- Discord webhook: every notification an admin sends is also posted to a Discord channel ----
+// Set DISCORD_WEBHOOK_URL in the environment, or let the owner paste the URL in the admin panel (Notifications tab).
+const HOOK_RX = /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
+const hookUrl = () => { const u = process.env.DISCORD_WEBHOOK_URL || (shop.cfg && shop.cfg.webhook) || ''; return HOOK_RX.test(u) ? u : ''; };
+async function hookPost(url, embed) {
+  const body = JSON.stringify({ username: 'WAYANIME', allowed_mentions: { parse: [] }, embeds: [Object.assign({ timestamp: new Date().toISOString(), footer: { text: 'WAYANIME' } }, embed)] });
+  for (let i = 0; i < 2; i++) {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    if (r.status === 429) { const j = await r.json().catch(() => ({})); await new Promise((ok) => setTimeout(ok, Math.min(5000, (Number(j.retry_after) || 1) * 1000))); continue; }
+    return { ok: r.ok, status: r.status };
+  }
+  return { ok: false, status: 429 };
+}
+let hookQ = Promise.resolve();
+function hookSend(embed) { // fire-and-forget, one message at a time so Discord's rate limit is respected
+  const url = hookUrl(); if (!url || typeof fetch !== 'function') return;
+  hookQ = hookQ.then(() => hookPost(url, embed)).then((r) => { if (!r.ok) console.error('discord webhook failed', r.status); }, (e) => console.error('discord webhook error', e.message))
+    .then(() => new Promise((ok) => setTimeout(ok, 400)));
+}
+const hcut = (x, n) => String(x == null ? '' : x).slice(0, n);
+const hby = (me) => ({ name: 'By', value: hcut((roleOf(me) || 'admin') + ' · ' + db[me].user.username, 100), inline: true });
+app.get('/api/admin/webhook', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const u = hookUrl();
+  res.json({ set: !!u, env: !!process.env.DISCORD_WEBHOOK_URL, hint: u ? '…/webhooks/' + u.split('/webhooks/')[1].split('/')[0] + '/••••' + u.slice(-4) : '', owner: roleOf(me) === 'owner' });
+});
+app.post('/api/admin/webhook', (req, res) => { // owner only: paste / clear the webhook URL
+  const me = ownerId(req, res); if (!me) return;
+  const u = String((req.body || {}).url || '').trim();
+  if (!u) { delete shop.cfg.webhook; logEvent(me, 'admin', 'Discord webhook removed'); persist(); return res.json({ ok: true, set: !!hookUrl() }); }
+  if (!HOOK_RX.test(u)) return res.status(400).json({ error: 'not a Discord webhook URL (https://discord.com/api/webhooks/ID/TOKEN)' });
+  shop.cfg.webhook = u; logEvent(me, 'admin', 'Discord webhook set'); persist(); res.json({ ok: true, set: true });
+});
+app.post('/api/admin/webhook/test', async (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const u = hookUrl(); if (!u) return res.status(400).json({ error: 'no webhook set' });
+  try {
+    const r = await hookPost(u, { title: 'Webhook test', description: 'Notifications sent from the admin panel will appear here.', color: 0x5865f2, fields: [hby(me)] });
+    res.status(r.ok ? 200 : 502).json(r.ok ? { ok: true } : { error: 'Discord answered ' + r.status });
+  } catch (e) { res.status(502).json({ error: 'could not reach Discord' }); }
+});
+
 const baseOf = (a) => (a === 'cute' ? CUTE_COUNT : a === 'leg' ? LEG_COUNT : (COUNTS[a] || 0));
 const rid = () => crypto.randomBytes(6).toString('hex');
 const byName = (q) => { const k = bodyOf(String(q || '')).toLowerCase(); return k ? Object.keys(db).find((id) => db[id].user && bodyOf(db[id].user.username).toLowerCase() === k) : undefined; };
@@ -1081,6 +1164,7 @@ app.post('/api/admin/notify', (req, res) => { // notification to everybody or to
   }
   ids.forEach((id) => pushNote(id, 'notice', title, text, roleOf(me)));
   logEvent(me, 'admin', 'Notification "' + title + '" sent to ' + ids.length + ' user(s)');
+  hookSend({ title, description: text, color: 0x5865f2, fields: [{ name: 'Sent to', value: b.to === 'all' ? 'Everyone (' + ids.length + ')' : ids.length + ' user(s)', inline: true }, hby(me)] });
   persist(); res.json({ ok: true, sent: ids.length, missing });
 });
 
@@ -1093,6 +1177,7 @@ app.post('/api/admin/dm', (req, res) => { // custom message to one user
   if (!text) return res.status(400).json({ error: 'message required' });
   pushNote(id, 'dm', title, text, roleOf(me));
   logEvent(me, 'admin', 'Message sent to ' + db[id].user.username);
+  hookSend({ title, description: text, color: 0x5865f2, fields: [{ name: 'To', value: hcut(db[id].user.username, 60), inline: true }, hby(me)] });
   persist(); res.json({ ok: true, to: db[id].user.username });
 });
 
@@ -1108,6 +1193,7 @@ app.post('/api/admin/aura-card', (req, res) => { // give one Aura card (chosen c
   const note = txt(b.text, 300);
   pushNote(id, 'dm', 'Aura card', 'You received the Aura card ' + AURA_NAMES[i] + ' from the admin.' + (note ? ' ' + note : ''), roleOf(me));
   logEvent(me, 'admin', 'Gave Aura card ' + AURA_NAMES[i] + ' to ' + db[id].user.username);
+  hookSend({ title: 'Aura card sent', description: '**' + AURA_NAMES[i] + '** to ' + hcut(db[id].user.username, 60) + (note ? '\n' + note : ''), color: 0xeb459e, fields: [hby(me)] });
   logEvent(id, 'gift', 'Received Aura card ' + AURA_NAMES[i] + ' from the admin');
   persist(); res.json({ ok: true, to: db[id].user.username, card: AURA_NAMES[i] });
 });
@@ -1128,6 +1214,7 @@ app.post('/api/admin/announce', (req, res) => { // a "pub": banner shown to ever
   const a = { id: rid(), t: Date.now(), title, text, img: b.img || null, until: days ? Date.now() + days * 864e5 : null };
   ann.push(a); if (ann.length > 50) ann.splice(0, ann.length - 50);
   logEvent(me, 'admin', 'Announcement: ' + title);
+  hookSend({ title: '📢 ' + title, description: text || undefined, color: 0xf47b3a, fields: [hby(me)] });
   persist(); res.json({ ok: true, item: a });
 });
 app.delete('/api/admin/announce/:id', (req, res) => {

@@ -1,0 +1,84 @@
+/* ===== STORE — Discord Shop look (dark, blurple, big hero, cards with price chips, detail modal) ===== */
+html:root body #store{position:relative;padding:28px;border-radius:20px;background:#1e1f22;color:#f2f3f5;border:1px solid #2e3035;box-shadow:0 30px 70px -30px rgba(0,0,0,.8);font-family:"Poppins","Cairo",system-ui,sans-serif}
+html:root body #store h2,html:root body #store h4,html:root body #store p{color:inherit}
+#store .dsh{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+#store .dsh h2{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em;display:block}
+#store .dsh p{margin:4px 0 0;color:#b5bac1;font-size:.92rem}
+#store .dsbal{display:inline-flex;align-items:center;gap:8px;background:#2b2d31;border:1px solid #3a3c42;border-radius:999px;padding:8px 18px 8px 10px;font-weight:800;font-size:1.1rem;color:#f2f3f5}
+#store .dsbal .coin{width:28px;height:28px;margin:0}
+#store .dsbal small{display:block;font-size:.66rem;font-weight:600;color:#949ba4;letter-spacing:.05em;text-transform:uppercase;line-height:1}
+#store .dsbal span{display:flex;flex-direction:column;gap:2px}
+/* hero */
+#store .dshero{position:relative;overflow:hidden;border-radius:16px;min-height:230px;display:flex;align-items:flex-end;padding:28px;background:#111214 var(--hg) center/cover;isolation:isolate;cursor:pointer}
+#store .dshero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(17,18,20,.92) 0%,rgba(17,18,20,.55) 55%,rgba(17,18,20,.1) 100%)}
+#store .dshero .dsk{display:inline-block;background:#5865f2;color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.08em;padding:4px 10px;border-radius:6px;text-transform:uppercase}
+#store .dshero h3{margin:10px 0 4px;font-size:2rem;font-weight:800;color:#fff;display:block}
+#store .dshero p{margin:0 0 16px;max-width:420px;color:#dbdee1;font-size:.95rem}
+#store .dshero .dsb{width:auto;display:inline-flex;padding:10px 22px}
+/* buttons */
+#store .dsb{border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;font-size:.92rem;cursor:pointer;background:#5865f2;color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,transform .15s}
+#store .dsb:hover{background:#4752c4}
+#store .dsb.g{background:#248046}#store .dsb.g:hover{background:#1a6334}
+#store .dsb:disabled{cursor:default;background:#3a3c42;color:#b5bac1}
+#store .dsb.w{width:100%}
+/* discord buy-points strip + chips */
+html:root body #store .stbuy{background:#2b2d31;color:#f2f3f5;border:1px solid #3a3c42;border-radius:12px;margin:16px 0 0}
+html:root body #store .stbuy em{background:#5865f2;color:#fff}
+html:root body #store .stbt small{color:#b5bac1}
+#store .dstabs{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 4px;padding-bottom:14px;border-bottom:1px solid #2e3035}
+#store .dstab{border:0;background:#2b2d31;color:#dbdee1;border-radius:999px;padding:8px 18px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;transition:background .15s}
+#store .dstab:hover{background:#383a40}
+#store .dstab.on{background:#f2f3f5;color:#111214}
+/* sections */
+#store .dssec{margin-top:26px}
+#store .dssec>header{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+#store .dssec>header b{font-size:1.25rem;font-weight:800;color:#f2f3f5}
+#store .dssec>header span{color:#949ba4;font-size:.85rem}
+#store .dsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+#store .dsgrid.banner,#store .dsgrid.theme{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+/* card */
+#store .dsc{position:relative;background:#2b2d31;border:1px solid #2b2d31;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+#store .dsc:hover{transform:translateY(-3px);border-color:#5865f2;box-shadow:0 12px 28px -14px rgba(0,0,0,.8)}
+#store .dsc.cur{border-color:#23a559}
+#store .dsp{position:relative;aspect-ratio:16/10;background:#1e1f22;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#store .dsgrid.pic .dsp{aspect-ratio:1/.82}
+#store .dsp>img.dsbl{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(18px) saturate(1.3) brightness(.6)}
+#store .dsp>img.dsav{position:relative;width:62%;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px #2b2d31,0 8px 24px rgba(0,0,0,.5)}
+#store .dsp>img.dsbn{width:100%;height:100%;object-fit:cover;display:block}
+#store .dsp .dsth{position:absolute;inset:0;background:var(--g);display:flex;align-items:flex-end;padding:12px 14px}
+#store .dsp .dsth b{font-size:1.05rem;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+#store .dsbd{position:absolute;top:8px;inset-inline-start:8px;display:flex;gap:6px}
+#store .dsbd i{font-style:normal;font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(17,18,20,.78);color:#fff;backdrop-filter:blur(4px)}
+#store .dsbd i.an{background:#5865f2}
+#store .dsbd i.us{background:#23a559}
+#store .dsf{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px}
+#store .dsn{min-width:0;display:flex;flex-direction:column}
+#store .dsn b{font-size:.9rem;font-weight:700;color:#f2f3f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#store .dsn small{font-size:.74rem;color:#949ba4}
+#store .dspr{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:.92rem;color:#f2f3f5;white-space:nowrap}
+#store .dspr .coin{width:18px;height:18px;margin:0}
+#store .dsown{font-weight:700;font-size:.8rem;color:#23a559;white-space:nowrap}
+/* modal */
+#store .dsmo{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#store .dsmd{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);width:min(860px,100%);max-height:90vh;overflow:auto;background:#313338;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+#store .dsmp{background:#1e1f22;display:flex;align-items:center;justify-content:center;min-height:320px;position:relative;overflow:hidden}
+#store .dsmp>img.dsbl{position:absolute;inset:-30px;width:calc(100% + 60px);height:calc(100% + 60px);object-fit:cover;filter:blur(26px) saturate(1.3) brightness(.55)}
+#store .dsmp>img.dsav{position:relative;width:58%;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px #313338,0 14px 40px rgba(0,0,0,.6)}
+#store .dsmp>img.dsbn{width:100%;height:100%;object-fit:cover;display:block}
+#store .dsmp .dsth{position:absolute;inset:0;background:var(--g);display:flex;align-items:flex-end;padding:20px}
+#store .dsmp .dsth b{font-size:1.5rem;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+#store .dsmi{padding:28px 26px;display:flex;flex-direction:column;gap:10px}
+#store .dsmi small{color:#949ba4;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.72rem}
+#store .dsmi h3{margin:0;font-size:1.6rem;font-weight:800;color:#f2f3f5;display:block}
+#store .dsmi p{margin:0;color:#b5bac1;font-size:.92rem;line-height:1.5}
+#store .dsmi .dspr{font-size:1.3rem;margin:6px 0 4px}
+#store .dsmi .dspr .coin{width:26px;height:26px}
+#store .dsmi .dsmsg{min-height:1.2em;color:#f0b232;font-weight:600;font-size:.85rem}
+#store .dsx{position:absolute;top:10px;inset-inline-end:10px;z-index:3;width:34px;height:34px;border-radius:50%;border:0;background:rgba(17,18,20,.7);color:#fff;font-size:1.3rem;line-height:1;cursor:pointer}
+#store .dsx:hover{background:#4e5058}
+/* earn strip */
+html:root body #store .strt{background:#2b2d31;color:#f2f3f5;border:1px solid #3a3c42;border-radius:12px;margin-top:28px}
+html:root body #store .strr span{background:#1e1f22;color:#dbdee1}
+html:root body #store .strr b{color:#f0b232}
+#store .stm,#store .ste{color:#b5bac1}
+@media (max-width:760px){#store .dsmd{grid-template-columns:1fr}#store .dsmp{min-height:220px}#store .dshero{min-height:200px;padding:20px}#store .dsh h2{font-size:1.6rem}}

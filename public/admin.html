@@ -94,6 +94,15 @@ th{color:var(--mut);font-size:.7rem}
   <label>Text</label><textarea id="nt-text" maxlength="500" dir="auto"></textarea>
   <button class="btn" id="nt-go">Send notification</button>
   <div class="res" id="nt-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Discord webhook</h3>
+  <div class="muted" id="wh-st">Loading…</div>
+  <label>Webhook URL (owner only)</label>
+  <input type="text" id="wh-url" placeholder="https://discord.com/api/webhooks/…" autocomplete="off">
+  <button class="btn" id="wh-save">Save webhook</button>
+  <button class="btn" id="wh-test">Send test</button>
+  <button class="btn" id="wh-del">Remove</button>
+  <div class="res" id="wh-res"></div>
 </div>
 
 <!-- STORE -->
@@ -104,9 +113,17 @@ th{color:var(--mut);font-size:.7rem}
   <button class="btn" id="pt-go">Send points</button>
   <div class="res" id="pt-res"></div>
   <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Change a user's gender</h3>
+  <label>Username</label><input type="text" id="gd-user" list="dm-names" placeholder="@username">
+  <label>Gender</label><select id="gd-g"><option value="f">Girl (f)</option><option value="m">Boy (m)</option></select>
+  <button class="btn" id="gd-go">Change gender</button>
+  <div class="res" id="gd-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
   <h2>Add to the Store</h2>
   <label>Type</label>
   <select id="st-type"><option value="pic">Profile photo</option><option value="banner">Banner</option></select>
+  <label>Name (shown in the Store, optional)</label>
+  <input type="text" id="st-name" maxlength="40" placeholder="e.g. Sakura Petals">
   <label>Image</label>
   <input type="file" id="st-img" accept="image/*"><img class="prev" id="st-prev" alt="">
   <label>Price (points)</label>
@@ -260,6 +277,7 @@ $('tabs').onclick = e => {
   document.querySelectorAll('.sec').forEach(x => x.classList.toggle('on', x.id === 's-' + b.dataset.t));
   if(b.dataset.t === 'pk') loadCustom();
   if(b.dataset.t === 'st') loadShop();
+  if(b.dataset.t === 'nt') loadHook();
   if(b.dataset.t === 'pb') loadAnn();
   if(b.dataset.t === 'sf') loadStaff();
 };
@@ -412,17 +430,20 @@ const simg = {};
 bindImg('st-img', 'st-prev', 900, 'image/jpeg', simg);
 async function loadShop(){
   const r = await api('GET', '/api/admin/shop'); if(!r.ok) return;
-  $('st-list').innerHTML = r.j.items.length ? r.j.items.map(x => `<div class="li"><img src="/shop/img/${esc(x.id)}" alt="" style="${x.type==='pic'?'border-radius:50%;':''}width:56px;height:56px;object-fit:cover"><div class="t"><b>${x.type==='pic'?'Profile photo':'Banner'}</b>${x.off?' <span class="muted">(hidden)</span>':''}<div class="muted">${x.price} points</div></div><input type="number" min="0" value="${x.price}" style="width:90px" data-sp="${esc(x.id)}"><button class="btn" data-sv="${esc(x.id)}">Save</button><button class="btn" data-sh="${esc(x.id)}" data-off="${x.off?0:1}">${x.off?'Show':'Hide'}</button></div>`).join('') : 'None yet.';
+  const kind = x => x.type === 'pic' ? 'Profile photo' : 'Banner';
+  $('st-list').innerHTML = r.j.items.length ? r.j.items.map(x => `<div class="li"><img src="/shop/img/${esc(x.id)}" alt="" style="${x.type==='pic'?'border-radius:50%;':''}width:56px;height:56px;object-fit:cover"><div class="t"><b>${esc(x.name || kind(x))}</b>${x.off?' <span class="muted">(hidden)</span>':''}${x.builtin?' <span class="muted">(built-in)</span>':''}<div class="muted">${kind(x)} · ${x.price} points</div></div><input type="text" maxlength="40" value="${esc(x.name || '')}" placeholder="Name" style="width:140px" data-sn="${esc(x.id)}">${x.builtin ? '' : `<input type="number" min="0" value="${x.price}" style="width:90px" data-sp="${esc(x.id)}">`}<button class="btn" data-sv="${esc(x.id)}"${x.builtin ? ' data-bi="1"' : ''}>Save</button>${x.builtin ? '' : `<button class="btn" data-sh="${esc(x.id)}" data-off="${x.off?0:1}">${x.off?'Show':'Hide'}</button>`}</div>`).join('') : 'None yet.';
 }
 $('st-list').onclick = async e => {
   const sv = e.target.closest('[data-sv]'), sh = e.target.closest('[data-sh]');
-  if(sv){ const id = sv.dataset.sv, v = document.querySelector('[data-sp="'+id+'"]').value; await api('POST', '/api/admin/shop/' + id, { price: Number(v) }); loadShop() }
+  if(sv){ const id = sv.dataset.sv, nm = document.querySelector('[data-sn="'+id+'"]').value, pe = document.querySelector('[data-sp="'+id+'"]');
+    const body = { name: nm }; if(pe) body.price = Number(pe.value);
+    await api('POST', '/api/admin/shop/' + id, body); loadShop() }
   if(sh){ await api('POST', '/api/admin/shop/' + sh.dataset.sh, { off: sh.dataset.off === '1' }); loadShop() }
 };
 $('st-go').onclick = async () => {
   if(!simg.v) return say('st-res', false, 'Choose an image first.');
-  const r = await api('POST', '/api/admin/shop', { type: $('st-type').value, img: simg.v, price: Number($('st-price').value) });
-  if(r.ok){ say('st-res', true, 'Added to the Store.'); $('st-img').value = ''; $('st-prev').style.display = 'none'; simg.v = null; loadShop() }
+  const r = await api('POST', '/api/admin/shop', { type: $('st-type').value, img: simg.v, price: Number($('st-price').value), name: $('st-name').value });
+  if(r.ok){ say('st-res', true, 'Added to the Store.'); $('st-img').value = ''; $('st-prev').style.display = 'none'; simg.v = null; $('st-name').value = ''; loadShop() }
   else say('st-res', false, r.j.error || 'Error');
 };
 
@@ -431,6 +452,20 @@ $('pt-go').onclick = async () => {
   const r = await api('POST', '/api/admin/points', { user: $('pt-user').value, amount: Number($('pt-n').value) });
   $('pt-go').disabled = false;
   if(r.ok) say('pt-res', true, r.j.to + ' now has ' + r.j.pts + ' points.'); else say('pt-res', false, r.j.error || 'Failed.');
+};
+async function loadHook(){
+  const r = await api('GET', '/api/admin/webhook'); if(!r.ok) return;
+  $('wh-st').textContent = r.j.set ? 'Active: every notification, DM, points, Aura card and announcement is also posted to Discord (' + r.j.hint + ')' + (r.j.env ? ' — set by DISCORD_WEBHOOK_URL' : '') + '.' : 'Not set. Paste a Discord webhook URL to also post notifications in a channel.';
+  $('wh-url').disabled = $('wh-save').disabled = $('wh-del').disabled = !r.j.owner; $('wh-test').disabled = !r.j.set;
+}
+$('wh-save').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: $('wh-url').value }); if(r.ok){ say('wh-res', true, 'Saved.'); $('wh-url').value = ''; loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
+$('wh-del').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: '' }); if(r.ok){ say('wh-res', true, 'Removed.'); loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
+$('wh-test').onclick = async () => { const r = await api('POST', '/api/admin/webhook/test', {}); say('wh-res', r.ok, r.ok ? 'Test message sent — check your Discord channel.' : (r.j.error || 'Failed.')) };
+$('gd-go').onclick = async () => {
+  $('gd-go').disabled = true;
+  const r = await api('POST', '/api/admin/gender', { user: $('gd-user').value, gender: $('gd-g').value });
+  $('gd-go').disabled = false;
+  if(r.ok) say('gd-res', true, r.j.to + ' is now ' + (r.j.gender === 'f' ? 'girl' : 'boy') + '.'); else say('gd-res', false, r.j.error || 'Failed.');
 };
 </script>
 </body>

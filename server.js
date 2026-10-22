@@ -184,7 +184,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { pts: db[id].pts || 0, ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', theme: db[id].theme || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: (db[id].trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { pts: db[id].pts || 0, ...db[id].user, pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', theme: db[id].theme || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: isVerified(id, db[id]), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -420,6 +420,8 @@ function socOf(id) { const u = db[id]; if (!u.soc) u.soc = { f: [], i: [], o: []
 const BG_KEYS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8']; // popup background colours (the client draws them)
 const BANNER_PRESETS = ['sky', 'night', 'eyes', 'meadow', 'ban01', 'ban02', 'ban03', 'ban04', 'ban05', 'ban06', 'ban07', 'ban08', 'ban09', 'ban10', 'ban11', 'ban12', 'ban13', 'pf01', 'pf02', 'pf03', 'pf04', 'pf05', 'pf06', 'pf07', 'pf08', 'pf09', 'pf10', 'pf11', 'pf12', 'pf13', 'pf14']; // files in public/banners
 const VERIFY_AT = 100; // completed trades needed for the verified badge
+// girls always show the (gif) verified badge; boys only after VERIFY_AT trades (admin always)
+function isVerified(id, u) { return !!u && (u.gender === 'f' || (u.trades || 0) >= VERIFY_AT || isAdmin(id)); }
 function hasLeg(u) {
   const g = (((u.state || {}).a || {}).leg || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
@@ -436,7 +438,7 @@ function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), girl: u.gender === 'f' } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: isVerified(id, u), gold: isAdmin(id), girl: u.gender === 'f' } : null; }
 function validCard(c) {
   return c && c.a !== 'aura' && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -848,7 +850,7 @@ app.get('/shop/img/:id', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
 });
 // Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
-const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500 };
+const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500, naruto: 300 };
 app.get('/api/store', (req, res) => {
   const id = need(req, res); if (!id) return;
   const own = db[id].owned || [];
@@ -980,6 +982,16 @@ app.post('/api/admin/gender', (req, res) => { // fix a user's gender when they p
   logEvent(me, 'admin', 'Changed gender of ' + db[id].user.username + ': ' + (old || 'none') + ' -> ' + g);
   persist(); res.json({ ok: true, to: db[id].user.username, gender: g, was: old });
 });
+app.post('/api/admin/verify', (req, res) => { // manually give / remove the verified badge (girls get the girl badge automatically)
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {};
+  const id = db[b.user] && db[b.user].user ? b.user : byName(b.user);
+  if (!id) return res.status(404).json({ error: 'user not found' });
+  const on = b.on !== false;
+  db[id].verified = on;
+  logEvent(me, 'admin', (on ? 'Verified ' : 'Removed verified from ') + db[id].user.username);
+  persist(); res.json({ ok: true, to: db[id].user.username, verified: on, girl: db[id].gender === 'f' });
+});
 app.get('/api/admin/users', (req, res) => {
   const me = adminId(req, res); if (!me) return;
   const rows = Object.keys(db).filter((id) => db[id].local).map((id) => {
@@ -989,7 +1001,7 @@ app.get('/api/admin/users', (req, res) => {
       id,
       username: u.user.username,
       trades: u.trades || 0,
-      verified: (u.trades || 0) >= VERIFY_AT || isAdmin(id),
+      verified: isVerified(id, u),
       admin: isAdmin(id),
       cards,
       created: u.created || null,

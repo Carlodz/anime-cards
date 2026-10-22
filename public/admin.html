@@ -119,6 +119,12 @@ th{color:var(--mut);font-size:.7rem}
   <button class="btn" id="gd-go">Change gender</button>
   <div class="res" id="gd-res"></div>
   <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Verified badge (girls get the girl badge)</h3>
+  <label>Username</label><input type="text" id="vf-user" list="dm-names" placeholder="@username">
+  <label>Action</label><select id="vf-on"><option value="1">Verify</option><option value="0">Remove verified</option></select>
+  <button class="btn" id="vf-go">Apply</button>
+  <div class="res" id="vf-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
   <h2>Add to the Store</h2>
   <label>Type</label>
   <select id="st-type"><option value="pic">Profile photo</option><option value="banner">Banner</option></select>
@@ -461,6 +467,12 @@ async function loadHook(){
 $('wh-save').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: $('wh-url').value }); if(r.ok){ say('wh-res', true, 'Saved.'); $('wh-url').value = ''; loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
 $('wh-del').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: '' }); if(r.ok){ say('wh-res', true, 'Removed.'); loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
 $('wh-test').onclick = async () => { const r = await api('POST', '/api/admin/webhook/test', {}); say('wh-res', r.ok, r.ok ? 'Test message sent — check your Discord channel.' : (r.j.error || 'Failed.')) };
+$('vf-go').onclick = async () => {
+  $('vf-go').disabled = true;
+  const r = await api('POST', '/api/admin/verify', { user: $('vf-user').value, on: $('vf-on').value === '1' });
+  $('vf-go').disabled = false;
+  if(r.ok) say('vf-res', true, r.j.to + (r.j.verified ? ' is now verified' + (r.j.girl ? ' (girl badge).' : '.') : ' is no longer verified.')); else say('vf-res', false, r.j.error || 'Failed.');
+};
 $('gd-go').onclick = async () => {
   $('gd-go').disabled = true;
   const r = await api('POST', '/api/admin/gender', { user: $('gd-user').value, gender: $('gd-g').value });

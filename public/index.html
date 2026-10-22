@@ -2154,12 +2154,43 @@ var g=document.getElementById("gbrand");if(g){var o=new MutationObserver(functio
 <style id="theme-vid-css">
 #thvid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;z-index:-1;pointer-events:none;display:block;background:#000}
 #thov{position:fixed;inset:0;z-index:-1;pointer-events:none}
+#vsit{position:fixed;z-index:69;display:none;background:url(/themes/violet-sit.webp) center top/100% 100% no-repeat;pointer-events:none;filter:drop-shadow(0 -4px 22px rgba(140,100,255,.45))}
+#zpeek{position:fixed;z-index:71;display:none;background:url(/themes/zero-peek.webp) right center/100% 100% no-repeat;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.5))}
 html[data-theme="zero"] #thov{background:linear-gradient(180deg,rgba(40,4,20,.35),rgba(24,2,12,.6))}
 html[data-theme="violet"] #thov{background:linear-gradient(180deg,rgba(14,6,40,.3),rgba(8,3,24,.58))}
 html[data-theme="violet"] #thvid{object-position:50% 25%}
+/* thème Zero Two : fond rose sombre (sans vidéo) + 2 personnages */
+html[data-theme="zero"]:root{background:radial-gradient(70vw 50vh at 20% 0,rgba(255,60,120,.28),transparent 70%),radial-gradient(60vw 50vh at 90% 100%,rgba(200,20,70,.3),transparent 70%),#14030c fixed}
+/* la fille assise sur le pack (carte Anime Pack) */
+html[data-theme="zero"]:root body .hero{overflow:visible;margin-top:205px}
+html[data-theme="zero"]:root body .hero .stage{position:relative}
+html[data-theme="zero"]:root body .hero .stage::after{content:"";position:absolute;left:50%;bottom:calc(100% - 22px);transform:translateX(-50%);width:230px;height:225px;background:url(/themes/zero-sit.webp) center bottom/contain no-repeat;pointer-events:none;z-index:2;filter:drop-shadow(0 6px 18px rgba(255,40,100,.45))}
+/* thème Violet : fond violet sombre (sans vidéo) + 2 personnages */
+html[data-theme="violet"]:root{background:radial-gradient(70vw 50vh at 20% 0,rgba(130,80,255,.3),transparent 70%),radial-gradient(60vw 50vh at 90% 100%,rgba(70,40,200,.32),transparent 70%),#07041a fixed}
+/* le visage dans le fond du bandeau Anime Pack */
+html[data-theme="violet"]:root body .hero{overflow:hidden}
+html[data-theme="violet"]:root body .hero::after{background:linear-gradient(90deg,rgba(14,6,40,.55) 0%,rgba(14,6,40,.12) 45%,rgba(14,6,40,0) 100%)!important}
+html[data-theme="violet"]:root body .hero::before{content:"";position:absolute;z-index:-1;right:120px;bottom:0;height:min(100%,470px);aspect-ratio:1/1;background:url(/themes/violet-face.webp) center bottom/contain no-repeat;opacity:.9;pointer-events:none;filter:drop-shadow(0 0 30px rgba(140,100,255,.4))}
+@media (max-width:1100px){html[data-theme="violet"]:root body .hero::before{right:0;opacity:.5}}
+/* la fille debout en bas du panneau Friends (violet) */
+html[data-theme="violet"]:root body #friends{bottom:min(54vh,480px)!important;height:auto!important;border-bottom:1px solid rgba(255,255,255,.1)}
+html[data-theme="violet"]::after{content:"";position:fixed;right:0;bottom:0;width:270px;height:min(54vh,480px);z-index:29;pointer-events:none;background-image:url(/themes/violet-stand.webp),linear-gradient(180deg,rgba(14,5,30,.94),rgba(18,8,44,.94));background-repeat:no-repeat;background-position:center bottom,0 0;background-size:auto 100%,auto;border-left:1px solid rgba(255,255,255,.1)}
+@media (max-width:1100px){html[data-theme="violet"]::after{display:none}html[data-theme="violet"]:root body #friends{bottom:0!important}}
+/* la fille debout en bas du panneau Friends */
+html[data-theme="zero"]:root body #friends{bottom:min(54vh,480px)!important;height:auto!important;border-bottom:1px solid rgba(255,255,255,.1)}
+html[data-theme="zero"]::after{content:"";position:fixed;right:0;bottom:0;width:270px;height:min(54vh,480px);background:linear-gradient(180deg,rgba(14,5,30,.94),rgba(40,4,20,.94));z-index:29;pointer-events:none;background-image:url(/themes/zero-stand.webp),linear-gradient(180deg,rgba(14,5,30,.94),rgba(40,4,20,.94));background-repeat:no-repeat;background-position:center bottom,0 0;background-size:auto 100%,auto;border-left:1px solid rgba(255,255,255,.1)}
+@media (max-width:1100px){html[data-theme="zero"]::after{display:none}html[data-theme="zero"]:root body #friends{bottom:0!important}}
+@media (max-width:700px){html[data-theme="zero"]:root body .hero .stage::after{width:150px;height:150px}}
 html[data-theme="zero"],html[data-theme="violet"]{background:#000}
+/* thème Zero Two : personnages en décor (au-dessus de la vidéo, sous le contenu) */
+html[data-theme="zero"] #thov::before,html[data-theme="zero"] #thov::after{content:"";position:fixed;bottom:0;background-repeat:no-repeat;background-position:bottom;background-size:contain;pointer-events:none;filter:drop-shadow(0 0 28px rgba(255,60,120,.45))}
+html[data-theme="zero"] #thov::before{background-image:url(/themes/zero-sit.webp);right:290px;width:min(38vw,560px);height:min(78vh,700px)}
+html[data-theme="zero"] #thov::after{background-image:url(/themes/zero-stand.webp);left:285px;width:min(14vw,210px);height:min(62vh,560px)}
+@media (max-width:1250px){html[data-theme="zero"] #thov::after{display:none}}
+@media (max-width:900px){html[data-theme="zero"] #thov::before{right:0;opacity:.55;width:70vw}}
 html[data-theme="zero"] body,html[data-theme="violet"] body,html[data-theme="zero"] body[class],html[data-theme="violet"] body[class]{background:transparent!important}
 html[data-theme="zero"] .hvid,html[data-theme="violet"] .hvid,html[data-theme="zero"] .libvid,html[data-theme="violet"] .libvid{display:none}
+/* thème Zero Two / Violet : la vidéo du thème doit rester visible aussi dans Anime Packs (hero) et Bibliothèque */
 </style>
 <script id="theme-js">
 /* Site color themes: remaps the purple/pink palette of every stylesheet rule to blue / red / pink. window.__applyTheme(key|null) */
@@ -2171,7 +2202,7 @@ html[data-theme="zero"] .hvid,html[data-theme="violet"] .hvid,html[data-theme="z
     zero:[[228,336],[268,342],[285,348],[316,352],[335,356]],
     violet:[[228,252],[268,262],[285,270],[316,280],[335,288]]
   };
-  var VD={zero:"/themes/zero.mp4",violet:"/themes/violet.mp4"};
+  var VD={};
   function vid(k){var v=document.getElementById("thvid"),o=document.getElementById("thov");
     if(!VD[k]){if(v)v.remove();if(o)o.remove();return}
     if(!v){v=document.createElement("video");v.id="thvid";v.muted=true;v.loop=true;v.autoplay=true;v.setAttribute("playsinline","");v.setAttribute("aria-hidden","true");document.body.insertBefore(v,document.body.firstChild);o=document.createElement("div");o.id="thov";document.body.insertBefore(o,v.nextSibling)}
@@ -2212,6 +2243,34 @@ html[data-theme="zero"] .hvid,html[data-theme="violet"] .hvid,html[data-theme="z
   window.__applyTheme=apply;
   var st="";try{st=localStorage.getItem("wtheme")||""}catch(e){}
   if(st)apply(st);
+})();
+</script>
+<script id="zpeek-js">
+/* Violet : fille assise qui sort la tête au-dessus de la fenêtre Profil (#vsit). Zero Two (thème zero) : sur ton profil ET sur le profil des autres ; même hauteur que la fenêtre Profil, sa main attrape le bord gauche */
+(function(){
+  var el=null,R=518/920,HAND=.034;
+  function tick(){
+    var p=document.getElementById("profile"),f=document.getElementById("fprof");
+    if(!(p&&p.classList.contains("pop")))p=(f&&f.classList.contains("pop"))?f:null;
+    var th=document.documentElement.getAttribute("data-theme"),on=th==="zero"&&p&&innerWidth>820;
+    var vs=document.getElementById("vsit");
+    if(th==="violet"&&p&&innerWidth>820){
+      if(!vs){vs=document.createElement("div");vs.id="vsit";document.body.appendChild(vs)}
+      var q=p.getBoundingClientRect(),F=.62,hh=Math.min(460,(q.top-6)/F);
+      if(hh<190){vs.style.display="none"}else{var ww=hh*736/1104;
+        vs.style.display="block";vs.style.width=ww+"px";vs.style.height=hh+"px";
+        vs.style.left=(q.left+q.width-ww-24)+"px";vs.style.top=(q.top-F*hh)+"px"}
+    }else if(vs){vs.style.display="none"}
+    if(!on){if(el)el.style.display="none";return}
+    if(!el){el=document.createElement("div");el.id="zpeek";document.body.appendChild(el)}
+    var r=p.getBoundingClientRect(),h=r.height,w=h*R,room=r.left+w*HAND;
+    if(w>room){w=room/(1+0);h=w/R}
+    if(w<80){el.style.display="none";return}
+    el.style.display="block";el.style.width=w+"px";el.style.height=h+"px";
+    el.style.top=(r.top+(r.height-h)/2)+"px";
+    el.style.left=(r.left+w*HAND-w)+"px";
+  }
+  setInterval(tick,200);addEventListener("resize",tick);
 })();
 </script>
 <script id="store-js">

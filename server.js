@@ -436,7 +436,7 @@ function hasCute(u) {
   const g = (((u.state || {}).a || {}).cute || {}).got || {};
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id) } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: (u.trades || 0) >= VERIFY_AT || isAdmin(id), gold: isAdmin(id), girl: u.gender === 'f' } : null; }
 function validCard(c) {
   return c && c.a !== 'aura' && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }

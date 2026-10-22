@@ -937,6 +937,35 @@ app.post('/api/admin/shop/:id', (req, res) => { // change price or hide / show a
 
 app.get('/api/config', (req, res) => res.json({ discord: DISCORD_ON }));
 
+// ---- Discord presence (what a Discord user is listening to / playing), via the free Lanyard API ----
+// The player must have logged in with Discord AND joined the Lanyard server (discord.gg/lanyard) so their presence is public.
+const presCache = new Map();
+app.get('/api/presence/:id', async (req, res) => {
+  if (!sessionId(req)) return res.status(401).json({ ok: false });
+  const id = String(req.params.id);
+  if (!/^\d{17,20}$/.test(id) || !db[id] || db[id].local) return res.json({ ok: false, reason: 'not_discord' });
+  const hit = presCache.get(id);
+  if (hit && Date.now() - hit.t < 20000) return res.json(hit.v);
+  let v = { ok: false, reason: 'unavailable' };
+  try {
+    const r = await fetch('https://api.lanyard.rest/v1/users/' + id, { signal: AbortSignal.timeout(4000) });
+    const j = await r.json().catch(() => null);
+    if (j && j.success && j.data) {
+      const d = j.data, acts = Array.isArray(d.activities) ? d.activities : [];
+      const play = acts.find((a) => a && a.type === 0);
+      v = {
+        ok: true,
+        status: ['online', 'idle', 'dnd', 'offline'].includes(d.discord_status) ? d.discord_status : 'offline',
+        spotify: d.listening_to_spotify && d.spotify ? { song: String(d.spotify.song || '').slice(0, 100), artist: String(d.spotify.artist || '').slice(0, 100), art: /^https:\/\//.test(d.spotify.album_art_url || '') ? d.spotify.album_art_url : null } : null,
+        game: play ? { name: String(play.name || '').slice(0, 80), details: String(play.details || play.state || '').slice(0, 80) } : null,
+      };
+    } else if (j && j.error && j.error.code === 'user_not_monitored') v = { ok: false, reason: 'not_monitored' };
+  } catch (e) { /* network / timeout: keep unavailable */ }
+  presCache.set(id, { t: Date.now(), v });
+  if (presCache.size > 2000) presCache.delete(presCache.keys().next().value);
+  res.json(v);
+});
+
 app.post('/auth/register', (req, res) => {
   const b = req.body || {}, body = bodyOf(b.username), pw = String(b.password || '');
   if (!UNAME.test(body)) return res.status(400).json({ error: 'bad username' });

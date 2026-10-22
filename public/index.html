@@ -1293,7 +1293,39 @@ html:root body .jump a#j9.clk::before{animation-name:icSpin}
 <video class="hvid" src="/packs-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
 <div class="wl"><svg class="wlogo " viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp p1" x1="697" y1="900" x2="1068" y2="422"/><line class="wp p2" x1="1164" y1="900" x2="1535" y2="422"/></svg><span class="wbr"><span class="wtxt" id="wtxt" aria-label="WAYANIME">WAYANIME</span><span class="wsub">CARDS PACK</span></span></div>
 <nav class="nav"><button class="langb" id="lang"></button><label class="navq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="nq" type="search" autocomplete="off" enterkeyhint="search" spellcheck="false"></label><button class="langb" id="auth"></button></nav>
-<nav class="nav jump"><a id="j1" href="#top"></a><a id="j2" href="#coll"></a><a id="j3" href="#trade"></a><a id="j4" href="#vault"></a><a id="j5" href="#cutepack"></a><a id="j6" href="#library" style="display:none"></a><a id="j7" href="#profile" style="display:none"></a><a id="j8" href="#friends" style="display:none"></a><a id="j10" href="#store" style="display:none"><span>Store</span></a><a id="j9" href="/admin.html" target="_blank" rel="noopener" style="display:none">LOG</a></nav>
+<nav class="nav jump"><a id="j1" href="#top"></a><a id="j2" href="#coll"></a><a id="j3" href="#trade"></a><a id="j4" href="#vault"></a><a id="j5" href="#cutepack"></a><a id="j6" href="#library" style="display:none"></a><a id="j7" href="#profile" style="display:none"></a><a id="j8" href="#friends" style="display:none"></a><a id="j10" href="#store" style="display:none"><span>Store</span></a><a id="j9" href="/admin.html" target="_blank" rel="noopener" style="display:none">LOG</a><a id="jout" href="/auth/logout" style="display:none"><span id="joutt">Log out</span></a></nav>
+<style>.dpres{display:flex;align-items:center;gap:10px;margin:16px 0 0;position:relative;z-index:1;padding:9px 12px;border-radius:14px;background:rgba(120,110,170,.12);font-size:.82rem;line-height:1.35;text-align:start}
+.dpres img{width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none}
+.dpres .dpi{width:38px;height:38px;border-radius:8px;flex:none;display:grid;place-items:center;font-size:1.15rem;background:rgba(120,110,170,.2)}
+.dpres .dpt{min-width:0}.dpres small{display:block;opacity:.65;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.dpres b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dpres span{display:block;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpres.dphint{font-size:.75rem;opacity:.8}.dpres.dphint a{color:#5865F2;font-weight:700}
+.dpres .dpd{width:9px;height:9px;border-radius:50%;flex:none;margin-inline-start:auto;background:#80848e}.dpres .dpd.online{background:#23a55a}.dpres .dpd.idle{background:#f0b232}.dpres .dpd.dnd{background:#f23f43}
+</style>
+<script>(function(){
+var ME=null,C={};function ar(){return document.documentElement.lang==="ar"}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function meId(){if(ME!==null)return Promise.resolve(ME);return fetch("/api/me").then(function(r){return r.ok?r.json():null}).then(function(d){ME=(d&&d.user&&d.user.id)||"";return ME}).catch(function(){ME="";return ""})}
+function get(id){var h=C[id];if(h&&Date.now()-h.t<20000)return Promise.resolve(h.v);return fetch("/api/presence/"+encodeURIComponent(id)).then(function(r){return r.json()}).then(function(v){C[id]={t:Date.now(),v:v};return v}).catch(function(){return{ok:false}})}
+function html(v,own){
+ if(!v||!v.ok){if(own&&v&&v.reason==="not_monitored")return'<div class="dpres dphint">'+(ar()?"باش تبان حالتك في البروفايل، ادخل لسيرفر Lanyard:":"To show your Discord status here, join the Lanyard server:")+' <a href="https://discord.gg/lanyard" target="_blank" rel="noopener">discord.gg/lanyard</a></div>';return""}
+ if(v.spotify){var s=v.spotify;return'<div class="dpres">'+(s.art?'<img alt="" src="'+esc(s.art)+'">':'<div class="dpi">\u{1F3B5}</div>')+'<div class="dpt"><small>'+(ar()?"يسمع على Spotify":"Listening to Spotify")+'</small><b>'+esc(s.song)+'</b><span>'+esc(s.artist)+'</span></div><i class="dpd '+v.status+'"></i></div>'}
+ if(v.game){var g=v.game;return'<div class="dpres"><div class="dpi">\u{1F3AE}</div><div class="dpt"><small>'+(ar()?"يلعب":"Playing")+'</small><b>'+esc(g.name)+'</b>'+(g.details?'<span>'+esc(g.details)+'</span>':'')+'</div><i class="dpd '+v.status+'"></i></div>'}
+ return""}
+function fill(box,own){
+ if(!box||!box.classList.contains("pop")||box.querySelector(".dpres")||box.getAttribute("data-pbusy"))return;
+ var anchor=box.querySelector(".fst")||box.querySelector(".ph0");if(!anchor)return;
+ var idp=own?meId():Promise.resolve((box.querySelector("[data-id]")||{getAttribute:function(){return""}}).getAttribute("data-id"));
+ box.setAttribute("data-pbusy","1");
+ idp.then(function(id){if(!id)return null;return get(id)}).then(function(v){
+  box.removeAttribute("data-pbusy");if(!v)return;
+  var a2=box.querySelector(".fst")||box.querySelector(".ph0");if(!a2||box.querySelector(".dpres"))return;
+  var h=html(v,own);if(h)a2.insertAdjacentHTML("afterend",h)})}
+function watch(id,own,n){var b=document.getElementById(id);if(!b){if((n||0)<60)setTimeout(function(){watch(id,own,(n||0)+1)},500);return}var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){fill(b,own)},60)}).observe(b,{childList:true,attributes:true,attributeFilter:["class"]})}
+function init(){watch("profile",true);watch("fprof",false)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init()})();</script>
+<style>#jout{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpath d='M16 17l5-5-5-5'/%3E%3Cpath d='M21 12H9'/%3E%3C/svg%3E")}html:root body .jump #jout{order:10}</style>
+<script>(function(){function go(){fetch("/api/me").then(function(r){return r.ok?r.json():null}).then(function(d){if(!d||!d.user)return;var a=document.getElementById("jout"),t=document.getElementById("joutt");if(!a)return;a.style.display="";var ar=document.documentElement.lang==="ar"||window.LANG==="ar";if(ar&&t)t.textContent="\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c";a.onclick=function(e){e.preventDefault();var b=document.getElementById("auth");try{if(b)b.click();else location.href="/auth/logout"}catch(x){location.href="/auth/logout"}setTimeout(function(){location.href="/auth/logout"},400)}}).catch(function(){})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go()})();</script>
 <h1 id="h1"></h1><div id="packtimer" class="packtimer" aria-live="off"><span class="pt-l"></span><b class="pt-t">--:--:--</b></div>
 <section class="stage" aria-label="Daily pack">
   <button class="pack" id="pack" aria-label="Open today's pack"><svg viewBox="0 0 190 310" aria-hidden="true" focusable="false">
@@ -1339,12 +1371,7 @@ html:root body .jump a#j9.clk::before{animation-name:icSpin}
 
 <section class="trade" id="trade"></section>
 <div class="tools"><button id="bgoff"></button></div>
-<footer class="sitefoot" dir="ltr"><a class="dcfoot" id="dcfoot" href="/auth/login" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.5a18.3 18.3 0 0 0-5.4 0L9.6 3a19.8 19.8 0 0 0-4.9 1.4C1.600 9 .8 13.500 1.200 18a20 20 0 0 0 6 3l1.300-2.100a12.900 12.900 0 0 1-2-.9l.5-.4a14.200 14.200 0 0 0 12 0l.5.4c-.6.400-1.300.700-2 .9L18.800 21a20 20 0 0 0 6-3c.5-5.200-.8-9.700-3.500-13.600ZM8.500 15.300c-1.200 0-2.100-1.100-2.100-2.400s.9-2.400 2.100-2.400 2.100 1.100 2.100 2.400-.9 2.400-2.100 2.400Zm7 0c-1.200 0-2.100-1.100-2.100-2.400s.9-2.400 2.100-2.400 2.100 1.100 2.100 2.400-.9 2.400-2.100 2.400Z"/></svg><span id="dcfoott">Login with Discord</span></a>© 2026 CARLODZ. All rights reserved. · wayanime Card Packs</footer>
-<style>html:root body main>.sitefoot{position:relative}
-.dcfoot{position:absolute;left:0;top:50%;transform:translateY(-35%);display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:#5865F2;color:#fff!important;font-weight:700;font-size:.85rem;text-decoration:none;box-shadow:0 8px 22px -8px rgba(88,101,242,.8);transition:filter .15s,transform .15s}
-.dcfoot:hover{filter:brightness(1.12);transform:translateY(-38%)}
-@media(max-width:700px){.dcfoot{position:static;transform:none;display:flex;width:max-content;margin:0 auto 12px}.dcfoot:hover{transform:none}}</style>
-<script>(function(){fetch("/api/config").then(function(r){return r.json()}).then(function(c){var b=document.getElementById("dcfoot");if(!b||!c.discord)return;b.style.display="";var l=document.getElementById("dcfoott"),ar=document.documentElement.lang==="ar"||(window.LANG&&window.LANG==="ar");if(l&&ar)l.textContent="\u0627\u0644\u062f\u062e\u0648\u0644 \u0639\u0628\u0631 \u062f\u064a\u0633\u0643\u0648\u0631\u062f"}).catch(function(){})})();</script>
+<footer class="sitefoot" dir="ltr">© 2026 CARLODZ. All rights reserved. · wayanime Card Packs</footer>
 </main>
 <div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Your card">
   <div class="sb" id="sb"><svg class="aura" id="aura" viewBox="0 0 600 600" aria-hidden="true" focusable="false">

@@ -155,7 +155,7 @@ app.get('/auth/callback', async (req, res) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: CID, client_secret: SEC, grant_type: 'authorization_code', code: String(code), redirect_uri: REDIRECT }),
     });
-    if (!tr.ok) return res.status(400).send('Discord refused the login.');
+    if (!tr.ok) { const eb = await tr.text().catch(() => ''); console.error('Discord token error', tr.status, eb, '| redirect_uri used:', REDIRECT); return res.status(400).send('Discord refused the login.'); }
     const tok = await tr.json();
     const ur = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + tok.access_token } });
     if (!ur.ok) return res.status(400).send('Could not read your Discord profile.');

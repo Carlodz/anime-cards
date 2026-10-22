@@ -940,10 +940,54 @@ app.get('/api/config', (req, res) => res.json({ discord: DISCORD_ON }));
 // ---- Discord presence (what a Discord user is listening to / playing), via the free Lanyard API ----
 // The player must have logged in with Discord AND joined the Lanyard server (discord.gg/lanyard) so their presence is public.
 const presCache = new Map();
+// ---- Optional Discord bot: reads live presence of members of YOUR Discord server (set DISCORD_BOT_TOKEN + DISCORD_GUILD_ID) ----
+const { DISCORD_BOT_TOKEN: BOT_TOKEN, DISCORD_GUILD_ID: GUILD_ID, DISCORD_INVITE_URL: INVITE_URL } = process.env;
+const botPres = new Map(); // discord id -> { status, spotify, game }
+let botGuild = null;
+function botStore(p) {
+  try {
+    const id = p && (p.userId || (p.user && p.user.id));
+    if (!id) return;
+    const acts = Array.from((p.activities && (p.activities.values ? p.activities.values() : p.activities)) || []);
+    const sp = acts.find((a) => a.type === 2 && a.name === 'Spotify');
+    const pl = acts.find((a) => a.type === 0);
+    const img = sp && sp.assets && sp.assets.largeImage && String(sp.assets.largeImage).startsWith('spotify:') ? 'https://i.scdn.co/image/' + String(sp.assets.largeImage).slice(8) : null;
+    botPres.set(String(id), {
+      status: ['online', 'idle', 'dnd'].includes(p.status) ? p.status : 'offline',
+      spotify: sp ? { song: String(sp.details || '').slice(0, 100), artist: String(sp.state || '').replace(/;\s*/g, ', ').slice(0, 100), art: img } : null,
+      game: pl ? { name: String(pl.name || '').slice(0, 80), details: String(pl.details || pl.state || '').slice(0, 80) } : null,
+    });
+  } catch (e) { /* ignore a malformed presence */ }
+}
+if (BOT_TOKEN && GUILD_ID) {
+  try {
+    const { Client, GatewayIntentBits } = require('discord.js');
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildPresences] });
+    client.on('presenceUpdate', (_o, n) => botStore(n));
+    client.on('error', (e) => console.error('discord bot error', e && e.message));
+    let botInit = false;
+    const onReady = async () => {
+      if (botInit) return; botInit = true;
+      try {
+        botGuild = await client.guilds.fetch(GUILD_ID);
+        await botGuild.members.fetch({ withPresences: true });
+        botGuild.presences.cache.forEach(botStore);
+        console.log('Discord presence bot ready:', botGuild.name, '(' + botGuild.members.cache.size + ' members)');
+      } catch (e) { console.error('discord bot guild fetch failed:', e && e.message); }
+    };
+    client.once('clientReady', onReady);
+    client.once('ready', onReady);
+    client.login(BOT_TOKEN).catch((e) => console.error('discord bot login failed:', e && e.message));
+  } catch (e) { console.error('discord bot disabled:', e && e.message); }
+}
 app.get('/api/presence/:id', async (req, res) => {
   if (!sessionId(req)) return res.status(401).json({ ok: false });
   const id = String(req.params.id);
   if (!/^\d{17,20}$/.test(id) || !db[id] || db[id].local) return res.json({ ok: false, reason: 'not_discord' });
+  if (botGuild && botGuild.members.cache.has(id)) {
+    const bp = botPres.get(id);
+    return res.json(bp ? { ok: true, ...bp } : { ok: true, status: 'offline', spotify: null, game: null });
+  }
   const hit = presCache.get(id);
   if (hit && Date.now() - hit.t < 20000) return res.json(hit.v);
   let v = { ok: false, reason: 'unavailable' };
@@ -959,7 +1003,7 @@ app.get('/api/presence/:id', async (req, res) => {
         spotify: d.listening_to_spotify && d.spotify ? { song: String(d.spotify.song || '').slice(0, 100), artist: String(d.spotify.artist || '').slice(0, 100), art: /^https:\/\//.test(d.spotify.album_art_url || '') ? d.spotify.album_art_url : null } : null,
         game: play ? { name: String(play.name || '').slice(0, 80), details: String(play.details || play.state || '').slice(0, 80) } : null,
       };
-    } else if (j && j.error && j.error.code === 'user_not_monitored') v = { ok: false, reason: 'not_monitored' };
+    } else if (j && j.error && j.error.code === 'user_not_monitored') v = { ok: false, reason: 'not_monitored', invite: botGuild && INVITE_URL ? INVITE_URL : null };
   } catch (e) { /* network / timeout: keep unavailable */ }
   presCache.set(id, { t: Date.now(), v });
   if (presCache.size > 2000) presCache.delete(presCache.keys().next().value);

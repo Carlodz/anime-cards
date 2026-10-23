@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%27230 270 1450 780%27%3E%3Cg fill=%27%23e070ff%27 stroke=%27%23e070ff%27 stroke-width=%27260%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%27461%27 cy=%27517%27 r=%27205%27 stroke=%27none%27/%3E%3Cline x1=%27697%27 y1=%27900%27 x2=%271068%27 y2=%27422%27/%3E%3Cline x1=%271164%27 y1=%27900%27 x2=%271535%27 y2=%27422%27/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="/favicon.png">
 <meta charset="utf-8">
 <style>
 
@@ -1023,7 +1023,7 @@ em.ust{display:block;font-style:normal;font-weight:500;font-size:.78rem;opacity:
 @media (max-width:480px){.wsub{font-size:.52rem;letter-spacing:.22em}}
 
 /* ===== WAYANIME logo on collection cards (bottom-left) ===== */
-.tile:not(.no) .ph::before{content:"";position:absolute;left:8px;bottom:8px;width:40px;height:22px;z-index:2;pointer-events:none;opacity:.95;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='230 270 1450 780'%3E%3Ccircle cx='461' cy='517' r='205' fill='%23fff'/%3E%3Cg stroke='%23fff' stroke-width='260' stroke-linecap='round'%3E%3Cline x1='697' y1='900' x2='1068' y2='422'/%3E%3Cline x1='1164' y1='900' x2='1535' y2='422'/%3E%3C/g%3E%3C/svg%3E") no-repeat left center/contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.tile:not(.no) .ph::before{content:"";position:absolute;left:8px;bottom:8px;width:40px;height:22px;z-index:2;pointer-events:none;opacity:.95;background:url("/logo.png") no-repeat left center/contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
 @media (max-width:480px){.tile:not(.no) .ph::before{width:30px;height:16px;left:6px;bottom:6px}}
 
 /* ===== opening animation extras ===== */
@@ -1280,9 +1280,25 @@ html:root body .jump a#j9.clk::before{animation-name:icSpin}
 @keyframes icWiggle{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-5px) rotate(-14deg)}40%{transform:translateX(5px) rotate(14deg)}60%{transform:translateX(-3px) rotate(-8deg)}80%{transform:translateX(3px) rotate(6deg)}}
 @keyframes icSpin{to{transform:rotate(360deg) scale(1)}}
 
-</style><link rel="stylesheet" href="/profile-card.css"><link rel="stylesheet" href="/profile-card2.css?v=6"><link rel="stylesheet" href="/store-discord.css?v=1"><link rel="stylesheet" href="/notif-discord.css?v=2"><script id="daynight-early">try{if(localStorage.getItem("wa-mode")==="day")document.documentElement.setAttribute("data-mode","day")}catch(e){}</script></head>
+</style><link rel="stylesheet" href="/profile-card.css"><link rel="stylesheet" href="/profile-card2.css?v=6"><link rel="stylesheet" href="/store-discord.css?v=1"><link rel="stylesheet" href="/notif-discord.css?v=2"><script id="daynight-early">try{if(localStorage.getItem("wa-mode")==="day")document.documentElement.setAttribute("data-mode","day")}catch(e){}</script><style id="wlogo-img">
+.wlogo.wlg{position:relative;display:block;height:46px;width:auto;aspect-ratio:1041/576;overflow:visible;isolation:isolate;animation:lgGlow 3.2s ease-in-out infinite!important}
+.wlg>img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.wlg .lg-c{transform-origin:16% 38%;animation:lgPop .9s cubic-bezier(.2,.9,.3,1.35) .05s both,lgBob 4.2s ease-in-out 1s infinite}
+.wlg .lg-p1{animation:lgSlide .8s cubic-bezier(.2,.8,.2,1) .22s both,lgSway 4.6s ease-in-out 1.1s infinite}
+.wlg .lg-p2{animation:lgSlide .8s cubic-bezier(.2,.8,.2,1) .4s both,lgSway 4.6s ease-in-out 1.55s infinite}
+.wlg::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;-webkit-mask:url(/logo.png) center/100% 100% no-repeat;mask:url(/logo.png) center/100% 100% no-repeat;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.9) 50%,transparent 62%) no-repeat;background-size:250% 100%;background-position:150% 0;animation:lgShine 4.8s ease-in-out 1.5s infinite}
+.wlogo.wm{animation:none!important;filter:drop-shadow(0 1px 3px rgba(0,0,0,.7))}
+@keyframes lgPop{0%{opacity:0;transform:scale(.15) rotate(-60deg)}100%{opacity:1;transform:none}}
+@keyframes lgSlide{0%{opacity:0;transform:translate(-20%,24%)}100%{opacity:1;transform:none}}
+@keyframes lgBob{0%,100%{translate:0 0;scale:1}50%{translate:0 -6%;scale:1.07}}
+@keyframes lgSway{0%,100%{translate:0 0}50%{translate:5% -7%}}
+@keyframes lgShine{0%{background-position:150% 0}45%,100%{background-position:-60% 0}}
+@keyframes lgGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(168,120,255,.45))}50%{filter:drop-shadow(0 0 16px rgba(190,140,255,.95))}}
+@media (prefers-reduced-motion:reduce){.wlg,.wlg>img,.wlg::after{animation:none!important}.wlg::after{display:none}}
+</style>
+</head>
 <body>
-<div id="gate" aria-live="polite"><div class="gl"><i class="gdot" style="width:90px;height:90px;left:8%;top:62%"></i><i class="gdot" style="width:46px;height:46px;left:70%;top:18%;animation-delay:-3s"></i><i class="gdot" style="width:130px;height:130px;left:55%;top:78%;animation-delay:-5s;opacity:.6"></i><div class="gtop"><span class="gbrand"><span id="gmark"><svg class="wlogo on-dark" viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp p1" x1="697" y1="900" x2="1068" y2="422"/><line class="wp p2" x1="1164" y1="900" x2="1535" y2="422"/></svg></span><span id="gbrand"></span></span><span><span id="gq"></span> <a id="gsw"></a></span></div>
+<div id="gate" aria-live="polite"><div class="gl"><i class="gdot" style="width:90px;height:90px;left:8%;top:62%"></i><i class="gdot" style="width:46px;height:46px;left:70%;top:18%;animation-delay:-3s"></i><i class="gdot" style="width:130px;height:130px;left:55%;top:78%;animation-delay:-5s;opacity:.6"></i><div class="gtop"><span class="gbrand"><span id="gmark"><span class="wlogo wlg" aria-hidden="true"><img class="lg-c" src="/logo-c.png" alt=""><img class="lg-p1" src="/logo-p1.png" alt=""><img class="lg-p2" src="/logo-p2.png" alt=""></span></span><span id="gbrand"></span></span><span><span id="gq"></span> <a id="gsw"></a></span></div>
 <div class="gmain" id="gmain"><h2 id="gh"></h2>
 <a class="gbtn gbuy" id="gbuy" href="https://discord.gg/fkH9mEkuSX" target="_blank" rel="noopener noreferrer"></a>
 <input id="gu" autocomplete="username" maxlength="21" dir="ltr"><input id="gp" type="password" maxlength="72"><input id="gc" type="password" maxlength="72" autocomplete="new-password"><div class="ggen" id="ggen"><button type="button" class="gopt" data-g="f" aria-label="Girl" title="Girl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9.2" r="3.1"/><path d="M7.3 15c-1-2.1-1.4-4.2-1-6.3C6.7 5.2 9 3 12 3s5.3 2.2 5.7 5.7c.4 2.1 0 4.2-1 6.3"/><path d="M5 21.2c.4-3.4 3-5.2 7-5.2s6.6 1.8 7 5.2"/></svg><span id="ggf"></span></button><button type="button" class="gopt" data-g="m" aria-label="Boy" title="Boy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.8"/><path d="M5 21.2c.4-3.8 3.2-6 7-6s6.6 2.2 7 6"/></svg><span id="ggm"></span></button></div>
@@ -1291,7 +1307,7 @@ html:root body .jump a#j9.clk::before{animation-name:icSpin}
 <main>
 <section class="hero" id="top">
 <video class="hvid" src="/packs-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
-<div class="wl"><svg class="wlogo " viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp p1" x1="697" y1="900" x2="1068" y2="422"/><line class="wp p2" x1="1164" y1="900" x2="1535" y2="422"/></svg><span class="wbr"><span class="wtxt" id="wtxt" aria-label="WAYANIME">WAYANIME</span><span class="wsub">CARDS PACK</span></span></div>
+<div class="wl"><span class="wlogo wlg" aria-hidden="true"><img class="lg-c" src="/logo-c.png" alt=""><img class="lg-p1" src="/logo-p1.png" alt=""><img class="lg-p2" src="/logo-p2.png" alt=""></span><span class="wbr"><span class="wtxt" id="wtxt" aria-label="WAYANIME">WAYANIME</span><span class="wsub">CARDS PACK</span></span></div>
 <nav class="nav"><button class="langb" id="lang"></button><label class="navq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="nq" type="search" autocomplete="off" enterkeyhint="search" spellcheck="false"></label><button class="langb" id="auth"></button></nav>
 <nav class="nav jump"><a id="j1" href="#top"></a><a id="j2" href="#coll"></a><a id="j3" href="#trade"></a><a id="j4" href="#vault"></a><a id="j5" href="#cutepack"></a><a id="j6" href="#library" style="display:none"></a><a id="j7" href="#profile" style="display:none"></a><a id="j8" href="#friends" style="display:none"></a><a id="j10" href="#store" style="display:none"><span>Store</span></a><a id="j9" href="/admin.html" target="_blank" rel="noopener" style="display:none">LOG</a><a id="jout" href="/auth/logout" style="display:none"><span id="joutt">Log out</span></a></nav>
 <style>.dpres{display:flex;align-items:center;gap:10px;margin:16px 0 0;position:relative;z-index:1;padding:9px 12px;border-radius:14px;background:rgba(120,110,170,.12);font-size:.82rem;line-height:1.35;text-align:start}
@@ -1523,7 +1539,7 @@ var CORNER='<path d="M3 24V13Q3 3 13 3H24" fill="none" stroke="var(--f2)" stroke
 var FRAME='<svg class="frm" viewBox="0 0 256 391" preserveAspectRatio="none" aria-hidden="true"><rect x="3" y="3" width="250" height="385" rx="9" fill="none" stroke="var(--f2)" stroke-opacity=".7" stroke-width="1.2" vector-effect="non-scaling-stroke"/>'+CORNER+'<g transform="translate(256 0) scale(-1 1)">'+CORNER+'</g><g transform="translate(0 391) scale(1 -1)">'+CORNER+'</g><g transform="translate(256 391) scale(-1 -1)">'+CORNER+'</g><path d="M3 190l4 5-4 5-4-5z M253 190l4 5-4 5-4-5z" fill="var(--f2)"/></svg>';
 var LDIV='<svg class="ldiv" viewBox="0 0 240 14" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6.5H66Q78 6.5 84 10.5L90 12.5H150L156 10.5Q162 6.5 174 6.5H240" stroke-width="1.7" vector-effect="non-scaling-stroke"/><path d="M0 9.5H62Q76 9.5 82 12.8" stroke-width=".8" stroke-opacity=".5" vector-effect="non-scaling-stroke"/><path d="M240 9.5H178Q164 9.5 158 12.8" stroke-width=".8" stroke-opacity=".5" vector-effect="non-scaling-stroke"/></svg>';
 function LORE(t1,t2,img,logo,st,info,em,r){
-  return'<div class="fr"><div class="ph"><img alt="" src="'+img+'">'+(logo?'<img class="lg" alt="" src="'+logo+'">':"")+'</div><div class="shade"></div><div class="lstar">'+st+'</div><div class="ltxt"><b>'+t1+'</b><small>'+t2+'</small></div>'+LDIV+'<div class="lfoot"><span>'+info+'</span><i class="lem">'+em+'</i><span class="lwm"><svg class="wlogo wm" viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp" x1="697" y1="900" x2="1068" y2="422"/><line class="wp" x1="1164" y1="900" x2="1535" y2="422"/></svg></span></div></div><div class="holo"></div>'}
+  return'<div class="fr"><div class="ph"><img alt="" src="'+img+'">'+(logo?'<img class="lg" alt="" src="'+logo+'">':"")+'</div><div class="shade"></div><div class="lstar">'+st+'</div><div class="ltxt"><b>'+t1+'</b><small>'+t2+'</small></div>'+LDIV+'<div class="lfoot"><span>'+info+'</span><i class="lem">'+em+'</i><span class="lwm"><img class="wlogo wm" src="/logo.png" alt=""></span></div></div><div class="holo"></div>'}
 function reveal(an,ci,ri,boost){
   var r=RS[ri];lastCard={id:an.id,i:ci};
   var f=$("front");f.className="face front lore "+r.k;f.style.setProperty("--rc",r.c);$("ov").setAttribute("data-rar",r.k);$("ov").style.setProperty("--rc",r.c);
@@ -1739,7 +1755,7 @@ function cvOwn(k){var st=S.a[cv.a]||{};return(((st.got||{})[cv.i])||{})[k]||0}
 function cvRender(){if(!cv)return;var I=cvInfo(),best=-1,rows="",col="#777";
   I.rs.forEach(function(r,j){var n=cvOwn(r.k);if(n){best=j;col=r.c;rows+='<div class="cvr"><span style="color:'+r.c+'">'+"\u2605".repeat(I.sn||j+1)+" "+esc(r.n)+" \u00d7"+n+'</span>'+(cv.a==="aura"?'':'<button data-g="'+r.k+'">'+g("gift")+'</button>')+'</div>'}});
   $("cvf").style.setProperty("--rc",col);
-  $("cvf").innerHTML='<img alt="" src="'+I.img+'"><span class="cvs" style="color:'+col+'">'+"\u2605".repeat(best<0?0:(I.sn||best+1))+'</span><div class="cvsh"></div><div class="cvft"><svg class="wlogo wm" viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp" x1="697" y1="900" x2="1068" y2="422"/><line class="wp" x1="1164" y1="900" x2="1535" y2="422"/></svg>'+(I.logo?'<img class="cvl" alt="" src="'+I.logo+'">':"")+'</div>';
+  $("cvf").innerHTML='<img alt="" src="'+I.img+'"><span class="cvs" style="color:'+col+'">'+"\u2605".repeat(best<0?0:(I.sn||best+1))+'</span><div class="cvsh"></div><div class="cvft"><img class="wlogo wm" src="/logo.png" alt="">'+(I.logo?'<img class="cvl" alt="" src="'+I.logo+'">':"")+'</div>';
   $("cvb").innerHTML='<button class="cvx" data-flip="1" aria-label="'+CV("fb")+'">\u21ba</button><h3>'+CV(cv.a==="aura"?"lt":"t")+'</h3><p class="cvn">'+esc(I.n)+'</p><p class="cvs2">'+CV(cv.a==="aura"?"ls":"s")+'</p>'+(rows||'<p class="cvn">'+CV("none")+'</p>')+(cvCode?'<div class="cvcode"><small>'+g("code")+'</small><code>'+cvCode+'</code><button data-copy="'+cvCode+'">'+g("copy")+'</button></div>':"")+(cvMsg?'<p class="cvm">'+esc(cvMsg)+'</p>':"")+(cv.a!=="leg"&&best>=0?'<button class="cvbg" data-bg="1">'+CV("bg")+'</button>':"");
   $("cvhint").textContent=CV("flip");$("cvclose").textContent=CV("x")}
 function cvOpen(a,i){cv={a:a,i:i};cvCode="";cvMsg="";$("cvfl").classList.remove("flipped");cvRender();$("cv").classList.add("show","done")}

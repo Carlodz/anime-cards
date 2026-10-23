@@ -2258,8 +2258,14 @@ html[data-theme="zoro"] .hvid,html[data-theme="zoro"] .libvid{display:none}
 html[data-theme="zoro"]:root body .hero{overflow:visible;background:url(/themes/zoro-bg.jpg) 50% 30%/cover no-repeat,#04120b;border:1px solid rgba(255,255,255,.12)}
 html[data-theme="zoro"]:root body .hero::after{background:linear-gradient(90deg,rgba(4,18,11,.78) 0%,rgba(4,18,11,.35) 50%,rgba(4,18,11,.08) 100%),linear-gradient(0deg,rgba(4,18,11,.5),transparent 45%)}
 html[data-theme="zoro"]:root body .hero .stage{position:relative}
-html[data-theme="zoro"]:root body .hero .stage::after{content:"";position:absolute;left:calc(100% + 6px);bottom:-6px;width:130px;height:225px;background:url(/themes/zoro-sword.webp) center bottom/contain no-repeat;pointer-events:none;z-index:2;filter:drop-shadow(0 6px 16px rgba(60,220,130,.4))}
-@media (max-width:1100px){html[data-theme="zoro"]:root body .hero .stage::after{left:auto;right:-26px;width:90px;height:160px}}
+/* sabre de Zoro : a gauche, sous le timer et juste au-dessus du texte (zone dessinee par l'utilisateur) */
+html[data-theme="zoro"]:root body .hfoot::before{content:"";position:absolute;left:0;bottom:calc(100% + 10px);height:clamp(95px,10.5vw,140px);aspect-ratio:519/900;background:url(/themes/zoro-sword.webp) center bottom/contain no-repeat;pointer-events:none;z-index:2;filter:drop-shadow(0 6px 16px rgba(60,220,130,.4))}
+html[data-theme="zoro"]:root body .hero .stage::after{content:none}
+@media (max-width:1100px){
+html[data-theme="zoro"]:root body .hfoot::before{content:none}
+html[data-theme="zoro"]:root body .hero::before{content:"";position:absolute;z-index:0;right:14px;top:14px;height:clamp(90px,24vw,150px);aspect-ratio:519/900;background:url(/themes/zoro-sword.webp) center/contain no-repeat;pointer-events:none;filter:drop-shadow(0 6px 16px rgba(60,220,130,.4))}
+}
+@media (max-width:480px){html[data-theme="zoro"]:root body .hero::before{height:78px;top:8px;right:8px}}
 html[data-theme="zoro"] #profile.pop .pban img{object-position:50% 50%}
 html[data-theme="zoro"]:root body #friends{bottom:0!important;height:auto!important;background-color:#06180f!important;background-image:linear-gradient(180deg,rgba(6,24,15,.8) 0%,rgba(6,24,15,.35) 55%,rgba(6,24,15,.1) 100%),url(/themes/zoro-stand.webp)!important;background-repeat:no-repeat!important;background-position:center,center bottom!important;background-size:auto,auto 88%!important}
 /* thème Zero Two / Violet : la vidéo du thème doit rester visible aussi dans Anime Packs (hero) et Bibliothèque */

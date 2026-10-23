@@ -1883,7 +1883,7 @@ function renderProfile(){
   var chips=RS.map(function(r,k){return cnt[k]?'<span style="border-color:'+r.c+'">'+rn(r)+'<i>'+cnt[k]+'</i></span>':""}).join("")+(cnt[4]?'<span style="border-color:#ffb800">'+PL("leg")+'<i>'+cnt[4]+'</i></span>':"");
   var t=items.map(function(x){
     return'<div class="tile" data-pa="'+x.a+'" data-pi="'+x.i+'" style="border-color:'+x.col+';--tc:'+x.col+'"><div class="ph"><span class="bd" style="color:'+x.col+'">'+"\u2605".repeat(x.st)+'</span><img alt="'+esc(x.nm)+'" src="'+x.img+'"></div><b>'+esc(x.nm)+'</b><span class="sub">'+esc(x.an)+' \u00b7 '+esc(x.rn)+'</span>'+(x.n>1?'<div class="pips"><u class="on" style="background:'+x.col+'">'+x.n+'</u></div>':"")+'</div>'}).join("");
-  var av=avSrc(USER),bsrc=(document.documentElement.getAttribute("data-theme")==="naruto"?"/themes/naruto-profile.jpg":bnImg(USER.banner)),ban='<div class="pban'+(USER.aura?' aurf':'')+'">'+(bsrc?'<img alt="" src="'+esc(bsrc)+'">':"")+'<button class="fb g" data-pf="bpick">'+PL("bn")+'</button></div>';
+  var av=avSrc(USER),bsrc=(document.documentElement.getAttribute("data-theme")==="naruto"?"/themes/naruto-profile.jpg":document.documentElement.getAttribute("data-theme")==="zoro"?"/themes/zoro-profile.jpg":bnImg(USER.banner)),ban='<div class="pban'+(USER.aura?' aurf':'')+'">'+(bsrc?'<img alt="" src="'+esc(bsrc)+'">':"")+'<button class="fb g" data-pf="bpick">'+PL("bn")+'</button></div>';
   el.style.display="";if(j6){j6.style.display="";j6.textContent=PL("n6")}var j7=$("j7"),j8=$("j8");if(j7){j7.style.display="";navProfile(j7)}if(j8)j8.style.display="none";
   el.innerHTML='<h2>'+(LANG==="en"?"Profile":"\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a")+'</h2>'+ban+'<div class="ph0"><img alt="" src="'+esc(av)+'" onerror="this.onerror=null;this.src=DEFAV"><div class="pid"><b>'+esc(USER.username)+stz0(USER)+cflagBtn()+'</b><span class="hnd">@'+esc(String(USER.username).replace(/^@+/,""))+'</span><small class="rl'+(USER.role?' r-'+USER.role:'')+'">'+(USER.role==="owner"?"Owner":USER.role==="mod"?"Admin":"")+'</small></div></div><div class="pbio">'+stEditor()+(CTYE?ctySel():"")+'</div>'+pickerHtml()+'<div class="stats"><span><i>'+PL("tot")+'</i><strong>'+tot+'</strong></span><span><i>'+PL("uni")+'</i><strong>'+uni+'</strong></span><span><i>'+PL("pct")+'</i><strong>'+Math.round(uni*100/all)+'%</strong></span></div><div class="stats chp">'+chips+'<span>'+(LANG==="en"?"trades":"\u062a\u0628\u062f\u064a\u0644")+'<i>'+(USER.trades||0)+'/100</i></span></div>'+PACT();var lb=$("library");if(lb){lb.style.display="";lb.innerHTML='<h2>'+PL("h")+' <span>'+uni+' / '+all+'</span></h2>'+(items.length?lhBuild(items):'<p class="empty">'+PL("empty")+'</p>')}}
 var _pc=function(e){var pb=e.target.closest("[data-pf]");if(pb){pfAct(pb);return}var t=e.target.closest(".tile[data-pa]");if(t)cvOpen(t.getAttribute("data-pa"),+t.getAttribute("data-pi"))};$("profile").addEventListener("click",_pc);$("library").addEventListener("click",_pc);$("library").addEventListener("click",function(e){var o=e.target.closest("[data-lopen]");if(o){var q=o.getAttribute("data-lopen").split("|");cvOpen(q[0],+q[1]);return}
@@ -2250,6 +2250,18 @@ html[data-theme="naruto"]:root body .hero .stage::after{content:"";position:abso
 html[data-theme="naruto"] #profile.pop .pban img{object-position:80% 50%}
 html[data-theme="naruto"]:root body #friends{bottom:0!important;height:auto!important;background-color:#1a0a04!important;background-image:linear-gradient(180deg,rgba(26,10,4,.8) 0%,rgba(26,10,4,.35) 55%,rgba(26,10,4,.1) 100%),url(/themes/naruto-stand.webp)!important;background-repeat:no-repeat!important;background-position:center,center bottom!important;background-size:auto,auto 88%!important}
 html[data-theme="violet"]:root body #friends{bottom:0!important;height:auto!important;background-color:#0e061e!important;background-image:linear-gradient(180deg,rgba(14,5,30,.8) 0%,rgba(14,5,30,.35) 55%,rgba(14,5,30,.1) 100%),url(/themes/violet-stand.webp)!important;background-repeat:no-repeat!important;background-position:center,center bottom!important;background-size:auto,auto 78%!important}
+/* theme Zoro : Zoro assis en fond du bandeau Anime Pack + du Store, sabre a droite de la carte Anime Pack, Zoro debout en fond du panneau Friends */
+html[data-theme="zoro"]:root{background:radial-gradient(70vw 50vh at 20% 0,rgba(40,170,90,.26),transparent 70%),radial-gradient(60vw 50vh at 90% 100%,rgba(15,90,70,.34),transparent 70%),#04120b fixed}
+html[data-theme="zoro"]{background:#000}
+html[data-theme="zoro"] body,html[data-theme="zoro"] body[class]{background:transparent!important}
+html[data-theme="zoro"] .hvid,html[data-theme="zoro"] .libvid{display:none}
+html[data-theme="zoro"]:root body .hero{overflow:visible;background:url(/themes/zoro-bg.jpg) 50% 30%/cover no-repeat,#04120b;border:1px solid rgba(255,255,255,.12)}
+html[data-theme="zoro"]:root body .hero::after{background:linear-gradient(90deg,rgba(4,18,11,.78) 0%,rgba(4,18,11,.35) 50%,rgba(4,18,11,.08) 100%),linear-gradient(0deg,rgba(4,18,11,.5),transparent 45%)}
+html[data-theme="zoro"]:root body .hero .stage{position:relative}
+html[data-theme="zoro"]:root body .hero .stage::after{content:"";position:absolute;left:calc(100% + 6px);bottom:-6px;width:130px;height:225px;background:url(/themes/zoro-sword.webp) center bottom/contain no-repeat;pointer-events:none;z-index:2;filter:drop-shadow(0 6px 16px rgba(60,220,130,.4))}
+@media (max-width:1100px){html[data-theme="zoro"]:root body .hero .stage::after{left:auto;right:-26px;width:90px;height:160px}}
+html[data-theme="zoro"] #profile.pop .pban img{object-position:50% 50%}
+html[data-theme="zoro"]:root body #friends{bottom:0!important;height:auto!important;background-color:#06180f!important;background-image:linear-gradient(180deg,rgba(6,24,15,.8) 0%,rgba(6,24,15,.35) 55%,rgba(6,24,15,.1) 100%),url(/themes/zoro-stand.webp)!important;background-repeat:no-repeat!important;background-position:center,center bottom!important;background-size:auto,auto 88%!important}
 /* thème Zero Two / Violet : la vidéo du thème doit rester visible aussi dans Anime Packs (hero) et Bibliothèque */
 </style>
 <script id="theme-js">
@@ -2261,7 +2273,8 @@ html[data-theme="violet"]:root body #friends{bottom:0!important;height:auto!impo
     pink:[[228,322],[268,326],[285,332],[316,340],[335,346]],
     zero:[[228,336],[268,342],[285,348],[316,352],[335,356]],
     violet:[[228,252],[268,262],[285,270],[316,280],[335,288]],
-    naruto:[[228,24],[268,28],[285,32],[316,36],[335,40]]
+    naruto:[[228,24],[268,28],[285,32],[316,36],[335,40]],
+    zoro:[[228,132],[268,138],[285,144],[316,150],[335,156]]
   };
   var VD={};
   function vid(k){var v=document.getElementById("thvid"),o=document.getElementById("thov");
@@ -2350,9 +2363,9 @@ html[data-theme="violet"]:root body #friends{bottom:0!important;height:auto!impo
   function nav(){var a=$("j10");if(a)a.innerHTML="<span>"+t("n")+"</span>"+(ST?"<em>"+COIN+ST.pts+"</em>":"");
     var c=$("ptschip");if(!c){var bl=document.querySelector(".nav .navq")||$("nbell");if(!bl||!bl.parentNode)return;c=document.createElement("a");c.id="ptschip";c.href="#store";bl.parentNode.insertBefore(c,bl)}
     c.innerHTML=COIN+"<b>"+(ST?ST.pts:0)+"</b>"}
-  var THC={"default":["#1a0b34","#7c3aed","#e070ff"],blue:["#0a1630","#1f55e0","#4fb0ff"],red:["#2a0508","#c8142b","#ff6a52"],pink:["#2a0518","#e0348f","#ff9ccb"],zero:["#2a0510","#e0284f","#ffa0c4"],violet:["#0e0626","#6a35e8","#b48cff"],naruto:["#2a1204","#e8700f","#ffc15a"]};
-  var THP={zero:"/themes/zero.jpg",violet:"/themes/violet.jpg",naruto:"/themes/naruto.jpg"};
-  var THN={"default":{ar:"الأصلي (بنفسجي)",en:"Original (Purple)"},blue:{ar:"أزرق",en:"Blue"},red:{ar:"أحمر",en:"Red"},pink:{ar:"روز",en:"Pink"},zero:{ar:"زيرو تو (Zero Two)",en:"Zero Two"},violet:{ar:"فيوليت (Violet)",en:"Violet"},naruto:{ar:"ناروتو (Naruto)",en:"Naruto"}};
+  var THC={"default":["#1a0b34","#7c3aed","#e070ff"],blue:["#0a1630","#1f55e0","#4fb0ff"],red:["#2a0508","#c8142b","#ff6a52"],pink:["#2a0518","#e0348f","#ff9ccb"],zero:["#2a0510","#e0284f","#ffa0c4"],violet:["#0e0626","#6a35e8","#b48cff"],naruto:["#2a1204","#e8700f","#ffc15a"],zoro:["#04180e","#1f8f4a","#7be3a0"]};
+  var THP={zero:"/themes/zero.jpg",violet:"/themes/violet.jpg",naruto:"/themes/naruto.jpg",zoro:"/themes/zoro.jpg"};
+  var THN={"default":{ar:"الأصلي (بنفسجي)",en:"Original (Purple)"},blue:{ar:"أزرق",en:"Blue"},red:{ar:"أحمر",en:"Red"},pink:{ar:"روز",en:"Pink"},zero:{ar:"زيرو تو (Zero Two)",en:"Zero Two"},violet:{ar:"فيوليت (Violet)",en:"Violet"},naruto:{ar:"ناروتو (Naruto)",en:"Naruto"},zoro:{ar:"زورو (Zoro)",en:"Zoro"}};
   var sel=null;
   function isEn(){return lg()==="en"}
   function isAn(x){return x.type==="theme"?!!THP[x.key]:/^(anim|bnr)-/.test(x.id)}

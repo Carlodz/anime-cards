@@ -3,12 +3,10 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const { DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SEC, BASE_URL, SESSION_SECRET: SS0, PORT = 3000 } = process.env;
+const { BASE_URL, SESSION_SECRET: SS0, PORT = 3000 } = process.env;
 // Everything is optional: with no settings at all, players log in with a username + password.
-const DISCORD_ON = !!(CID && SEC && BASE_URL);
 const SESSION_SECRET = SS0 || crypto.randomBytes(32).toString('hex');
 if (!SS0) console.warn('SESSION_SECRET is not set: using a random one (everyone is logged out after each restart). Set it to avoid that.');
-const REDIRECT = BASE_URL ? BASE_URL.replace(/\/$/, '') + '/auth/callback' : '';
 const SECURE = !!BASE_URL && BASE_URL.startsWith('https');
 
 // ---- tiny JSON "database" (one entry per Discord user id) ----
@@ -135,45 +133,7 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '700kb' }));
 
-// ---- Discord OAuth2 ----
-app.get('/auth/login', (req, res) => {
-  if (!DISCORD_ON) return res.status(404).send('Discord login is not configured.');
-  const state = crypto.randomBytes(16).toString('hex');
-  setCookie(res, 'oauth_state', state, 600);
-  const q = new URLSearchParams({ client_id: CID, redirect_uri: REDIRECT, response_type: 'code', scope: 'identify', state, prompt: 'none' });
-  res.redirect('https://discord.com/oauth2/authorize?' + q);
-});
-
-app.get('/auth/callback', async (req, res) => {
-  if (!DISCORD_ON) return res.status(404).send('Discord login is not configured.');
-  try {
-    const { code, state } = req.query;
-    const saved = cookies(req).oauth_state;
-    if (!code || !state || !saved || !safeEq(String(state), saved)) return res.status(400).send('Invalid login state. Go back and try again.');
-    const tr = await fetch('https://discord.com/api/oauth2/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ client_id: CID, client_secret: SEC, grant_type: 'authorization_code', code: String(code), redirect_uri: REDIRECT }),
-    });
-    if (!tr.ok) { const eb = await tr.text().catch(() => ''); console.error('Discord token error', tr.status, eb, '| redirect_uri used:', REDIRECT); return res.status(400).send('Discord refused the login.'); }
-    const tok = await tr.json();
-    const ur = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + tok.access_token } });
-    if (!ur.ok) return res.status(400).send('Could not read your Discord profile.');
-    const u = await ur.json();
-    const user = { id: u.id, username: u.global_name || u.username, avatar: u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=128` : null };
-    db[u.id] = Object.assign(db[u.id] || {}, { user, state: (db[u.id] && db[u.id].state) || null });
-    persist();
-    autoCountry(req, u.id);
-    const exp = Date.now() + 30 * 24 * 3600 * 1000;
-    setCookie(res, 'sid', `${u.id}.${exp}.${sign(u.id + '.' + exp)}`, 30 * 24 * 3600);
-    setCookie(res, 'oauth_state', '', 0);
-    res.redirect('/');
-  } catch (e) {
-    console.error(e);
-    res.status(500).send('Login failed.');
-  }
-});
-
+// Discord login was removed: players sign in with username + password only.
 app.get('/auth/logout', (req, res) => {
   setCookie(res, 'sid', '', 0);
   res.redirect('/');
@@ -935,7 +895,7 @@ app.post('/api/admin/shop/:id', (req, res) => { // change price or hide / show a
   logEvent(me, 'admin', 'Store item updated: ' + it.id); persist(); res.json({ ok: true });
 });
 
-app.get('/api/config', (req, res) => res.json({ discord: DISCORD_ON }));
+app.get('/api/config', (req, res) => res.json({ discord: false }));
 
 // ---- Discord presence (what a Discord user is listening to / playing), via the free Lanyard API ----
 // The player must have logged in with Discord AND joined the Lanyard server (discord.gg/lanyard) so their presence is public.

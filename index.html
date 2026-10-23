@@ -692,7 +692,6 @@ html:root .cutepk .tile:not(.no) .ph{box-shadow:0 0 0 2px var(--tc),0 12px 34px 
 .abox input:focus{border-color:#8b8bff;box-shadow:0 0 0 3px rgba(139,139,255,.25)}
 .abox .row2{display:flex;gap:8px}.abox .row2 .fb{flex:1;padding:11px 14px;font-size:.88rem}
 .abox .aerr{color:#ff8fa3;font-weight:600;font-size:.82rem;min-height:1.1em;text-align:center}
-.abox .dcb{background:#5865F2;color:#fff}
 .abox .sep{text-align:center;color:var(--muted);font-size:.78rem}
 /* ===== animated logo (circle + two slanted pills) ===== */
 .wlogo{display:block;height:46px;width:auto;overflow:visible}
@@ -729,8 +728,9 @@ body.gated{overflow:hidden}
 #gate input:focus{box-shadow:0 0 0 3px rgba(45,111,255,.45)}
 #gate .gbtn{width:100%;border:0;border-radius:6px;padding:13px;font:inherit;font-weight:700;font-size:.95rem;color:#fff;background:#2d6fff;cursor:pointer}
 #gate .gbtn:hover{filter:brightness(1.07)}
+#gate .gbuy{display:block;box-sizing:border-box;text-align:center;text-decoration:none;background:#5865F2}
+.abox .dcb{background:#5865F2;color:#fff;text-decoration:none;justify-content:center;text-align:center}
 #gate .gbtn:disabled{opacity:.6;cursor:wait}
-#gate .gdc{background:#5865F2}
 #gate .gor{display:flex;align-items:center;gap:12px;color:#fff;font-size:.8rem}
 #gate .gor::before,#gate .gor::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.85)}
 img.cflag{height:.85em;width:auto;max-height:16px;vertical-align:-1px;border-radius:2px;margin-inline-start:5px}
@@ -1284,9 +1284,9 @@ html:root body .jump a#j9.clk::before{animation-name:icSpin}
 <body>
 <div id="gate" aria-live="polite"><div class="gl"><i class="gdot" style="width:90px;height:90px;left:8%;top:62%"></i><i class="gdot" style="width:46px;height:46px;left:70%;top:18%;animation-delay:-3s"></i><i class="gdot" style="width:130px;height:130px;left:55%;top:78%;animation-delay:-5s;opacity:.6"></i><div class="gtop"><span class="gbrand"><span id="gmark"><svg class="wlogo on-dark" viewBox="230 270 1450 780" aria-hidden="true" focusable="false"><circle class="wc" cx="461" cy="517" r="205"/><line class="wp p1" x1="697" y1="900" x2="1068" y2="422"/><line class="wp p2" x1="1164" y1="900" x2="1535" y2="422"/></svg></span><span id="gbrand"></span></span><span><span id="gq"></span> <a id="gsw"></a></span></div>
 <div class="gmain" id="gmain"><h2 id="gh"></h2>
-<button class="gbtn gdc" id="gdc" type="button" style="display:none"></button><div class="gor" id="gor" style="display:none"></div>
+<a class="gbtn gbuy" id="gbuy" href="https://discord.gg/fkH9mEkuSX" target="_blank" rel="noopener noreferrer"></a>
 <input id="gu" autocomplete="username" maxlength="21" dir="ltr"><input id="gp" type="password" maxlength="72"><input id="gc" type="password" maxlength="72" autocomplete="new-password"><div class="ggen" id="ggen"><button type="button" class="gopt" data-g="f" aria-label="Girl" title="Girl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9.2" r="3.1"/><path d="M7.3 15c-1-2.1-1.4-4.2-1-6.3C6.7 5.2 9 3 12 3s5.3 2.2 5.7 5.7c.4 2.1 0 4.2-1 6.3"/><path d="M5 21.2c.4-3.4 3-5.2 7-5.2s6.6 1.8 7 5.2"/></svg><span id="ggf"></span></button><button type="button" class="gopt" data-g="m" aria-label="Boy" title="Boy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.8"/><path d="M5 21.2c.4-3.8 3.2-6 7-6s6.6 2.2 7 6"/></svg><span id="ggm"></span></button></div>
-<div class="gerr" id="gerr"></div><button class="gbtn" id="gbtn" type="button"></button><div class="gfg" id="gfg"><p id="gfgt"></p><div class="gfgl"><a id="gfgd" href="https://discord.gg/4JWVgWwpxr" target="_blank" rel="noopener noreferrer">Discord</a><a id="gfgw" href="https://wa.me/213669967596" target="_blank" rel="noopener noreferrer">WhatsApp</a></div></div></div></div><div class="gr"><video class="gvid" id="gvid" src="/login-video.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video><p id="gtag"></p></div></div>
+<div class="gerr" id="gerr"></div><button class="gbtn" id="gbtn" type="button"></button><div class="gfg" id="gfg"><p id="gfgt"></p><div class="gfgl"><a id="gfgd" href="https://discord.gg/fkH9mEkuSX" target="_blank" rel="noopener noreferrer">Discord</a><a id="gfgw" href="https://wa.me/213669967596" target="_blank" rel="noopener noreferrer">WhatsApp</a></div></div></div></div><div class="gr"><video class="gvid" id="gvid" src="/login-video.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video><p id="gtag"></p></div></div>
 <div id="bgl" aria-hidden="true"></div>
 <main>
 <section class="hero" id="top">
@@ -1587,7 +1587,7 @@ $("trade").onclick=function(e){var b=e.target.closest("button");if(!b)return;
   else if(b.dataset.redeem)doRedeem()};
 $("trade").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id==="rcode")doRedeem()});
 var _render=render;render=function(){_render();renderAuth();renderTrade()};
-$("auth").onclick=function(){if(USER){try{localStorage.removeItem(KEY)}catch(e){}location.href="/auth/logout"}else location.href="/auth/login"};
+$("auth").onclick=function(){if(USER){try{localStorage.removeItem(KEY)}catch(e){}location.href="/auth/logout"}};
 api("GET","/api/me").then(function(r){return r.ok?r.json():null}).then(function(d){if(!d||!d.user){S.a={};S.off=0;render();return}USER=d.user;var lg9=document.getElementById("j9");if(lg9)lg9.style.display=USER.admin?"":"none";
   return api("GET","/api/state").then(function(r){return r.json()}).then(function(d2){var c=S.cur,b=S.bg;S=(d2&&d2.state&&d2.state.a)?d2.state:fresh();S.cur=c||0;S.bg=S.bg||b||null;S.off=0;_save();render();loadGifts()})}).catch(function(){});
 /* ---- Legendary Vault: one mystery card per week, can be NOTHING ---- */
@@ -2022,16 +2022,15 @@ function viewPanel(){var v=FR.view;if(!v)return"";var u=v.u||{username:"?"},cs=v
 renderProfile();renderFriends();navAvatar();
 
 /* ---- username + password login ---- */
-var AT={ar:{t:"دخول / حساب جديد",u:"اسم المستخدم",p:"كلمة السر",i:"دخول",r:"حساب جديد",or:"أو",dc:"دخول بديسكورد",x:"سد",bad:"اسم المستخدم يبدا بـ @ ومن 3 لـ 20 حرف (حروف، أرقام، _ . -)",pw:"كلمة السر 6 حروف على الأقل",inv:"اسم المستخدم أو كلمة السر غالطين",tk:"هاد الاسم مستعمل ولا مشابه لاسم آخر، اختار واحد آخر",cf:"تأكيد كلمة السر",mm:"كلمتا السر ماشي متطابقتين",nw:"ما عندكش حساب؟ سجّل",hv:"عندك حساب؟ دخول",many:"بزاف ديال المحاولات، عاود من بعد شوية",err:"وقع مشكل، عاود"},
-en:{t:"Log in / Sign up",u:"Username",p:"Password",i:"Log in",r:"Sign up",or:"or",dc:"Log in with Discord",x:"Close",bad:"Username starts with @ and has 3-20 characters (letters, numbers, _ . -)",pw:"Password must be at least 6 characters",inv:"Wrong username or password",tk:"That name is taken or too similar to another one",cf:"Confirm password",mm:"Passwords do not match",nw:"No account? Sign up",hv:"Have an account? Log in",many:"Too many attempts, try again later",err:"Something went wrong, try again"}};
+var AT={ar:{t:"دخول / حساب جديد",u:"اسم المستخدم",p:"كلمة السر",i:"دخول",r:"حساب جديد",bu:"شراء نقاط / تواصل لاستعادة كلمة السر",x:"سد",bad:"اسم المستخدم يبدا بـ @ ومن 3 لـ 20 حرف (حروف، أرقام، _ . -)",pw:"كلمة السر 6 حروف على الأقل",inv:"اسم المستخدم أو كلمة السر غالطين",tk:"هاد الاسم مستعمل ولا مشابه لاسم آخر، اختار واحد آخر",cf:"تأكيد كلمة السر",mm:"كلمتا السر ماشي متطابقتين",nw:"ما عندكش حساب؟ سجّل",hv:"عندك حساب؟ دخول",many:"بزاف ديال المحاولات، عاود من بعد شوية",err:"وقع مشكل، عاود"},
+en:{t:"Log in / Sign up",u:"Username",p:"Password",i:"Log in",r:"Sign up",bu:"Buy points / Contact for lost password",x:"Close",bad:"Username starts with @ and has 3-20 characters (letters, numbers, _ . -)",pw:"Password must be at least 6 characters",inv:"Wrong username or password",tk:"That name is taken or too similar to another one",cf:"Confirm password",mm:"Passwords do not match",nw:"No account? Sign up",hv:"Have an account? Log in",many:"Too many attempts, try again later",err:"Something went wrong, try again"}};
 function AL(k){return AT[LANG==="en"?"en":"ar"][k]}
-var AUTHCFG=null;
 function showAuth(){
   if($("amod"))return;
   var mode="in",m=document.createElement("div");m.className="amod";m.id="amod";
   function fixAt(el){var v=el.value.replace(/@/g,"").replace(/\s/g,"");el.value="@"+v}
   function draw(){var up=mode==="up",u0=$("au")?$("au").value:"@",p0=$("ap")?$("ap").value:"",c0=$("ac")?$("ac").value:"";
-    m.innerHTML='<div class="abox" role="dialog" aria-modal="true"><h3>'+AL(up?"r":"i")+'</h3><input id="au" autocomplete="username" maxlength="21" dir="ltr" placeholder="@'+esc(AL("u"))+'"><input id="ap" type="password" autocomplete="'+(up?"new-password":"current-password")+'" maxlength="72" placeholder="'+esc(AL("p"))+'">'+(up?'<input id="ac" type="password" autocomplete="new-password" maxlength="72" placeholder="'+esc(AL("cf"))+'">':'')+'<div class="aerr" id="aerr"></div><button class="fb" id="'+(up?"aup":"ain")+'" style="padding:11px">'+AL(up?"r":"i")+'</button><button class="fb g" id="asw" style="background:transparent">'+AL(up?"hv":"nw")+'</button>'+(AUTHCFG&&AUTHCFG.discord?'<div class="sep">'+AL("or")+'</div><button class="fb dcb" id="adc" style="padding:11px">'+AL("dc")+'</button>':'')+'<button class="fb g" id="ax" style="background:transparent">'+AL("x")+'</button></div>';
+    m.innerHTML='<div class="abox" role="dialog" aria-modal="true"><h3>'+AL(up?"r":"i")+'</h3><input id="au" autocomplete="username" maxlength="21" dir="ltr" placeholder="@'+esc(AL("u"))+'"><input id="ap" type="password" autocomplete="'+(up?"new-password":"current-password")+'" maxlength="72" placeholder="'+esc(AL("p"))+'">'+(up?'<input id="ac" type="password" autocomplete="new-password" maxlength="72" placeholder="'+esc(AL("cf"))+'">':'')+'<div class="aerr" id="aerr"></div><button class="fb" id="'+(up?"aup":"ain")+'" style="padding:11px">'+AL(up?"r":"i")+'</button><button class="fb g" id="asw" style="background:transparent">'+AL(up?"hv":"nw")+'</button>'+'<a class="fb dcb" id="abuy" href="https://discord.gg/fkH9mEkuSX" target="_blank" rel="noopener noreferrer" style="padding:11px">'+AL("bu")+'</a>'+'<button class="fb g" id="ax" style="background:transparent">'+AL("x")+'</button></div>';
     $("au").value=u0&&u0.charAt(0)==="@"?u0:"@"+(u0||"");$("ap").value=p0;if(up)$("ac").value=c0}
   draw();document.body.appendChild(m);
   function close(){m.remove()}
@@ -2047,10 +2046,8 @@ function showAuth(){
     if(e.target===m||id==="ax")close();
     else if(id==="ain")go("/auth/loginpw");
     else if(id==="aup")go("/auth/register");
-    else if(id==="asw"){mode=mode==="in"?"up":"in";draw();$("au").focus()}
-    else if(id==="adc")location.href="/auth/login"});
+    else if(id==="asw"){mode=mode==="in"?"up":"in";draw();$("au").focus()}});
   m.addEventListener("keydown",function(e){if(e.key==="Enter")go(mode==="up"?"/auth/register":"/auth/loginpw");else if(e.key==="Escape")close()});
-  if(!AUTHCFG)fetch("/api/config").then(function(r){return r.json()}).then(function(c){AUTHCFG=c;if(c.discord&&$("amod"))draw()}).catch(function(){AUTHCFG={discord:false}});
   setTimeout(function(){var f=$("au");if(f){f.focus();var l=f.value.length;try{f.setSelectionRange(l,l)}catch(e){}}},50)}
 $("auth").onclick=function(){if(USER){try{localStorage.removeItem(KEY)}catch(e){}location.href="/auth/logout"}else showAuth()};
 </script>
@@ -2059,19 +2056,19 @@ $("auth").onclick=function(){if(USER){try{localStorage.removeItem(KEY)}catch(e){
 (function(){
   var g=document.getElementById("gate");if(!g)return;
   document.body.classList.add("gated");
-  var T={ar:{brand:"WAYANIME",tag:"افتح الباكيتات واجمع أندر بطاقات الأنمي",up:"لنبدأ الآن",inn:"أهلاً بعودتك",uph:"إنشاء حساب",inh:"تسجيل الدخول",u:"@اسم المستخدم",p:"كلمة السر",c:"أعد كلمة السر",q1:"عندك حساب؟",q2:"ما عندكش حساب؟",s1:"تسجيل الدخول",s2:"إنشاء حساب",dc:"الدخول عبر ديسكورد",or:"أو",fg:"نسيت كلمة السر؟ تواصل معنا باش نرجعولك حسابك:",
+  var T={ar:{brand:"WAYANIME",tag:"افتح الباكيتات واجمع أندر بطاقات الأنمي",up:"لنبدأ الآن",inn:"أهلاً بعودتك",uph:"إنشاء حساب",inh:"تسجيل الدخول",u:"@اسم المستخدم",p:"كلمة السر",c:"أعد كلمة السر",q1:"عندك حساب؟",q2:"ما عندكش حساب؟",s1:"تسجيل الدخول",s2:"إنشاء حساب",bu:"شراء نقاط / تواصل لاستعادة كلمة السر",fg:"نسيت كلمة السر؟ تواصل معنا باش نرجعولك حسابك:",
     bad:"اسم المستخدم يبدأ بـ @ وفيه من 3 إلى 20 حرفاً (حروف، أرقام، _ . -)",pw:"كلمة السر 6 أحرف على الأقل",inv:"اسم المستخدم أو كلمة السر غير صحيحة",tk:"هذا الاسم مأخوذ أو يشبه اسماً آخر",mm:"كلمتا السر غير متطابقتين",many:"محاولات كثيرة، حاول لاحقاً",err:"حدث خطأ، حاول مرة أخرى"},
-  en:{brand:"WAYANIME",tag:"Open packs and collect the rarest anime cards",up:"Let’s get started",inn:"Welcome back",uph:"Sign up",inh:"Log in",u:"@username",p:"Password",c:"Confirm password",q1:"Already have an account?",q2:"No account yet?",s1:"Sign in",s2:"Sign up",dc:"Log in with Discord",or:"or",fg:"Forgot your password? Contact us and we will reset it for you:",
+  en:{brand:"WAYANIME",tag:"Open packs and collect the rarest anime cards",up:"Let’s get started",inn:"Welcome back",uph:"Sign up",inh:"Log in",u:"@username",p:"Password",c:"Confirm password",q1:"Already have an account?",q2:"No account yet?",s1:"Sign in",s2:"Sign up",bu:"Buy points / Contact for lost password",fg:"Forgot your password? Contact us and we will reset it for you:",
     bad:"Username starts with @ and has 3–20 characters (letters, numbers, _ . -)",pw:"Password must be at least 6 characters",inv:"Wrong username or password",tk:"That name is taken or too similar to another one",mm:"Passwords do not match",many:"Too many attempts, try again later",err:"Something went wrong, try again"}};
   var $=function(i){return document.getElementById(i)},mode="in",discord=false,L="en",gen="";
   var GT={ar:{gf:"بنت",gm:"ولد",gn:"اختار الجنس (بنت ولا ولد)",gt:"اختار جنسك (ما تقدرش تبدلو من بعد)",ok:"تأكيد"},en:{gf:"Girl",gm:"Boy",gn:"Choose your gender (girl or boy)",gt:"Choose your gender (can’t be changed later)",ok:"Confirm"}};
   function t(k){return T[L][k]!==undefined?T[L][k]:GT[L][k]}
   function draw(){var up=mode==="up";g.dir=L==="ar"?"rtl":"ltr";
     $("gbrand").textContent=t("brand");$("gtag").textContent=t("tag");
-    $("gh").textContent=up?t("up"):t("inn");$("gu").placeholder=t("u");$("gp").placeholder=t("p");$("gc").placeholder=t("c");
+    $("gh").textContent=up?t("up"):t("inn");$("gbuy").textContent=t("bu");$("gu").placeholder=t("u");$("gp").placeholder=t("p");$("gc").placeholder=t("c");
     $("gc").style.display=up?"":"none";$("gp").autocomplete=up?"new-password":"current-password";
     $("gbtn").textContent=up?t("s2"):t("s1");$("gq").textContent=up?t("q1"):t("q2");$("gsw").textContent=up?t("s1"):t("s2");
-    $("gdc").textContent=t("dc");$("gdc").style.display=discord?"":"none";$("gor").textContent=t("or");$("gor").style.display=discord?"":"none";$("ggf").textContent=t("gf");$("ggm").textContent=t("gm");$("ggen").classList.toggle("on",up);$("gerr").textContent="";$("gfgt").textContent=t("fg");$("gfg").style.display=up?"none":""}
+    $("ggf").textContent=t("gf");$("ggm").textContent=t("gm");$("ggen").classList.toggle("on",up);$("gerr").textContent="";$("gfgt").textContent=t("fg");$("gfg").style.display=up?"none":""}
   function fixAt(){var v=$("gu").value.replace(/@/g,"").replace(/\s/g,"");$("gu").value="@"+v}
   function submit(){fixAt();var u=$("gu").value.trim(),p=$("gp").value,c=$("gc").value,up=mode==="up";$("gerr").textContent="";
     if(up&&p!==c){$("gerr").textContent=t("mm");return}
@@ -2095,11 +2092,10 @@ $("auth").onclick=function(){if(USER){try{localStorage.removeItem(KEY)}catch(e){
       if(e.target.tagName==="BUTTON"&&e.target.classList.contains("gbtn")){if(!pick){m.querySelector(".gerr2").textContent=t("gn");return}
         fetch("/api/gender",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({gender:pick})}).then(function(){location.reload()})}});
     document.body.appendChild(m)}
-$("gdc").onclick=function(){location.href="/auth/login"};
   g.addEventListener("keydown",function(e){if(e.key==="Enter")submit()});
   fetch("/api/me",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null}).then(function(d){
     if(d&&d.user){if(!d.user.gender)needGen();open();return}
-    fetch("/api/config").then(function(r){return r.json()}).then(function(c){discord=!!c.discord}).catch(function(){}).then(show)
+    show()
   }).catch(show);
 })();
 </script>
@@ -2227,7 +2223,7 @@ html[data-theme="zero"]:root body .libwrap .vault.lib,html[data-theme="violet"]:
 <script id="store-js">
 /* Store : points gagnés avec les cartes -> photos de profil et bannières ajoutées par l'admin ; achat de points via Discord */
 (function(){
-  var $=function(i){return document.getElementById(i)},ST=null,msg="",tab="all",DC="https://discord.gg/4JWVgWwpxr";
+  var $=function(i){return document.getElementById(i)},ST=null,msg="",tab="all",DC="https://discord.gg/fkH9mEkuSX";
   var COIN='<img class="coin" alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgYXJpYS1sYWJlbD0iV0FZQU5JTUUgcG9pbnRzIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTEiIGZpbGw9IiNmZmM5MzMiIHN0cm9rZT0iI2I4NmIwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjguNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmM2IwIiBzdHJva2Utb3BhY2l0eT0iLjc1IiBzdHJva2Utd2lkdGg9Ii43Ii8+CjxzdmcgeD0iMy4zIiB5PSI2LjMiIHdpZHRoPSIxNy40IiBoZWlnaHQ9IjkuNCIgdmlld0JveD0iMjMwIDI3MCAxNDUwIDc4MCI+CjxjaXJjbGUgY3g9IjQ2MSIgY3k9IjUxNyIgcj0iMjA1IiBmaWxsPSIjNWEyYTAwIi8+CjxnIHN0cm9rZT0iIzVhMmEwMCIgc3Ryb2tlLXdpZHRoPSI5NSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48bGluZSB4MT0iNjk3IiB5MT0iOTAwIiB4Mj0iMTA2OCIgeTI9IjQyMiIvPjxsaW5lIHgxPSIxMTY0IiB5MT0iOTAwIiB4Mj0iMTUzNSIgeTI9IjQyMiIvPjwvZz4KPC9zdmc+Cjwvc3ZnPgo=">';
   var DCS='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>';
   var T={ar:{n:"المتجر",h:"المتجر",sub:"بدل الفوطو والبانر ديالك بالنقط اللي كتربح",bal:"رصيدك",pts:"نقطة",earn:"كيفاش تربح النقط (كل كارطة كتخرج ليك)",b:"البانرات",p:"الصور الشخصية",all:"الكل",buy:"شري",eq:"استعمل",on:"مستعمل",own:"ملكك",none:"ما كاين والو ف المتجر بعد",no:"ما كافيش النقط",err:"وقع مشكل، عاود",ok:"تم الشراء ✔",bp:"شري نقاط",bpd:"بغيتي نقط زيادة؟ تواصل معنا ف Discord"},
@@ -2513,5 +2509,78 @@ clearTimeout(a._t);a._t=setTimeout(function(){a.classList.remove("clk")},900)},t
   }
   tick();setInterval(tick,1000);
 })();
-</script></body>
+</script><style id="m-polish">
+/* ===== MOBILE POLISH (phones & small tablets) ===== */
+@media (max-width:820px){
+  html,body{max-width:100%;overflow-x:hidden}
+  html:root body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+
+  /* --- top bar: logo | bell | search, no overlap --- */
+  html:root body .hero>.nav:not(.jump){
+    padding:8px 12px 8px 150px!important;min-height:52px;
+    background:rgba(10,4,24,.92)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.07)!important}
+  html:root body .nav #nbell{
+    left:auto!important;right:58px!important;top:8px!important;width:36px;height:36px;
+    border-radius:50%!important;background:rgba(255,255,255,.09)!important;border:0;display:grid;place-items:center}
+  html:root body .nav #nbell svg{width:20px;height:20px}
+  html:root body .nav .navq{position:relative;left:auto!important;right:auto!important;top:auto!important;transform:none!important;margin:0}
+  html:root body .nav .navq>svg:first-child{
+    position:absolute!important;inset-inline-start:9px!important;top:9px!important;
+    width:18px!important;height:18px!important;margin:0!important;animation:none!important;
+    color:#1b2f57!important;stroke:currentColor!important;opacity:1!important;display:block!important;z-index:2}
+
+  /* --- bottom tab bar: ONE row, equal width --- */
+  html:root body .hero>.nav.jump{
+    flex-wrap:nowrap!important;overflow:hidden!important;gap:0!important;
+    background:rgba(11,5,22,.97)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(255,255,255,.1)!important;
+    padding:0 0 env(safe-area-inset-bottom,0px)!important}
+  html:root body .hero>.nav.jump a{
+    flex:1 1 0!important;min-width:0!important;padding:8px 1px 7px!important;gap:3px!important;
+    font-size:.56rem!important;line-height:1.15;letter-spacing:0!important;
+    justify-content:center;align-items:center;overflow:hidden;white-space:nowrap}
+  html:root body .hero>.nav.jump a::before{width:20px!important;height:20px!important}
+  html:root body .jump a.navprof{padding:8px 1px 7px!important;flex-direction:column!important;gap:3px!important}
+  html:root body .jump a.navprof span{max-width:100%!important;font-size:.56rem!important}
+  html:root body .jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge){width:22px!important;height:22px!important}
+  html:root body .jump a.on{background:linear-gradient(180deg,rgba(214,90,255,.22),rgba(214,90,255,.02))!important}
+  html:root body .jump a.on::after{left:18%!important;right:18%!important;top:0!important;bottom:auto!important;width:auto!important;height:3px!important;border-radius:0 0 4px 4px}
+
+  /* --- touch-friendly sizes --- */
+  html:root body button,html:root body .fb,html:root body input,html:root body select{touch-action:manipulation}
+  html:root body input,html:root body textarea,html:root body select{font-size:16px}
+}
+
+/* ===== LOGIN SCREEN (phones) ===== */
+@media (max-width:820px){
+  html:root body #gate .gl{padding:22px 18px 28px}
+  html:root body #gate .gbrand{font-size:1.15rem!important;white-space:nowrap;flex:none}
+  html:root body #gate .gbrand .wlogo{height:28px}
+  html:root body #gate .gtop{flex-wrap:nowrap;gap:10px;font-size:.8rem}
+  html:root body #gate .gtop>*:last-child{text-align:end}
+  html:root body #gate .gmain{width:100%;max-width:400px;padding:26px 20px!important;gap:12px}
+  html:root body #gate .gmain h2{display:block!important;width:100%;padding:0!important;text-align:center!important;font-size:1.5rem}
+  html:root body #gate .gerr:empty{display:none}
+  html:root body #gate a.gbuy{
+    background:rgba(88,101,242,.16)!important;border:1px solid rgba(120,132,255,.65)!important;
+    box-shadow:none!important;color:#fff!important;padding:11px 14px!important;
+    font-size:.84rem!important;line-height:1.35;border-radius:12px}
+  html:root body #gate a.gbuy:active{background:rgba(88,101,242,.3)!important}
+  html:root body #gate .gfgl a{max-width:none}
+}
+
+/* ===== small phones: keep pack timer + streak inside the card ===== */
+@media (max-width:820px){
+  html:root body #packtimer,html:root body #streak{box-sizing:border-box;max-width:100%;margin-inline:auto}
+  html:root body #packtimer{flex-wrap:wrap;justify-content:center;text-align:center;gap:4px 10px;padding-inline:14px}
+  html:root body #streak{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+}
+@media (max-width:360px){
+  html:root body #streak{gap:5px}
+  html:root body #streak>*{width:32px!important;height:32px!important;min-width:0;font-size:.8rem}
+  html:root body #packtimer{font-size:.82rem}
+}
+</style>
+</body>
 </html>

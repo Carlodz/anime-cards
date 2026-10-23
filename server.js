@@ -810,7 +810,7 @@ app.get('/shop/img/:id', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
 });
 // Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
-const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500, naruto: 300 };
+const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500, naruto: 300, zoro: 200 };
 app.get('/api/store', (req, res) => {
   const id = need(req, res); if (!id) return;
   const own = db[id].owned || [];

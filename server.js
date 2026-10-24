@@ -15,7 +15,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop, ob: j.ob } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -29,8 +29,9 @@ store.resets = store.resets || {};
 store.smsg = store.smsg || {};
 store.removed = store.removed || {}; // lowercase staff name -> true: staff the owner removed (they lose admin + staff card)
 store.shop = store.shop || { items: {} }; store.shop.items = store.shop.items || {}; store.shop.names = store.shop.names || {}; store.shop.cfg = store.shop.cfg || {};
+store.ob = Array.isArray(store.ob) ? store.ob : []; const ob = store.ob; // things the Discord bot must post / DM (it polls /api/bot/outbox)
 const shop = store.shop; // admin store: items { id -> {id,type:'banner'|'pic',img,price,t,off} }
-const PTS = { iron: 5, silver: 10, gold: 15, diamond: 20, legendary: 50, cute: 25, aura: 100 }; // points won per card
+const PTS = { iron: 5, silver: 10, gold: 15, diamond: 20, legendary: 70, epic: 50, cute: 25, aura: 100 }; // points won per card
 function addPts(id, n) { if (db[id] && n > 0) db[id].pts = (db[id].pts || 0) + n; }
 const custom = store.custom; // admin content: packs { id -> {id,ar,en,logo,g} } and extra cards { packId|cute|leg -> [{img,ar,en}] }
 const notes = store.notes;   // userId -> [{ id, t, type, title, text, read }]
@@ -71,6 +72,9 @@ async function initStore() {
     Object.assign(notes, j.notes || {});
     Object.assign(smsg, j.smsg || {});
     if (Array.isArray(j.ann)) ann.push(...j.ann);
+    if (Array.isArray(j.ob)) ob.push(...j.ob);
+    if (j.shop) { Object.assign(shop.items, j.shop.items || {}); Object.assign(shop.names, j.shop.names || {}); Object.assign(shop.cfg, j.shop.cfg || {}); } // store items + settings also survive redeploys with Postgres
+    Object.assign(store.removed, j.removed || {});
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
     await saveNow(); // first run: migrate whatever came from data/users.json
@@ -167,7 +171,7 @@ app.put('/api/state', (req, res) => {
 });
 
 // ---- Gift codes: a duplicate card leaves the sender and waits in escrow until someone redeems the code ----
-const RAR = ['iron', 'silver', 'gold', 'diamond', 'legendary'];
+const RAR = ['iron', 'silver', 'gold', 'diamond', 'legendary', 'epic']; // epic = rare black card from the daily pack (index 5 so older indexes never shift)
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const failed = {};
 function newCode() {
@@ -270,6 +274,8 @@ function weekKey() {
   const q = new Date(t - ((dow + 6) % 7) * 864e5);
   return `${q.getUTCFullYear()}-${q.getUTCMonth() + 1}-${q.getUTCDate()}`;
 }
+const LEG_PER_MILLE = 50;  // 5% per card to be a Legendary card (the 'leg' set, 70 points) in the daily pack
+const EPIC_PER_MILLE = 20; // 2% per card to be Epic (~10% of packs)
 const W_NORMAL = [55, 30, 12, 3], W_BOOST = [0, 0, 70, 30], W_CUTE = [25, 35, 30, 10];
 function pickRarity(boost, weights) {
   const w = weights || (boost ? W_BOOST : W_NORMAL);
@@ -280,27 +286,43 @@ function pickRarity(boost, weights) {
 app.post('/api/open', (req, res) => {
   // One pack per day in total. Each pack holds 5 cards; luck picks the anime, the character and the rarity of each one, and the same card can drop twice.
   // Day 7 of a streak: the first card is guaranteed Gold or Diamond.
+  // Epic (black, rare): each card has a small chance to be Epic (50 points) and an Epic in a pack unlocks ONE extra pack the same day.
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
   const st = stateOf(db[id]);
   const D = (st.d = st.d || { last: '', streak: 0 });
-  if (D.last === dstr()) return res.status(409).json({ error: 'already opened', state: st });
-  const ns = D.last === dstr(-1) ? (D.streak || 0) + 1 : 1;
-  const boost = ns >= 7;
+  const used = D.last === dstr();
+  if (used && !(D.bonus > 0)) return res.status(409).json({ error: 'already opened', state: st });
+  let boost = false;
+  if (used) D.bonus = 0; // spending the extra pack: no streak change, no boost
+  else {
+    const ns = D.last === dstr(-1) ? (D.streak || 0) + 1 : 1;
+    boost = ns >= 7;
+    D.last = dstr();
+    D.streak = boost ? 0 : ns;
+  }
   const ids = Object.keys(COUNTS).concat(Object.keys(custom.packs)).filter((k) => countOf(k) > 0);
-  D.last = dstr();
-  D.streak = boost ? 0 : ns;
   const cards = [];
+  let gotEpic = false;
   for (let n = 0; n < 5; n++) {
     const a = ids[crypto.randomInt(ids.length)];
     const b = boost && n === 0;
-    const r = RAR[pickRarity(b)], i = crypto.randomInt(countOf(a));
+    if (!b && crypto.randomInt(1000) < LEG_PER_MILLE) { // Legendary: a card from the 'leg' set
+      const li = crypto.randomInt(countOf('leg'));
+      addCard(st, 'leg', li, 'legendary'); addPts(id, PTS.legendary);
+      cards.push({ a: 'leg', i: li, r: 'legendary', boost: false });
+      continue;
+    }
+    const epic = !b && crypto.randomInt(1000) < EPIC_PER_MILLE;
+    const r = epic ? 'epic' : RAR[pickRarity(b)], i = crypto.randomInt(countOf(a));
+    if (epic) gotEpic = true;
     addCard(st, a, i, r); addPts(id, PTS[r]);
     cards.push({ a, i, r, boost: b });
   }
-  logEvent(id, 'pack', 'Opened daily pack (5 cards): ' + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : ''));
+  if (gotEpic) D.bonus = 1;
+  logEvent(id, 'pack', (used ? 'Opened EXTRA daily pack (5 cards): ' : 'Opened daily pack (5 cards): ') + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : '') + (gotEpic ? ' [epic -> extra pack]' : ''));
   persist();
-  res.json({ ok: true, state: st, card: cards[0], cards });
+  res.json({ ok: true, state: st, card: cards[0], cards, extra: !!D.bonus });
 });
 app.post('/api/legendary', (req, res) => {
   const id = sessionId(req);
@@ -457,6 +479,7 @@ app.post('/api/friend/add', (req, res) => {
     if (!b.i.includes(id)) b.i.push(id);
   }
   logEvent(id, 'friend', 'Friend request / add -> ' + db[t].user.username);
+  if (t === botId() && b.i.includes(id)) obPush({ type: 'friend', from: plainName(id), fromDiscordId: whoDiscord(id), requestId: id }, true); // tell the owner on Discord (Accept button)
   persist();
   res.json({ ok: true });
 });
@@ -730,7 +753,7 @@ function findSimilar(name) {
 // ---- one special account: always verified, can see the admin log page ----
 const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' }, sunny: { pass: 'Skikda2121', role: 'mod' } };
 // The Discord bot's own account (admin: sees everything). Its password comes from the BOT_ACCOUNT_PASSWORD setting, never from the code.
-if (process.env.BOT_ACCOUNT_PASSWORD) ADMINS.wayanime = { pass: process.env.BOT_ACCOUNT_PASSWORD, role: 'mod' }; // owner: crown + red check, mod: key + yellow check
+if (process.env.BOT_ACCOUNT_PASSWORD) ADMINS.wayanime = { pass: process.env.BOT_ACCOUNT_PASSWORD, role: 'bot' }; // owner: crown + red check, mod: key + yellow check, bot: BOT tag (same rights as mod; only the owner has more)
 function roleOf(id) {
   const u = db[id] && db[id].user;
   const k = u ? bodyOf(u.username).toLowerCase() : '';
@@ -884,6 +907,7 @@ app.post('/api/admin/shop', (req, res) => { // add a profile photo or banner wit
   shop.items[id] = { id, type: b.type, img: b.img, price, t: Date.now() };
   const nm0 = cleanName(b.name); if (nm0) shop.items[id].name = nm0;
   logEvent(me, 'admin', 'Store item added: ' + b.type + ' ' + id + ' (' + price + ' pts)');
+  announceStore(shop.items[id]); // Discord: new store item
   persist(); res.json({ ok: true, id });
 });
 app.post('/api/admin/points', (req, res) => { // give (or remove with a negative number) points to one user
@@ -930,11 +954,13 @@ function botStore(p) {
     const acts = Array.from((p.activities && (p.activities.values ? p.activities.values() : p.activities)) || []);
     const sp = acts.find((a) => a.type === 2 && a.name === 'Spotify');
     const pl = acts.find((a) => a.type === 0);
+    const wa = acts.find((a) => a.type === 3); // Watching (e.g. Crunchyroll)
     const img = sp && sp.assets && sp.assets.largeImage && String(sp.assets.largeImage).startsWith('spotify:') ? 'https://i.scdn.co/image/' + String(sp.assets.largeImage).slice(8) : null;
     botPres.set(String(id), {
       status: ['online', 'idle', 'dnd'].includes(p.status) ? p.status : 'offline',
       spotify: sp ? { song: String(sp.details || '').slice(0, 100), artist: String(sp.state || '').replace(/;\s*/g, ', ').slice(0, 100), art: img } : null,
       game: pl ? { name: String(pl.name || '').slice(0, 80), details: String(pl.details || pl.state || '').slice(0, 80) } : null,
+      watch: wa ? { name: String(wa.name || '').slice(0, 80), details: String(wa.details || wa.state || '').slice(0, 80) } : null,
     });
   } catch (e) { /* ignore a malformed presence */ }
 }
@@ -989,6 +1015,11 @@ app.get('/api/presence/:id', async (req, res) => {
   res.json(v);
 });
 
+// Notification every new user gets from the BOT: link to the Discord channel where they link their account (override with env vars)
+const DISCORD_LINK_URL = 'https://discord.com/channels/' + (process.env.DISCORD_GUILD_ID || '1562627288023957554') + '/' + (process.env.DISCORD_LINK_CHANNEL_ID || '1563473357113004042');
+// BOT auto-reply to a user's message: link to the Discord support channel (override with DISCORD_SUPPORT_CHANNEL_ID)
+const DISCORD_SUPPORT_URL = 'https://discord.com/channels/' + (process.env.DISCORD_GUILD_ID || '1562627288023957554') + '/' + (process.env.DISCORD_SUPPORT_CHANNEL_ID || '1562751814355521626');
+const BOT_REPLY = '\u0623\u0647\u0644\u0627! \u0644\u0644\u0645\u0633\u0627\u0639\u062f\u0629 \u0627\u0641\u062a\u062d \u0642\u0646\u0627\u0629 \u0627\u0644\u062f\u0639\u0645 \u0639\u0644\u0649 \u062f\u064a\u0633\u0643\u0648\u0631\u062f \u00b7 Hi! For help, open the support channel on Discord.';
 app.post('/auth/register', (req, res) => {
   const b = req.body || {}, body = bodyOf(b.username), pw = String(b.password || '');
   if (!UNAME.test(body)) return res.status(400).json({ error: 'bad username' });
@@ -1002,6 +1033,7 @@ app.post('/auth/register', (req, res) => {
   do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
   db[id] = { user: { id, username: name, avatar: null }, state: null, pw: hashPw(pw), gender: b.gender, local: true, created: Date.now(), lastLogin: Date.now() };
   logEvent(id, 'register', 'New account created');
+  pushNote(id, 'dm', 'Link your Discord account', '\u0627\u0631\u0628\u0637 \u062d\u0633\u0627\u0628\u0643 \u0639\u0644\u0649 \u062f\u064a\u0633\u0643\u0648\u0631\u062f \u0645\u0646 \u0647\u0646\u0627 \u00b7 Link your Discord account here', 'bot', DISCORD_LINK_URL);
   persist();
   autoCountry(req, id);
   startSession(res, id);
@@ -1324,8 +1356,8 @@ function staffList() { return Object.keys(ADMINS).map((n) => findLocal('@' + n))
 app.get('/api/staff', (req, res) => {
   const id = need(req, res); if (!id) return;
   res.set('Cache-Control', 'no-store');
-  const staff = staffList().filter((s) => s !== id).map((s) => { const u = pub(s); return { id: u.id, username: u.username, pic: u.pic, banner: u.banner, role: u.role }; })
-    .sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1));
+  const staff = staffList().filter((s) => s !== id && roleOf(s) === 'bot').map((s) => { const u = pub(s); return { id: u.id, username: u.username, pic: u.pic, banner: u.banner, role: u.role }; })
+    .sort((a, b) => ({ owner: 0, mod: 1, bot: 2 }[a.role] ?? 1) - ({ owner: 0, mod: 1, bot: 2 }[b.role] ?? 1));
   res.json({ staff });
 });
 app.post('/api/contact', (req, res) => {
@@ -1339,10 +1371,28 @@ app.post('/api/contact', (req, res) => {
   if (contactT[id].length >= 5) return res.status(429).json({ error: 'wait' });
   contactT[id].push(now);
   logEvent(id, 'message', '[to ' + roleOf(to) + '] ' + text);
+  if (to === botId()) obPush({ type: 'message', from: plainName(id), fromDiscordId: whoDiscord(id), text }); // forward to the owner on Discord
   const box2 = (smsg[to] = smsg[to] || {});
   const c = (box2[id] = box2[id] || { t: now, msgs: [] });
   c.t = now; c.msgs.push({ t: now, text }); if (c.msgs.length > 20) c.msgs.splice(0, c.msgs.length - 20);
+  let reply = null;
+  if (to === botId()) { reply = { text: BOT_REPLY, link: DISCORD_SUPPORT_URL }; pushNote(id, 'dm', 'BOT', BOT_REPLY, 'bot', DISCORD_SUPPORT_URL); }
   persist();
+  res.json({ ok: true, reply });
+});
+// ---- Tips: a user writes a tip in Settings, the Discord bot posts it in the tips channel (name + profile photo) ----
+const tipT = {}; // user id -> timestamps of recent tips (anti-spam)
+app.post('/api/tips', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const b = req.body || {}, text = txt(b.text, 500);
+  if (!text) return res.status(400).json({ error: 'text required' });
+  const now = Date.now();
+  tipT[id] = (tipT[id] || []).filter((t) => t > now - 60 * 60 * 1000);
+  if (tipT[id].length >= 5 || (tipT[id].length && now - tipT[id][tipT[id].length - 1] < 30 * 1000)) return res.status(429).json({ error: 'wait' });
+  tipT[id].push(now);
+  const av = typeof b.av === 'string' && b.av.length < 60000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(b.av) ? b.av : null;
+  logEvent(id, 'tip', 'Tip sent: ' + text.slice(0, 200));
+  obPush({ type: 'tip', from: plainName(id), fromDiscordId: whoDiscord(id), text, av });
   res.json({ ok: true });
 });
 // staff only: conversations people started with me (card with avatar + messages) until I hide them
@@ -1429,6 +1479,85 @@ app.post('/api/bot/gender', botKey, (req, res) => {
   db[id].gender = g;
   logEvent(id, 'admin', 'Gender changed by staff through the Discord bot' + (b.by ? ' (' + String(b.by).slice(0, 40) + ')' : '') + ': ' + (old || 'none') + ' -> ' + g);
   persist(); res.json({ ok: true, username: plainName(id), gender: g, was: old });
+});
+
+// ---- Discord bot posts: store + pack announcements (controlled from the admin panel) and the outbox the bot polls ----
+const botId = () => findLocal('@wayanime');
+const whoDiscord = (id) => (db[id] && db[id].discord) || null;
+const BA_KINDS = ['store', 'daily', 'legendary', 'cute', 'aura']; // store = new store items, the others = the pack announcements
+function bann() {
+  const c = (shop.cfg.botann = shop.cfg.botann || { v: 1 });
+  for (const k of BA_KINDS) c[k] = Object.assign({ on: true, text: '', img: null }, c[k]);
+  return c;
+}
+function obPush(o, once) {
+  if (once && ob.some((x) => x.type === o.type && x.requestId === o.requestId)) return;
+  ob.push(Object.assign({ id: rid(), at: Date.now() }, o));
+  if (ob.length > 200) ob.splice(0, ob.length - 200);
+  persist();
+}
+function announceStore(it, test) {
+  if (!it || (!test && !bann().store.on)) return;
+  obPush({ type: 'store', test: !!test, itemType: it.type, name: nameOf(it.id) || (it.type === 'pic' ? 'New profile picture' : 'New banner'), price: it.price, img: '/shop/img/' + it.id });
+}
+function baPublic() { const c = bann(), o = {}; for (const k of BA_KINDS) o[k] = { on: !!c[k].on, text: c[k].text || '', img: c[k].img ? '/bann/' + k + '?v=' + c.v : null }; return o; }
+app.get('/api/admin/botann', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const c = bann(), o = baPublic();
+  for (const k of BA_KINDS) o[k].img = c[k].img; // data URL for the preview in the admin panel
+  res.json(o);
+});
+app.post('/api/admin/botann', (req, res) => {
+  const me = adminId(req, res); if (!me) return;
+  const b = req.body || {}, k = String(b.kind);
+  if (!BA_KINDS.includes(k)) return res.status(400).json({ error: 'bad kind' });
+  const c = bann();
+  if (b.on !== undefined) c[k].on = !!b.on;
+  if (b.text !== undefined) c[k].text = txt(b.text, 300);
+  if (b.img !== undefined) {
+    if (b.img === null || b.img === '') c[k].img = null;
+    else if (okImg(b.img)) c[k].img = b.img;
+    else return res.status(400).json({ error: 'bad image (png/jpeg/webp/gif, small)' });
+  }
+  c.v = (c.v || 1) + 1;
+  logEvent(me, 'admin', 'Discord bot post settings changed: ' + k);
+  persist(); res.json({ ok: true });
+});
+app.post('/api/admin/botann/test', (req, res) => { // posts a sample store announcement on Discord (latest store item)
+  const me = adminId(req, res); if (!me) return;
+  const it = Object.values(shop.items).filter((x) => !x.off).sort((a, b) => b.t - a.t)[0] || bnrItem(BNR_IDS[0]);
+  if (!it) return res.status(404).json({ error: 'no store item yet' });
+  announceStore(it, true); res.json({ ok: true });
+});
+app.get('/bann/:kind', (req, res) => { // public image of a bot post (the Discord embed loads it)
+  const k = req.params.kind, c = BA_KINDS.includes(k) && bann()[k];
+  const m = c && c.img && /^data:(image\/[a-z]+);base64,(.+)$/.exec(c.img);
+  if (!m) return res.status(404).end();
+  res.set('Cache-Control', 'public, max-age=3600').type(m[1]).send(Buffer.from(m[2], 'base64'));
+});
+app.get('/api/bot/outbox', botKey, (req, res) => res.json({ items: ob.slice(0, 50), cfg: baPublic() }));
+app.get('/api/bot/announce-config', botKey, (req, res) => res.json({ cfg: baPublic() }));
+app.post('/api/bot/outbox/ack', botKey, (req, res) => {
+  const ids = new Set(Array.isArray((req.body || {}).ids) ? req.body.ids.map(String) : []);
+  for (let i = ob.length - 1; i >= 0; i--) if (ids.has(ob[i].id)) ob.splice(i, 1);
+  persist(); res.json({ ok: true });
+});
+// The owner pressed Accept / Decline on Discord: the bot profile (@wayanime) answers the friend request.
+app.post('/api/bot/friend/accept', botKey, (req, res) => {
+  const bid = botId(), rq = String((req.body || {}).requestId || '');
+  if (!bid || !isId(rq) || !db[rq] || !socOf(bid).i.includes(rq)) return res.status(404).json({ error: 'no request' });
+  befriend(bid, rq);
+  logEvent(bid, 'friend', 'Accepted friend ' + db[rq].user.username + ' (from Discord)');
+  pushNote(rq, 'dm', 'Friend request', plainName(bid) + ' accepted your friend request.', roleOf(bid));
+  persist(); res.json({ ok: true, username: plainName(rq) });
+});
+app.post('/api/bot/friend/decline', botKey, (req, res) => {
+  const bid = botId(), rq = String((req.body || {}).requestId || '');
+  if (!bid || !isId(rq) || !db[rq] || !socOf(bid).i.includes(rq)) return res.status(404).json({ error: 'no request' });
+  const A = socOf(bid), B = socOf(rq);
+  A.i = A.i.filter((x) => x !== rq); B.o = B.o.filter((x) => x !== bid);
+  logEvent(bid, 'friend', 'Declined friend ' + db[rq].user.username + ' (from Discord)');
+  persist(); res.json({ ok: true });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

@@ -450,6 +450,16 @@ app.get('/api/social', (req, res) => {
   res.json({ friends: list(s.f), inc: list(s.i), out: list(s.o), offers: mine });
 });
 
+app.get('/api/top-traders', (req, res) => { // ranking of the players with the most completed trades
+  const id = need(req, res); if (!id) return;
+  const list = Object.entries(db)
+    .filter(([, u]) => u && u.user && (u.trades || 0) > 0)
+    .sort((a, b) => (b[1].trades || 0) - (a[1].trades || 0))
+    .slice(0, 4)
+    .map(([uid, u]) => ({ ...pub(uid), trades: u.trades || 0 }));
+  res.json({ traders: list });
+});
+
 app.get('/api/users/search', (req, res) => {
   const id = need(req, res); if (!id) return;
   const qq = String(req.query.q || '').trim().toLowerCase();

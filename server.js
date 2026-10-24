@@ -1588,7 +1588,7 @@ app.post('/api/zero-chat', async (req, res) => {
   const raw = Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : [];
   const msgs = raw.map((m) => ({ role: m && m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String((m && m.content) || '').slice(0, 400) }] })).filter((m) => m.parts[0].text.trim());
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return res.status(400).json({ error: 'bad message' });
-  const model = (process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite').trim();
+  const model = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
   try {
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
       method: 'POST',
@@ -1596,7 +1596,7 @@ app.post('/api/zero-chat', async (req, res) => {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: ZERO_SYSTEM }] },
         contents: msgs,
-        generationConfig: { maxOutputTokens: 200, temperature: 1, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { maxOutputTokens: 1024, temperature: 1 },
       }),
       signal: AbortSignal.timeout(20000),
     });

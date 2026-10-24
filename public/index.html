@@ -3826,6 +3826,19 @@ html[data-theme="zero"]:root body .hero .stage .zhello i{display:inline-block;fo
 @media (max-width:700px){html[data-theme="zero"]:root body .hero .stage .zhello{left:calc(50% - 150px);bottom:calc(100% + 70px);padding:7px 14px;font-size:.9rem}}
 @media (prefers-reduced-motion:reduce){html[data-theme="zero"]:root body .hero .stage::after,html[data-theme="zero"]:root body .hero .stage .zhello,html[data-theme="zero"]:root body .hero .stage .zhello i{animation:none!important}}
 
+/* ===== Zero Two chat ===== */
+.zhit,.zin,.zreply{display:none}
+html[data-theme="zero"]:root body .hero .stage .zhit{display:block;position:absolute;z-index:4;left:calc(50% - 115px);bottom:calc(100% - 22px);width:230px;height:225px;cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+html[data-theme="zero"]:root body .hero .stage.zchat .zhello{display:none}
+html[data-theme="zero"]:root body .hero .stage.zchat .zin{display:flex;position:absolute;z-index:5;left:calc(50% - 235px);bottom:calc(100% + 100px);width:250px;gap:6px;padding:5px 5px 5px 14px;border-radius:20px 20px 20px 4px;background:rgba(40,6,24,.72);border:1px solid rgba(255,255,255,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 8px 22px -8px rgba(255,60,130,.7);animation:z2Pop .25s ease-out}
+.zin input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:700 .95rem "Poppins","Space Grotesk",system-ui,sans-serif}
+.zin input::placeholder{color:rgba(255,255,255,.6)}
+.zin button{border:0;border-radius:50%;width:32px;height:32px;cursor:pointer;background:linear-gradient(135deg,#ff5c9a,#ff2f6d);color:#fff;font-size:1rem;line-height:1}
+.zin button:disabled{opacity:.5;cursor:default}
+html[data-theme="zero"]:root body .hero .stage.zchat .zreply.on{display:block;position:absolute;z-index:5;left:calc(50% - 150px);bottom:calc(100% + 165px);width:max-content;max-width:min(280px,80vw);padding:10px 16px;border-radius:20px 20px 4px 20px;background:rgba(255,255,255,.96);color:#2a0618;font:700 .95rem/1.35 "Poppins","Space Grotesk",system-ui,sans-serif;box-shadow:0 10px 26px -8px rgba(255,60,130,.8);animation:z2Pop .25s ease-out;pointer-events:none;overflow-wrap:anywhere}
+@keyframes z2Pop{from{opacity:0;transform:translateY(8px) scale(.85)}to{opacity:1;transform:none}}
+@media (max-width:700px){html[data-theme="zero"]:root body .hero .stage.zchat .zin{left:calc(50% - 170px);bottom:calc(100% + 60px);width:220px}html[data-theme="zero"]:root body .hero .stage.zchat .zreply.on{left:calc(50% - 130px);bottom:calc(100% + 115px)}}
+
 /* ===== Library v3: glass design + SVG icons + animation ===== */
 @keyframes lbIn{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes lbArt{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-8px) rotate(.6deg)}}
@@ -3889,12 +3902,36 @@ load();setInterval(load,60000);
 </script>
 <script>
 (function(){
+var hist=[],busy=false,tmr=null;
+function setReply(st,txt){var r=st.querySelector(".zreply");r.textContent=txt;r.classList.add("on");clearTimeout(tmr);tmr=setTimeout(function(){r.classList.remove("on")},20000)}
+function close(st){st.classList.remove("zchat");st.querySelector(".zreply").classList.remove("on");hist=[]}
+function build(st){
+  var hit=document.createElement("button");hit.className="zhit";hit.type="button";hit.setAttribute("aria-label","Talk to Zero Two");
+  var d=document.createElement("div");d.className="zhello";d.setAttribute("aria-hidden","true");d.innerHTML='Hello<i>\uD83D\uDC4B</i>';
+  var rep=document.createElement("div");rep.className="zreply";rep.setAttribute("role","status");
+  var f=document.createElement("div");f.className="zin";
+  f.innerHTML='<input type="text" maxlength="200" placeholder="..." aria-label="Message"><button type="button" aria-label="Send">\u27A4</button>';
+  var inp=f.querySelector("input"),btn=f.querySelector("button");
+  function send(){
+    var t=inp.value.trim();if(!t||busy)return;
+    inp.value="";busy=true;btn.disabled=true;hist.push({role:"user",content:t});setReply(st,"...");
+    fetch("/api/zero-chat",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist})})
+      .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+      .then(function(j){hist.push({role:"assistant",content:j.reply});setReply(st,j.reply)})
+      .catch(function(e){hist.pop();setReply(st,e===429?"Slow down a little, darling \uD83D\uDE18":"I can't talk right now...")})
+      .then(function(){busy=false;btn.disabled=false;inp.focus()})}
+  hit.addEventListener("click",function(e){e.stopPropagation();
+    if(st.classList.contains("zchat")){close(st);return}
+    st.classList.add("zchat");setReply(st,"Hello darling \uD83D\uDC4B What can I help you with today?");setTimeout(function(){inp.focus()},50)});
+  btn.addEventListener("click",send);
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter")send();else if(e.key==="Escape")close(st)});
+  document.addEventListener("click",function(e){if(st.classList.contains("zchat")&&!f.contains(e.target))close(st)});
+  st.appendChild(hit);st.appendChild(d);st.appendChild(rep);st.appendChild(f)}
 function ensure(){
   var st=document.querySelector(".hero .stage");
-  if(!st||st.querySelector(".zhello"))return;
-  var d=document.createElement("div");d.className="zhello";d.setAttribute("aria-hidden","true");
-  d.innerHTML='Hello<i>\uD83D\uDC4B</i>';
-  st.appendChild(d)}
+  if(!st||st.querySelector(".zhit"))return;
+  var old=st.querySelector(".zhello");if(old)old.remove();
+  build(st)}
 ensure();setInterval(ensure,1000);
 })();
 </script>

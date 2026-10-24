@@ -64,6 +64,7 @@ th{color:var(--mut);font-size:.7rem}
   <button data-t="pk">Packs &amp; cards</button>
   <button data-t="st">Store</button>
   <button data-t="pb">Announcements</button>
+  <button data-t="bp">Bot posts</button>
   <button data-t="dm">Message a user</button>
   <button data-t="au">Aura card</button>
   <button data-t="rp" id="tab-rp" style="display:none">Reset password</button>
@@ -188,6 +189,13 @@ th{color:var(--mut);font-size:.7rem}
   <div id="pb-list" class="muted">None.</div>
 </div>
 
+<!-- BOT POSTS -->
+<div class="sec" id="s-bp">
+  <h2>Discord bot posts</h2>
+  <p class="note">What the Discord bot posts on its own: every new store item, and the pack announcements. Images and texts are optional; without an image the pack announcement uses the pack card back.</p>
+  <div id="bp-box"></div>
+</div>
+
 <!-- DIRECT MESSAGE -->
 <div class="sec" id="s-dm">
   <h2>Message one user</h2>
@@ -285,6 +293,7 @@ $('tabs').onclick = e => {
   if(b.dataset.t === 'st') loadShop();
   if(b.dataset.t === 'nt') loadHook();
   if(b.dataset.t === 'pb') loadAnn();
+  if(b.dataset.t === 'bp') loadBp();
   if(b.dataset.t === 'sf') loadStaff();
 };
 
@@ -366,6 +375,32 @@ $('cd-go').onclick = async () => {
   $('cd-go').disabled = false;
   if(r.ok){ say('cd-res', true, 'Card added (#' + (r.j.idx + 1) + ').'); $('cd-ar').value = $('cd-en').value = ''; $('cd-img').value = ''; $('cd-prev').style.display = 'none'; cimg.v = null; loadCustom() }
   else say('cd-res', false, r.j.error || 'Failed.');
+};
+
+
+// ---- Discord bot posts ----
+const BP = [['store', '🛍️ Store: new profile picture / banner'], ['daily', '🎴 Daily Pack'], ['legendary', '👑 Legendary Pack'], ['cute', '🌸 Cute Pack'], ['aura', '✨ Aura Pack']];
+const bpimg = {};
+$('bp-box').innerHTML = BP.map(([k, t]) => `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px"><h3>${t}</h3>` +
+  (k === 'store' ? `<label><input type="checkbox" id="bp-on-store" style="width:auto"> Announce every new store item on Discord</label>` : '') +
+  `<label>Extra text (optional)</label><input type="text" id="bp-tx-${k}" maxlength="300" dir="auto">` +
+  `<label>${k === 'store' ? 'Extra image (small logo next to the item)' : 'Pack box image'}</label>` +
+  `<input type="file" id="bp-im-${k}" accept="image/*"><img class="prev" id="bp-pv-${k}" alt="">` +
+  `<div style="margin-top:10px"><button class="btn" data-save="${k}">Save</button> <button class="btn" data-clr="${k}">Remove image</button>` + (k === 'store' ? ` <button class="btn" data-test="1">Send test post</button>` : '') + `</div><div class="res" id="bp-rs-${k}"></div></div>`).join('');
+BP.forEach(([k]) => bindImg('bp-im-' + k, 'bp-pv-' + k, k === 'store' ? 240 : 560, 'image/webp', (bpimg[k] = {})));
+async function loadBp(){
+  const r = await api('GET', '/api/admin/botann'); if(!r.ok) return;
+  BP.forEach(([k]) => { const c = r.j[k] || {}, p = $('bp-pv-' + k); if(k === 'store') $('bp-on-store').checked = !!c.on; $('bp-tx-' + k).value = c.text || ''; bpimg[k].v = null; $('bp-im-' + k).value = ''; if(c.img){ p.src = c.img; p.style.display = 'block' } else p.style.display = 'none' });
+}
+$('bp-box').onclick = async e => {
+  const t = e.target;
+  if(t.dataset.test){ const r = await api('POST', '/api/admin/botann/test', {}); say('bp-rs-store', r.ok, r.ok ? 'Test sent: it will appear on Discord in a few seconds.' : (r.j.error || 'Failed.')); return }
+  const k = t.dataset.save || t.dataset.clr; if(!k) return;
+  const b = { kind: k, text: $('bp-tx-' + k).value };
+  if(k === 'store') b.on = $('bp-on-store').checked;
+  if(t.dataset.clr) b.img = null; else if(bpimg[k].v) b.img = bpimg[k].v;
+  const r = await api('POST', '/api/admin/botann', b);
+  say('bp-rs-' + k, r.ok, r.ok ? 'Saved.' : (r.j.error || 'Failed.')); if(r.ok) loadBp();
 };
 
 // ---- announcements ----

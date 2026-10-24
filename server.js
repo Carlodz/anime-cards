@@ -278,7 +278,7 @@ function pickRarity(boost, weights) {
   return 0;
 }
 app.post('/api/open', (req, res) => {
-  // One pack per day in total. Each pack holds 3 cards; luck picks the anime, the character and the rarity of each one, and the same card can drop twice.
+  // One pack per day in total. Each pack holds 5 cards; luck picks the anime, the character and the rarity of each one, and the same card can drop twice.
   // Day 7 of a streak: the first card is guaranteed Gold or Diamond.
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
@@ -291,14 +291,14 @@ app.post('/api/open', (req, res) => {
   D.last = dstr();
   D.streak = boost ? 0 : ns;
   const cards = [];
-  for (let n = 0; n < 3; n++) {
+  for (let n = 0; n < 5; n++) {
     const a = ids[crypto.randomInt(ids.length)];
     const b = boost && n === 0;
     const r = RAR[pickRarity(b)], i = crypto.randomInt(countOf(a));
     addCard(st, a, i, r); addPts(id, PTS[r]);
     cards.push({ a, i, r, boost: b });
   }
-  logEvent(id, 'pack', 'Opened daily pack (3 cards): ' + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : ''));
+  logEvent(id, 'pack', 'Opened daily pack (5 cards): ' + cards.map((c) => cname(c.a, c.i, c.r)).join(', ') + (boost ? ' [boost]' : ''));
   persist();
   res.json({ ok: true, state: st, card: cards[0], cards });
 });
@@ -728,7 +728,9 @@ function findSimilar(name) {
 }
 
 // ---- one special account: always verified, can see the admin log page ----
-const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' }, sunny: { pass: 'Skikda2121', role: 'mod' } }; // owner: crown + red check, mod: key + yellow check
+const ADMINS = { carlodz: { pass: 'Skikda2121', role: 'owner' }, youzix: { pass: 'Skikda2121', role: 'mod' }, sunny: { pass: 'Skikda2121', role: 'mod' } };
+// The Discord bot's own account (admin: sees everything). Its password comes from the BOT_ACCOUNT_PASSWORD setting, never from the code.
+if (process.env.BOT_ACCOUNT_PASSWORD) ADMINS.wayanime = { pass: process.env.BOT_ACCOUNT_PASSWORD, role: 'mod' }; // owner: crown + red check, mod: key + yellow check
 function roleOf(id) {
   const u = db[id] && db[id].user;
   const k = u ? bodyOf(u.username).toLowerCase() : '';
@@ -747,13 +749,30 @@ function isAdmin(id) {
 }
 async function ensureAdminAccount() {
   for (const name of Object.keys(ADMINS)) {
-    if (findLocal('@' + name)) continue; // already exists, don't touch its password
+    if (findLocal('@' + name) || !ADMINS[name].pass) continue; // already exists (don't touch its password) or no password set
     let id;
     do { id = '9' + String(crypto.randomInt(0, 1e14)).padStart(14, '0'); } while (db[id]);
     db[id] = { user: { id, username: '@' + name, avatar: null }, state: null, pw: hashPw(ADMINS[name].pass), local: true, created: Date.now() };
     persist();
     console.log('Admin account @' + name + ' created');
   }
+}
+// Profile of the bot account: male, photo, status. Re-applied at every start so it always stays the same.
+const BOT_STATUS = "I'm U'r Spoort \uD83D\uDE0D";
+function setupBotProfile() {
+  const id = findLocal('@wayanime'); if (!id) return;
+  const u = db[id];
+  u.gender = 'm';
+  u.status = BOT_STATUS;
+  try {
+    if (!shop.items['bot-wayanime']) {
+      const img = fs.readFileSync(path.join(__dirname, 'assets', 'wayanime-bot.jpg')).toString('base64');
+      shop.items['bot-wayanime'] = { id: 'bot-wayanime', type: 'pic', img: 'data:image/jpeg;base64,' + img, price: 0, t: Date.now(), off: true, name: 'Wayanime' };
+    }
+    u.owned = Array.from(new Set((u.owned || []).concat('bot-wayanime')));
+    u.pic = { s: 'bot-wayanime' };
+  } catch (e) { console.error('Bot profile photo failed:', e.message); }
+  persist();
 }
 function adminId(req, res) {
   const id = need(req, res); if (!id) return null;
@@ -1342,8 +1361,79 @@ app.post('/api/staff/inbox/hide', (req, res) => {
   persist(); res.json({ ok: true });
 });
 
+// ---- Discord bot API: link a player's Discord account to their site account (protected by BOT_API_KEY) ----
+const linkCodes = new Map(); // code -> { uid, exp } (kept in memory only, valid 10 minutes)
+const LINK_TTL = 10 * 60 * 1000;
+function cleanLinkCodes() { const n = Date.now(); for (const [k, v] of linkCodes) if (v.exp < n) linkCodes.delete(k); }
+const byDiscord = (did) => Object.keys(db).find((id) => db[id].local && db[id].discord === String(did));
+const plainName = (id) => bodyOf(db[id].user.username);
+function botKey(req, res, next) {
+  const k = process.env.BOT_API_KEY;
+  if (!k) return res.status(503).json({ error: 'BOT_API_KEY not set' });
+  if (!safeEq(String(req.headers['x-bot-key'] || ''), k)) return res.status(401).json({ error: 'bad key' });
+  next();
+}
+// The logged-in player asks for a one-time code, then types /link <code> in Discord.
+app.post('/api/discord/link-code', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  if (!db[id].local) return res.status(400).json({ error: 'local accounts only' });
+  cleanLinkCodes();
+  for (const [k, v] of linkCodes) if (v.uid === id) linkCodes.delete(k);
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code; do { code = Array.from({ length: 8 }, () => A[crypto.randomInt(0, A.length)]).join(''); } while (linkCodes.has(code));
+  linkCodes.set(code, { uid: id, exp: Date.now() + LINK_TTL });
+  res.json({ ok: true, code, minutes: LINK_TTL / 60000, linked: !!db[id].discord });
+});
+app.post('/api/discord/unlink', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  delete db[id].discord; logEvent(id, 'discord', 'Discord account unlinked'); persist(); res.json({ ok: true });
+});
+app.get('/api/discord/status', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  res.json({ ok: true, linked: !!db[id].discord });
+});
+app.post('/api/bot/link', botKey, (req, res) => {
+  cleanLinkCodes();
+  const b = req.body || {}, did = String(b.discordId || '');
+  if (!/^\d{17,20}$/.test(did)) return res.status(400).json({ error: 'bad discord id' });
+  const c = linkCodes.get(String(b.code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
+  if (!c || !db[c.uid]) return res.status(404).json({ error: 'invalid or expired code' });
+  const other = byDiscord(did);
+  if (other && other !== c.uid) return res.status(409).json({ error: 'discord already linked to another account', username: db[other].user.username });
+  db[c.uid].discord = did; linkCodes.delete(String(b.code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
+  logEvent(c.uid, 'discord', 'Discord account linked (' + did + ')'); persist();
+  res.json({ ok: true, username: plainName(c.uid), gender: db[c.uid].gender || null });
+});
+app.get('/api/bot/user', botKey, (req, res) => {
+  const id = req.query.discord ? byDiscord(req.query.discord) : findLocal(String(req.query.name || ''));
+  if (!id) return res.json({ found: false });
+  res.json({ found: true, username: plainName(id), gender: db[id].gender || null, linked: !!db[id].discord, discord: db[id].discord || null });
+});
+// Password reset link for the player whose Discord account is linked (the bot DMs it to that Discord user only).
+app.post('/api/bot/reset', botKey, (req, res) => {
+  const id = byDiscord((req.body || {}).discordId);
+  if (!id) return res.status(404).json({ error: 'no linked account' });
+  cleanResets();
+  const token = crypto.randomBytes(24).toString('hex');
+  resets[token] = { uid: id, exp: Date.now() + RESET_TTL };
+  logEvent(id, 'reset', 'Password reset link issued through the Discord bot');
+  persist();
+  res.json({ ok: true, username: plainName(id), path: '/reset.html?token=' + token, minutes: RESET_TTL / 60000 });
+});
+app.post('/api/bot/gender', botKey, (req, res) => {
+  const b = req.body || {}, g = b.gender;
+  const id = byDiscord(b.discordId);
+  if (!id) return res.status(404).json({ error: 'no linked account' });
+  if (g !== 'f' && g !== 'm') return res.status(400).json({ error: 'bad gender' });
+  const old = db[id].gender || null;
+  db[id].gender = g;
+  logEvent(id, 'admin', 'Gender changed by staff through the Discord bot' + (b.by ? ' (' + String(b.by).slice(0, 40) + ')' : '') + ': ' + (old || 'none') + ' -> ' + g);
+  persist(); res.json({ ok: true, username: plainName(id), gender: g, was: old });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 initStore()
   .then(() => { addAtToOldNames(); return ensureAdminAccount(); })
+  .then(() => setupBotProfile())
   .then(() => app.listen(PORT, () => console.log('Running on port ' + PORT)))
   .catch((e) => { console.error('Database init failed:', e.message); process.exit(1); });

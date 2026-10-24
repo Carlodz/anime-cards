@@ -12,3 +12,7 @@ services:
         sync: false
       - key: BASE_URL
         sync: false
+      - key: BOT_API_KEY
+        sync: false
+      - key: BOT_ACCOUNT_PASSWORD
+        sync: false

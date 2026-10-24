@@ -1588,7 +1588,9 @@ app.post('/api/zero-chat', async (req, res) => {
   const raw = Array.isArray((req.body || {}).messages) ? req.body.messages.slice(-8) : [];
   const msgs = raw.map((m) => ({ role: m && m.role === 'assistant' ? 'model' : 'user', parts: [{ text: String((m && m.content) || '').slice(0, 400) }] })).filter((m) => m.parts[0].text.trim());
   if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return res.status(400).json({ error: 'bad message' });
-  const model = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+  const wantModel = String(process.env.GEMINI_MODEL || '').trim().replace(/^models\//, '');
+  const model = /^[a-z0-9][a-z0-9.\-]{2,60}$/.test(wantModel) ? wantModel : 'gemini-3.5-flash-lite';
+  if (wantModel && model !== wantModel) console.error('zero-chat: GEMINI_MODEL has a bad format, using default instead');
   try {
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
       method: 'POST',

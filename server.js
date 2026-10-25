@@ -148,7 +148,7 @@ app.get('/api/me', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({ user: null });
   autoCountry(req, id); // old accounts get their flag too (shows on the next refresh)
-  res.json({ user: { pts: db[id].pts || 0, ...db[id].user, ...(isBotAcct(id) ? { username: BOT_NAME } : {}), pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', theme: db[id].theme || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: isVerified(id, db[id]), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
+  res.json({ user: { pts: db[id].pts || 0, ...db[id].user, ...(isBotAcct(id) ? { username: BOT_NAME } : {}), games: gamesOf(db[id]), pic: db[id].pic || null, banner: db[id].banner || null, bg: db[id].bg || null, gender: db[id].gender || null, country: db[id].country || null, status: db[id].status || '', theme: db[id].theme || null, role: roleOf(id), leg: db[id].gender === 'm' && hasLeg(db[id]), cute: db[id].gender === 'f' && hasCute(db[id]), aura: hasAura(db[id]), ver: isVerified(id, db[id]), gold: isAdmin(id), trades: db[id].trades || 0, local: !!db[id].local, admin: isAdmin(id) } });
 });
 app.get('/api/state', (req, res) => {
   const id = sessionId(req);
@@ -421,8 +421,9 @@ function hasCute(u) {
   return Object.values(g).some((o) => o && Object.values(o).some((n) => n > 0));
 }
 const BOT_NAME = 'Mira Assistant';
+const gamesOf = (u) => (u && Array.isArray(u.games) ? u.games.filter((g) => g && Number.isInteger(g.id) && typeof g.name === 'string').slice(0, 6).map((g) => ({ id: g.id, name: g.name })) : []);
 const isBotAcct = (id) => !!(db[id] && db[id].user && bodyOf(db[id].user.username).toLowerCase() === 'wayanime');
-function pub(id) { const u = db[id]; return u && u.user ? { id, username: isBotAcct(id) ? BOT_NAME : u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: isVerified(id, u), gold: isAdmin(id), girl: u.gender === 'f' } : null; }
+function pub(id) { const u = db[id]; return u && u.user ? { id, username: isBotAcct(id) ? BOT_NAME : u.user.username, avatar: u.user.avatar, pic: u.pic || null, banner: u.banner || null, bg: u.bg || null, country: u.country || null, status: u.status || '', role: roleOf(id), leg: u.gender === 'm' && hasLeg(u), cute: u.gender === 'f' && hasCute(u), aura: hasAura(u), auras: auraList(u), ver: isVerified(id, u), gold: isAdmin(id), girl: u.gender === 'f', games: gamesOf(u) } : null; }
 function validCard(c) {
   return c && c.a !== 'aura' && typeof c.a === 'string' && /^[\w-]{1,20}$/.test(c.a) && Number.isInteger(c.i) && c.i >= 0 && c.i <= 99 && RAR.includes(c.r) && (c.a === 'leg') === (c.r === 'legendary');
 }
@@ -1709,6 +1710,52 @@ app.post('/api/gate/forgot', (req, res) => {
   try { obPush({ type: 'message', from: plainName(id), fromDiscordId: whoDiscord(id), text: '[Mira - login page] Password help request. Please verify before sending a reset link.' }); } catch (e) { console.error('forgot: bot push failed:', e.message); }
   persist();
   res.json(out);
+});
+
+// ---- Favorite games (Steam). Search uses Steam's public store search (no API key needed); a player keeps up to 6 games shown on their profile. ----
+const steamNames = new Map(), steamQ = new Map(), steamT = {}, gameT = {};
+const cleanGameName = (x) => String(x || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+app.get('/api/steam/search', async (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const q = String(req.query.q || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 60);
+  if (q.length < 2) return res.json({ items: [] });
+  const now = Date.now(), h = (steamT[id] = (steamT[id] || []).filter((t) => now - t < 60000));
+  if (h.length >= 20) return res.status(429).json({ error: 'slow down' });
+  h.push(now);
+  const ck = q.toLowerCase(), hit = steamQ.get(ck);
+  if (hit && now - hit.t < 3600 * 1000) return res.json({ items: hit.v });
+  const d = await getJson('https://store.steampowered.com/api/storesearch/?l=english&cc=us&term=' + encodeURIComponent(q));
+  if (!d || !Array.isArray(d.items)) return res.status(502).json({ error: 'steam error' });
+  const items = d.items.filter((x) => x && x.type === 'app' && Number.isInteger(x.id) && x.id > 0).slice(0, 8).map((x) => ({ id: x.id, name: cleanGameName(x.name) })).filter((x) => x.name);
+  items.forEach((x) => steamNames.set(x.id, x.name));
+  if (steamNames.size > 3000) steamNames.delete(steamNames.keys().next().value);
+  steamQ.set(ck, { t: now, v: items });
+  if (steamQ.size > 300) steamQ.delete(steamQ.keys().next().value);
+  res.json({ items });
+});
+app.post('/api/profile/games', async (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const now = Date.now(), h = (gameT[id] = (gameT[id] || []).filter((t) => now - t < 60000));
+  if (h.length >= 15) return res.status(429).json({ error: 'slow down' });
+  h.push(now);
+  const raw = (req.body || {}).ids;
+  if (!Array.isArray(raw)) return res.status(400).json({ error: 'bad games' });
+  const ids = Array.from(new Set(raw.map(Number))).filter((n) => Number.isInteger(n) && n > 0 && n < 1e9).slice(0, 6);
+  const out = [];
+  for (const gid of ids) {
+    let name = steamNames.get(gid);
+    if (!name) { // not seen in a search: ask Steam, so nobody can save a made-up name
+      const d = await getJson('https://store.steampowered.com/api/appdetails?filters=basic&appids=' + gid);
+      const e = d && d[gid];
+      name = e && e.success && e.data ? cleanGameName(e.data.name) : '';
+      if (name) steamNames.set(gid, name);
+    }
+    if (!name) return res.status(400).json({ error: 'unknown game' });
+    out.push({ id: gid, name });
+  }
+  if (out.length) db[id].games = out; else delete db[id].games;
+  persist();
+  res.json({ ok: true, games: gamesOf(db[id]) });
 });
 // ---- Mira sings: finds the song on YouTube (full song, played by the YouTube player on the page); if there is no key or quota is used up, a 30-second preview (Deezer, iTunes) is the fallback. Lyrics are never written. ----
 const songT = {}, ytCache = new Map();

@@ -28,13 +28,24 @@ function wave(root){
     if(t<fade){if(idleOk)ctx.drawImage(idle,0,0,FW,FH);drawFrame(0,t/fade)}else drawFrame(i);
     anim=requestAnimationFrame(step)})(t0)}
 function isAr(t){return /[\u0600-\u06FF]/.test(t)}
+var VOX={};
+try{if(window.speechSynthesis)speechSynthesis.addEventListener("voiceschanged",function(){VOX={}})}catch(e){}
+var RE_MALE=/(^|[^e])male\b|naayf|hamed|shakir|maged|tarik|fahed|omar|mehdi|henri|thomas|paul\b|claude|antoine|david|mark\b|james|george|daniel|alex\b|guy\b|ryan|fred\b|jorge|diego|rishi|oliver|christopher|eric\b|bruce|aaron|arthur|gordon|lee\b|reed|rocko|grandpa|ralph|albert|junior|kathy_/i,
+    RE_FEM=/female|femme|woman|zira|samantha|hoda|salma|laila|layla|zariyah|amira|hedda|aria\b|jenny|sara\b|hortense|denise|eloise|julie|siri|karen|moira|tessa|fiona|victoria|ava\b|allison|susan|catherine|amelie|am\u00e9lie|audrey|marie|google (?:us|uk|fran\u00e7ais|\u0627\u0644\u0639\u0631\u0628\u064a\u0629)/i;
+function pickVoice(pre){
+  if(VOX[pre]!==undefined)return VOX[pre];
+  var all=speechSynthesis.getVoices();if(!all.length)return null;
+  var L=all.filter(function(x){return String(x.lang||"").toLowerCase().replace("_","-").indexOf(pre)===0}),
+      v=L.filter(function(x){return RE_FEM.test(x.name)&&!RE_MALE.test(x.name)})[0]||L.filter(function(x){return !RE_MALE.test(x.name)})[0]||null;
+  VOX[pre]=v;return v}
 function speak(root,txt){
   if(muted||!window.speechSynthesis||!txt)return;
   try{
-    var ar=isAr(txt),u=new SpeechSynthesisUtterance(txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,""));
-    u.lang=ar?"ar":"en-US";u.rate=1;u.pitch=1.25;
-    var v=speechSynthesis.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(ar?"ar":"en")===0});
-    var f=v.filter(function(x){return /female|zira|samantha|google|hoda|salma|laila|amira/i.test(x.name)})[0]||v[0];if(f)u.voice=f;
+    var ar=isAr(txt),fr=!ar&&(/[\u00e0\u00e2\u00e7\u00e9\u00e8\u00ea\u00eb\u00ee\u00ef\u00f4\u00f9\u00fb\u00fc\u0153]/i.test(txt)||/\b(le|la|les|je|tu|est|pas|des|une|bonjour|salut|merci)\b/i.test(txt)),
+        pre=ar?"ar":fr?"fr":"en",u=new SpeechSynthesisUtterance(txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,""));
+    u.lang=ar?"ar-SA":fr?"fr-FR":"en-US";
+    var v=pickVoice(pre);if(v){u.voice=v;u.lang=v.lang}
+    u.rate=1;u.pitch=v&&RE_FEM.test(v.name)?1.2:1.9; /* no female voice found: raise the pitch so she never sounds like a man */
     u.onstart=function(){root.classList.add("speak")};
     var end=function(){root.classList.remove("speak")};u.onend=end;u.onerror=end;speechSynthesis.speak(u)}catch(e){}}
 function setReply(root,txt,ex){
@@ -53,7 +64,7 @@ function setReply(root,txt,ex){
     c.appendChild(im);c.appendChild(nm);r.appendChild(c)}
   if(ex&&ex.action&&typeof ex.action.url==="string"&&ex.action.url.indexOf("https://discord.gg/")===0){
     extra=true;var a=document.createElement("a");a.className="zbtn";a.href=ex.action.url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Open Discord";r.appendChild(a)}
-  if(ex&&ex.song&&typeof ex.song.preview==="string"&&ex.song.preview.indexOf("https://")===0){
+  if(ex&&ex.song&&((typeof ex.song.yt==="string"&&/^[\w-]{11}$/.test(ex.song.yt))||(typeof ex.song.preview==="string"&&ex.song.preview.indexOf("https://")===0))){
     extra=true;var sp=document.createElement("div");sp.className="zsong";
     var si=document.createElement("img");si.alt="";si.referrerPolicy="no-referrer";if(typeof ex.song.pic==="string"&&ex.song.pic.indexOf("https://")===0)si.src=ex.song.pic;
     var st=document.createElement("div");st.className="zs-t";var sb=document.createElement("b");sb.textContent=String(ex.song.artist||"").slice(0,60);var sm=document.createElement("small");sm.textContent=String(ex.song.title||"").slice(0,80);st.appendChild(sb);st.appendChild(sm);
@@ -77,26 +88,65 @@ function close(root){stopSong(root);hideMe(root);root.classList.remove("talk","s
 var SV18='<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="display:block;pointer-events:none">',
     ICON_PLAY=SV18+'<path d="M8 5v14l11-7z"/></svg>',ICON_PAUSE=SV18+'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
     SILENT="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=",
-    RE_SING=/^\s*(?:غنيلي|غنّيلي|غني ?لي|غنّي ?لي|غنى ?لي|غني|غنّي|ghanili|ghanni|ghani|sing(?: me)?|chante(?:[- ]moi)?)\s+(.{2,80})$/i;
+    RE_SING=/^\s*(?:(?:ya\s+|يا\s*)?(?:mira|ميرا)\s*[,،:!]*\s*)?(?:غنيلي|غنّيلي|غني ?لي|غنّي ?لي|غنى ?لي|غني|غنّي|ghanili+|ghenili+|ganili+|ghann?i ?li+|gann?i ?li+|ghanni|ghani|ganni|sing(?: me)?|chante(?:[- ]moi)?)\s+(.{2,80})$/i;
 function showMe(root,t){var e=root.querySelector(".mr-me");if(!e)return;e.textContent=String(t).slice(0,80);e.classList.add("on");root.classList.add("hasme")}
 function hideMe(root){var e=root.querySelector(".mr-me");if(e)e.classList.remove("on");root.classList.remove("hasme")}
 function stopSong(root){if(songAudio){try{songAudio.pause()}catch(e){}}if(root)root.classList.remove("sing")}
+var yt={p:null,ready:false,paused:true,ended:false,root:null,fail:null,
+  pause:function(){try{if(this.p&&this.ready)this.p.pauseVideo()}catch(e){}},
+  play:function(){try{if(this.p&&this.ready)this.p.playVideo()}catch(e){}return Promise.resolve()},
+  set currentTime(v){try{if(this.p&&this.ready)this.p.seekTo(v,true)}catch(e){}}},ytApi=0;
+function ytLoad(){
+  if(window.YT&&window.YT.Player)return Promise.resolve();
+  return new Promise(function(res,rej){
+    if(ytApi){ytApi.push(res);return}
+    ytApi=[res];var prev=window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady=function(){try{if(prev)prev()}catch(e){}var q=ytApi;ytApi=0;(q||[]).forEach(function(f){f()})};
+    var sc=document.createElement("script");sc.src="https://www.youtube.com/iframe_api";sc.onerror=function(){ytApi=0;rej(new Error("yt"))};document.head.appendChild(sc)})}
+function ytState(e){
+  var st=e&&e.data,root=yt.root;if(!root)return;var b=root.querySelector(".zsong button");
+  if(st===1){yt.paused=false;yt.ended=false;root.classList.add("speak","sing");if(b)b.innerHTML=ICON_PAUSE}
+  else if(st===2||st===0){yt.paused=true;yt.ended=st===0;root.classList.remove("speak","sing");if(b)b.innerHTML=ICON_PLAY}}
+function startYt(root,vid){
+  songAudio=yt;yt.root=root;yt.paused=true;yt.ended=false;
+  return ytLoad().then(function(){return new Promise(function(res,rej){
+    var to=setTimeout(function(){rej(new Error("timeout"))},9000);
+    if(yt.p&&yt.ready){clearTimeout(to);try{yt.p.loadVideoById(vid)}catch(e){return rej(e)}res();return}
+    var old=document.getElementById("mr-yt-host");if(old)old.remove();
+    yt.p=null;yt.ready=false;
+    var host=document.createElement("div");host.id="mr-yt-host";host.style.cssText="position:fixed;left:-9999px;top:0;width:220px;height:220px;opacity:0;pointer-events:none";
+    var fr=document.createElement("iframe");fr.width="220";fr.height="220";fr.setAttribute("allow","autoplay; encrypted-media");fr.setAttribute("title","Mira");
+    fr.src="https://www.youtube.com/embed/"+vid+"?enablejsapi=1&autoplay=1&playsinline=1&controls=0&rel=0&fs=0&disablekb=1&origin="+encodeURIComponent(location.origin);
+    host.appendChild(fr);document.body.appendChild(host);
+    yt.p=new YT.Player(fr,{events:{
+      onReady:function(){clearTimeout(to);yt.ready=true;try{yt.p.setVolume(100);yt.p.playVideo()}catch(e){}res()},
+      onStateChange:ytState,
+      onError:function(){clearTimeout(to);yt.ready=false;if(yt.fail)yt.fail()}}})})})}
 function songReq(root,t,q,inp,btn){
   var a=LG()==="ar";
   showMe(root,t);busy=true;btn.disabled=true;stopSong(root);
   if(audio){try{audio.pause()}catch(e){}}
-  songAudio=new Audio();songAudio.src=SILENT;try{var pp=songAudio.play();if(pp&&pp.catch)pp.catch(function(){})}catch(e){}
+  var au=new Audio();au.src=SILENT;try{var pp=au.play();if(pp&&pp.catch)pp.catch(function(){})}catch(e){}
+  songAudio=au;ytLoad().catch(function(){});
   setReply(root,a?"لحظة، أجهز الأغنية...":"One sec, getting the song ready...");
-  fetch("/api/mira-song?q="+encodeURIComponent(q),{credentials:"same-origin"})
-    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
-    .then(function(j){
-      if(!j||typeof j.preview!=="string"||j.preview.indexOf("https://")!==0)return Promise.reject(404);
-      var au=songAudio;au.src=j.preview;au.volume=1;
-      au.onended=function(){root.classList.remove("speak","sing");var b=root.querySelector(".zsong button");if(b)b.innerHTML=ICON_PLAY};
-      var go=au.play();
-      var p=go&&go.then?go:Promise.resolve();
-      return p.then(function(){root.classList.add("speak","sing")},function(){}).then(function(){
-        setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})})})
+  function getSong(prev){return fetch("/api/mira-song?q="+encodeURIComponent(q)+(prev?"&src=preview":""),{credentials:"same-origin"})
+    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})}
+  function usePreview(j){
+    if(!j||typeof j.preview!=="string"||j.preview.indexOf("https://")!==0)return Promise.reject(404);
+    songAudio=au;au.src=j.preview;au.volume=1;
+    au.onended=function(){root.classList.remove("speak","sing");var b=root.querySelector(".zsong button");if(b)b.innerHTML=ICON_PLAY};
+    var go=au.play(),p=go&&go.then?go:Promise.resolve();
+    return p.then(function(){root.classList.add("speak","sing")},function(){}).then(function(){
+      setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})})}
+  function viaPreview(){return getSong(true).then(usePreview)}
+  getSong(false).then(function(j){
+    if(j&&typeof j.yt==="string"&&/^[\w-]{11}$/.test(j.yt)){
+      yt.fail=function(){stopSong(root);viaPreview().catch(function(){root.classList.remove("speak","sing");setReply(root,a?"ما أقدر أشغل هذه الأغنية":"I can't play this one")})};
+      return startYt(root,j.yt).then(function(){setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})},function(){return Promise.reject("yt")})}
+    return usePreview(j)})
+    .catch(function(e){
+      if(e==="yt"||(e&&e.message))return viaPreview();
+      return Promise.reject(e)})
     .catch(function(e){root.classList.remove("speak","sing");setReply(root,e===404?(a?"ما لقيت هذه الأغنية":"I couldn't find that song"):e===429?(a?"مهلاً قليلاً":"Slow down a little"):(a?"ما أقدر أغني الآن...":"I can't sing right now..."))})
     .then(function(){busy=false;btn.disabled=false;inp.focus()})}
 function LG(){try{return LANG==="ar"?"ar":"en"}catch(e){return"en"}}
@@ -115,7 +165,7 @@ function onGender(g){
   myGender=g;var root=document.querySelector(".mr");if(!root||!root.offsetWidth)return;
   var a=LG()==="ar",msg=a?(g==="f"?"أهلاً بكِ يا جميلة \uD83D\uDC96 أنا ميرا، سعيدة جداً بتعرفي عليكِ":"أهلاً بك! أنا ميرا، سعيدة بتعرفي عليك"):(g==="f"?"Welcome, beautiful \uD83D\uDC96 I'm Mira, so happy to meet you":"Welcome! I'm Mira, happy to meet you");
   root.classList.add("talk");wave(root);setReply(root,msg);speak(root,msg);
-  if(!myName)setTimeout(function(){needName=true;setReply(root,askMsg());var i=root.querySelector(".mr-in input");if(i)i.focus()},3800)}
+}
 (function(){var f0=window.fetch;if(!f0||f0.__mgd)return;
   var nf=function(u,o){var p=f0.apply(this,arguments);
     try{var url=typeof u==="string"?u:(u&&u.url)||"";

@@ -20,3 +20,7 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: DISCORD_MIRA_CHAT
+        sync: false
+      - key: DISCORD_MIRA_CHANNEL_ID
+        sync: false

@@ -20,7 +20,7 @@ html:root body #friends{position:fixed;right:0;top:0;bottom:0;width:270px;margin
 @media (min-width:1300px){html:root body #friends h2{font-size:1.5rem;margin:0 0 10px}html:root body #friends h2 span{font-size:.8rem}html:root body #friends .fsearch input{font-size:.8rem;padding:8px 12px}html:root body #friends .frow img.fa{width:32px;height:32px}}
 html:root body .jump a.navprof{gap:12px;padding:10px 20px 10px 22px;margin:4px 12px;border-radius:14px;color:#fff;background:linear-gradient(90deg,rgba(14,5,30,.95) 38%,rgba(14,5,30,.15)),var(--bn,linear-gradient(120deg,#2a0f4d,#7c3aed)) right center/cover no-repeat;overflow:hidden}
 html:root body .jump a.navprof::before{display:none}
-.jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge){width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
 .jump a.navprof span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
 
 .cutepk .mc{box-shadow:0 14px 18px rgba(0,0,0,.35)}
@@ -620,7 +620,7 @@ html:root .cutepk .tile:not(.no) .ph{box-shadow:0 0 0 2px var(--tc),0 12px 34px 
 .av{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none;display:block;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
 .prof{margin-bottom:8px}
 .prof .ph0{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
-.prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge){width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #5865F2,0 10px 30px -8px rgba(88,101,242,.8)}
+.prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #5865F2,0 10px 30px -8px rgba(88,101,242,.8)}
 .prof .ph0 b{display:block;font-size:1.25rem;font-family:"Inter","Cairo",sans-serif}
 .prof .ph0 small{color:var(--muted);font-weight:600}
 .prof .stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 6px}
@@ -647,7 +647,7 @@ html:root .cutepk .tile:not(.no) .ph{box-shadow:0 0 0 2px var(--tc),0 12px 34px 
 .stf .sr{display:flex;align-items:center;gap:10px;padding:0 10px 10px;margin-top:-22px}
 .stf .sa{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #1a0f33;background:#2a1a4d;flex:none}
 .stf .sl{font-weight:800;font-size:.78rem;padding:3px 10px;border-radius:99px;margin-top:22px;background:rgba(255,255,255,.12)}
-.stf .sl.o{background:#ffb800;color:#2a1a00}.stf .sl.m{background:#5eead4;color:#032b26}.stf .sl.b{background:#5865f2;color:#fff}.botchk{height:16px;width:auto;vertical-align:-3px;margin-inline-start:4px}
+.stf .sl.o{background:#ffb800;color:#2a1a00}.stf .sl.m{background:#5eead4;color:#032b26}.stf .sl.b{background:#5865f2;color:#fff}.botchk{height:1.15em;width:auto;max-width:none;border-radius:0;box-shadow:none;object-fit:contain;vertical-align:-.2em;margin-inline-start:4px}
 .stf .sm{margin-inline-start:auto;margin-top:22px;width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#fff;padding:0}
 .stf .sm:hover{background:rgba(255,255,255,.26)}.stf .sm svg{width:18px;height:18px}
 .stf.imc .sl{background:rgba(255,255,255,.14);max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -671,7 +671,7 @@ html:root .cutepk .tile:not(.no) .ph{box-shadow:0 0 0 2px var(--tc),0 12px 34px 
 .orow .ot{flex:1;min-width:120px;font-size:.82rem;font-weight:600}
 .fmsg{color:var(--mint,#5eead4);font-weight:600;font-size:.82rem;margin:8px 0 0}
 
-.av,.prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge),.frow img.fa{object-position:50% 20%}
+.av,.prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk),.frow img.fa{object-position:50% 20%}
 .frs .tile .sub{display:block;font-size:.68rem;color:var(--muted);text-align:center;margin-top:2px;font-weight:600}
 .frs .stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
 .frs .stats span{border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:.82rem;font-weight:700;background:var(--panel)}
@@ -886,7 +886,7 @@ html:root body .nav .navq{position:absolute;left:50%;top:0;transform:translateX(
 html:root body .prof h2{margin-bottom:18px}
 html:root body .prof .pban{margin:0 0 22px;height:190px;border-radius:18px}
 html:root body .prof .ph0{padding:0;margin:0 0 18px;gap:16px}
-html:root body .prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge){box-shadow:0 0 0 3px #5865F2}
+html:root body .prof .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){box-shadow:0 0 0 3px #5865F2}
 html:root body .prof .stats{margin:0 0 14px}
 html:root body .frow.hb{margin-bottom:10px}
 html:root body .bpre{margin:0 0 18px;gap:10px}
@@ -924,7 +924,7 @@ html:root body .jump a{flex:1 0 auto;flex-direction:column;justify-content:cente
 html:root body .jump a::before{width:20px;height:20px}
 html:root body .jump a.on::after{left:0;right:0;top:0;bottom:auto;width:auto;height:3px}
 html:root body .jump #j7,html:root body .jump a.navprof{order:-1;margin:0;padding:8px 12px;min-height:0;border-radius:0;background:none}
-html:root body .jump #j7 img,.jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge){width:24px;height:24px}
+html:root body .jump #j7 img,.jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:24px;height:24px}
 html:root body .jump a.navprof span{max-width:70px;font-size:.62rem}
 html:root body .hero{padding:16px 12px;gap:12px 0}
 html:root body .hero .stage{margin:0;max-width:100%}
@@ -1130,7 +1130,7 @@ html:root body #profile.pop:has(.pban.aurf) .pset{border:1px solid rgba(255,45,6
 html:root body #profile.pop:has(.pban.aurf) .fb.g,html:root body #fprof:has(.pban.aurf) .fb.g{border:1px solid rgba(255,45,61,.5);background:rgba(255,45,61,.09);color:#ffd9dc}
 html:root body #profile.pop:has(.pban.aurf) .fb.g:hover,html:root body #fprof:has(.pban.aurf) .fb.g:hover{background:rgba(255,45,61,.22)}
 html:root body #profile.pop:has(.pban.aurf) .pban.aurf,html:root body #fprof:has(.pban.aurf) .pban.aurf{border-radius:12px;box-shadow:0 0 0 2px #ff2d3d,0 0 22px 2px rgba(255,45,61,.7),0 8px 22px -8px rgba(0,0,0,.8)}
-html:root body #profile.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge),html:root body #fprof:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge){width:78px;height:78px;box-shadow:0 0 0 3px #ff2d3d,0 0 0 5px #0b0306,0 0 0 6px rgba(255,45,61,.6),0 10px 26px -6px rgba(255,45,61,.65)}
+html:root body #profile.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk),html:root body #fprof:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:78px;height:78px;box-shadow:0 0 0 3px #ff2d3d,0 0 0 5px #0b0306,0 0 0 6px rgba(255,45,61,.6),0 10px 26px -6px rgba(255,45,61,.65)}
 html:root body #profile.pop:has(.pban.aurf) .ph0 b,html:root body #fprof:has(.pban.aurf) .ph0 b{font-family:"Cinzel",Georgia,"Cairo",serif;letter-spacing:.05em;font-size:1.3rem;color:#ffe3e5;text-shadow:0 2px 8px rgba(0,0,0,.8)}
 html:root body #profile.pop:has(.pban.aurf) .ph0 small,html:root body #fprof:has(.pban.aurf) .ph0 small{letter-spacing:.12em;text-transform:uppercase;font-size:.68rem}
 html:root body #fprof:has(.pban.aurf) .fst{border:1px solid rgba(255,45,61,.35);background:rgba(255,45,61,.07);font-family:"Cormorant Garamond",Georgia,"Cairo",serif;font-style:italic;font-size:1rem;color:#ffd9dc}
@@ -2078,7 +2078,7 @@ function renderProfile(){
     return'<div class="tile" data-pa="'+x.a+'" data-pi="'+x.i+'" style="border-color:'+x.col+';--tc:'+x.col+'"><div class="ph"><span class="bd" style="color:'+x.col+'">'+"\u2605".repeat(x.st)+'</span><img alt="'+esc(x.nm)+'" src="'+x.img+'"></div><b>'+esc(x.nm)+'</b><span class="sub">'+esc(x.an)+' \u00b7 '+esc(x.rn)+'</span>'+(x.n>1?'<div class="pips"><u class="on" style="background:'+x.col+'">'+x.n+'</u></div>':"")+'</div>'}).join("");
   var av=avSrc(USER),bsrc=(document.documentElement.getAttribute("data-theme")==="naruto"?"/themes/naruto-profile.jpg":document.documentElement.getAttribute("data-theme")==="zoro"?"/themes/zoro-profile.jpg":bnImg(USER.banner)),ban='<div class="pban'+(USER.aura?' aurf':'')+'">'+(bsrc?'<img alt="" src="'+esc(bsrc)+'">':"")+'<button class="fb g" data-pf="bpick">'+PL("bn")+'</button></div>';
   el.style.display="";if(j6){j6.style.display="";j6.textContent=PL("n6")}var j7=$("j7"),j8=$("j8");if(j7){j7.style.display="";navProfile(j7)}if(j8)j8.style.display="none";
-  el.innerHTML='<h2>'+(LANG==="en"?"Profile":"\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a")+'</h2>'+ban+'<div class="ph0"><img alt="" src="'+esc(av)+'" onerror="this.onerror=null;this.src=DEFAV"><div class="pid"><b>'+esc(USER.username)+stz0(USER)+cflagBtn()+'</b><span class="hnd">@'+esc(String(USER.username).replace(/^@+/,""))+'</span><small class="rl'+(USER.role?' r-'+USER.role:'')+'">'+(USER.role==="owner"?"Owner":USER.role==="mod"?"Admin":"")+'</small></div></div><div class="pbio">'+stEditor()+(CTYE?ctySel():"")+'</div>'+pickerHtml()+'<div class="stats"><span><i>'+PL("tot")+'</i><strong>'+tot+'</strong></span><span><i>'+PL("uni")+'</i><strong>'+uni+'</strong></span><span><i>'+PL("pct")+'</i><strong>'+Math.round(uni*100/all)+'%</strong></span></div><div class="stats chp">'+chips+'<span>'+(LANG==="en"?"trades":"\u062a\u0628\u062f\u064a\u0644")+'<i>'+(USER.trades||0)+'/100</i></span></div>';var lb=$("library");if(lb){lb.style.display="";lb.innerHTML='<h2>'+LIC.book+'<b class="lt">'+PL("h")+'</b> <span>'+uni+' / '+all+'</span></h2>'+(items.length?lhBuild(items):'<p class="empty">'+PL("empty")+'</p>')}}
+  el.innerHTML='<h2>'+(LANG==="en"?"Profile":"\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a")+'</h2>'+ban+'<div class="ph0"><img alt="" src="'+esc(av)+'" onerror="this.onerror=null;this.src=DEFAV"><div class="pid"><b>'+esc(USER.username)+stz0(USER)+cflagBtn()+'</b><span class="hnd">@'+esc(String(USER.username).replace(/^@+/,""))+'</span><small class="rl'+(USER.role?' r-'+USER.role:'')+'">'+(USER.role==="owner"?"Owner":USER.role==="mod"?"Admin":"")+'</small></div></div><div class="pbio">'+stEditor()+(CTYE?ctySel():"")+'</div>'+gamesHtml(USER)+pickerHtml()+'<div class="stats"><span><i>'+PL("tot")+'</i><strong>'+tot+'</strong></span><span><i>'+PL("uni")+'</i><strong>'+uni+'</strong></span><span><i>'+PL("pct")+'</i><strong>'+Math.round(uni*100/all)+'%</strong></span></div><div class="stats chp">'+chips+'<span>'+(LANG==="en"?"trades":"\u062a\u0628\u062f\u064a\u0644")+'<i>'+(USER.trades||0)+'/100</i></span></div>';var lb=$("library");if(lb){lb.style.display="";lb.innerHTML='<h2>'+LIC.book+'<b class="lt">'+PL("h")+'</b> <span>'+uni+' / '+all+'</span></h2>'+(items.length?lhBuild(items):'<p class="empty">'+PL("empty")+'</p>')}}
 var _pc=function(e){var pb=e.target.closest("[data-pf]");if(pb){pfAct(pb);return}var t=e.target.closest(".tile[data-pa]");if(t)cvOpen(t.getAttribute("data-pa"),+t.getAttribute("data-pi"))};$("profile").addEventListener("click",_pc);$("library").addEventListener("click",_pc);$("library").addEventListener("click",function(e){var o=e.target.closest("[data-lopen]");if(o){var q=o.getAttribute("data-lopen").split("|");cvOpen(q[0],+q[1]);return}
 var t=e.target.closest("[data-lk]");if(!t)return;var k=t.getAttribute("data-lk"),x=LIBI.filter(function(y){return lkey(y)===k})[0];if(!x)return;LSEL=k;
 var h=document.querySelector("#library .lhero");if(h){var d=document.createElement("div");d.innerHTML=lhHero(x);h.replaceWith(d.firstChild)}
@@ -3002,7 +3002,7 @@ if(anchor&&anchor.parentNode){
     box.innerHTML='<div class="ppctl"><b>'+(LANG==="en"?"Profile":"\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a")+'</b><button class="pclose" data-fc="1" type="button" aria-label="'+esc(FL("close"))+'">'+XSVG+'</button></div>'
       +'<div class="pban'+(u.aura?' aurf':'')+'">'+(b?'<img alt="" src="'+esc(b)+'">':'')+'</div>'
       +'<div class="ph0"><img alt="" src="'+esc(avSrc(u))+'" onerror="this.onerror=null;this.src=DEFAV"><div class="pid"><b>'+esc(u.username)+stz(u)+'</b><span class="hnd">@'+esc(String(u.username).replace(/^@+/,""))+'</span><small class="rl'+(u.role?' r-'+u.role:'')+'">'+(u.role==="owner"?"Owner":u.role==="mod"?"Admin":u.role==="bot"?"BOT":"")+'</small></div></div>'
-      +(u.status?'<div class="fst">'+esc(u.status)+'</div>':'')
+      +(u.status?'<div class="fst">'+esc(u.status)+'</div>':'')+gamesHtml(u)
       +'<div class="fact">'+btn("view",u.id,FL("coll"),"g")+btn("snd",u.id,FL("snd"),"")+btn("open",u.id,FL("tr"),"g")+btn("rm",u.id,FL("rm"),"g",1)+'</div>';
   }
   function open(id){cur=id;box.classList.add("pop");bk.classList.add("on");draw()}
@@ -3105,7 +3105,7 @@ if(nq.value)box.classList.add("open")})();
   html:root body .hero>.nav.jump a::before{width:20px!important;height:20px!important}
   html:root body .jump a.navprof{padding:8px 1px 7px!important;flex-direction:column!important;gap:3px!important}
   html:root body .jump a.navprof span{max-width:100%!important;font-size:.56rem!important}
-  html:root body .jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge){width:22px!important;height:22px!important}
+  html:root body .jump a.navprof img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:22px!important;height:22px!important}
   html:root body .jump a.on{background:linear-gradient(180deg,rgba(214,90,255,.22),rgba(214,90,255,.02))!important}
   html:root body .jump a.on::after{left:18%!important;right:18%!important;top:0!important;bottom:auto!important;width:auto!important;height:3px!important;border-radius:0 0 4px 4px}
 
@@ -3995,5 +3995,91 @@ ensure();setInterval(ensure,1000);
 </script>
 <link rel="stylesheet" href="/mira/mira.css?v=9">
 <script src="/mira/mira.js?v=9" defer></script>
+
+<style id="games-css">
+.fgames{margin:10px 6px 4px}
+.fgames>b{display:flex;align-items:center;gap:6px;font-size:.8rem;opacity:.85;margin:0 0 6px;letter-spacing:.02em}
+.fgames .gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.fgames .gi{border-radius:10px;overflow:hidden;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14)}
+.fgames .gi img{display:block;width:100%;aspect-ratio:460/215;object-fit:cover;background:#1b2838}
+.fgames .gi span{display:block;padding:4px 7px;font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stg .gmmine,#stg .gmres{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+#stg .gmrow{display:flex;align-items:center;gap:10px;padding:5px 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+#stg .gmrow img{width:92px;aspect-ratio:460/215;object-fit:cover;border-radius:7px;flex:none;background:#1b2838}
+#stg .gmrow span{flex:1;min-width:0;font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#stg .gmrow button{flex:none;width:32px;height:32px;border:0;border-radius:50%;cursor:pointer;color:#fff;font-size:1.2rem;line-height:1;background:linear-gradient(135deg,#7c3aed,#c04bff)}
+#stg .gmrow button.rm{background:rgba(255,255,255,.16)}
+#stg .gmrow button:disabled{opacity:.35;cursor:default}
+#stg .gmin input{width:100%;box-sizing:border-box;padding:10px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:#fff;font:inherit;font-weight:600;outline:0}
+#stg .gmh{font-size:.78rem;opacity:.7;margin:2px 2px 0}
+html[data-mode="day"] #stg .gmrow{background:#e2ecfb;border-color:#cddcf0}
+html[data-mode="day"] #stg .gmin input{background:#fff;color:#13233d;border-color:#cddcf0}
+</style>
+<script id="games-js">
+/* Favorite games: search Steam in Settings, press + to add up to 6 games to your profile; everyone who opens your profile sees them. */
+(function(){
+  var MAX=6,tm=0,seq=0;
+  var L={
+    t:{en:"Favorite games",ar:"الألعاب المفضلة",fr:"Jeux préférés"},
+    s:{en:"Search Steam and add up to 6 games to your profile",ar:"قلّب على Steam وزِد حتى 6 ألعاب لبروفايلك",fr:"Cherchez sur Steam et ajoutez jusqu'à 6 jeux à votre profil"},
+    ph:{en:"Search a game...",ar:"ابحث عن لعبة...",fr:"Rechercher un jeu..."},
+    none:{en:"No games yet",ar:"ما زدتش ألعاب بعد",fr:"Aucun jeu pour le moment"},
+    nores:{en:"No game found",ar:"ما لقيت حتى لعبة",fr:"Aucun jeu trouvé"},
+    full:{en:"You can add up to 6 games",ar:"تقدر تزيد 6 ألعاب كحد أقصى",fr:"6 jeux maximum"},
+    err:{en:"Search isn't working right now",ar:"البحث ما يخدمش دابا",fr:"La recherche ne marche pas pour le moment"},
+    fail:{en:"Couldn't save, try again",ar:"ما تسجلتش، عاود",fr:"Échec, réessayez"},
+    mine:{en:"Your games",ar:"ألعابك",fr:"Vos jeux"},
+    prof:{en:"Favorite games",ar:"الألعاب المفضلة",fr:"Jeux préférés"}
+  };
+  function lg(){var c="en";try{c=localStorage.getItem("wa-lang")||"en"}catch(e){}return L.t[c]?c:"en"}
+  function T(k){return L[k][lg()]}
+  function E(x){return String(x).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function img(id){return"https://cdn.cloudflare.steamstatic.com/steam/apps/"+(+id)+"/header.jpg"}
+  var ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.8" cy="13.6" r=".6" fill="currentColor"/></svg>';
+  window.gamesHtml=function(u){
+    var g=u&&Array.isArray(u.games)?u.games:[];if(!g.length)return"";
+    return'<div class="fgames"><b>'+ICON+E(T("prof"))+'</b><div class="gl">'+g.map(function(x){return'<div class="gi" title="'+E(x.name)+'"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="'+img(x.id)+'"><span>'+E(x.name)+'</span></div>'}).join("")+'</div></div>'};
+  function mine(){return(typeof USER!=="undefined"&&USER&&Array.isArray(USER.games))?USER.games:[]}
+  function has(id){return mine().some(function(g){return g.id===id})}
+  function row(g,add){return'<div class="gmrow"><img alt="" referrerpolicy="no-referrer" src="'+img(g.id)+'"><span title="'+E(g.name)+'">'+E(g.name)+'</span><button type="button" class="'+(add?"":"rm")+'" data-gid="'+(+g.id)+'" data-gn="'+E(g.name)+'" data-act="'+(add?"add":"rm")+'" '+(add&&(has(g.id)||mine().length>=MAX)?"disabled":"")+' aria-label="'+(add?"Add":"Remove")+'">'+(add?"+":"&times;")+'</button></div>'}
+  function drawMine(){var b=document.getElementById("gmmine");if(!b)return;var m=mine();b.innerHTML=m.length?m.map(function(g){return row(g,false)}).join(""):'<div class="gmh">'+E(T("none"))+'</div>'}
+  function msg(t){var m=document.getElementById("gmm");if(m)m.textContent=t||""}
+  function save(list){
+    msg("...");
+    return fetch("/api/profile/games",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:list.map(function(g){return g.id})})})
+      .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+      .then(function(j){USER.games=j.games||[];msg("");drawMine();try{renderProfile()}catch(e){}var q=document.getElementById("gmres");if(q)q.querySelectorAll('button[data-act="add"]').forEach(function(b){b.disabled=has(+b.getAttribute("data-gid"))||mine().length>=MAX})})
+      .catch(function(){msg(T("fail"))})}
+  function search(v){
+    var res=document.getElementById("gmres");if(!res)return;
+    v=v.trim();if(v.length<2){res.innerHTML="";msg("");return}
+    var my=++seq;msg("...");
+    fetch("/api/steam/search?q="+encodeURIComponent(v),{credentials:"same-origin"})
+      .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+      .then(function(j){if(my!==seq)return;msg("");var it=j.items||[];res.innerHTML=it.length?it.map(function(g){return row(g,true)}).join(""):'<div class="gmh">'+E(T("nores"))+'</div>'})
+      .catch(function(e){if(my!==seq)return;msg(e===429?"...":T("err"))})}
+  function init(){
+    var st=document.getElementById("stg");if(!st||document.getElementById("sggm"))return;
+    if(typeof USER==="undefined"||!USER)return;
+    var lang=st.querySelector(".sgl"),host=lang&&lang.parentNode;if(!host||!host.parentNode)return;
+    var c=document.createElement("div");c.className="sgc";c.id="sggm";
+    c.innerHTML='<h3><span style="color:#35d0ff;display:flex">'+ICON.replace('width="16" height="16"','width="20" height="20"')+'</span>'+E(T("t"))+'</h3><p>'+E(T("s"))+'</p><div id="gmmine" class="gmmine"></div><div class="gmin"><input id="gmq" type="text" maxlength="60" autocomplete="off" placeholder="'+E(T("ph"))+'"></div><div id="gmres" class="gmres"></div><span class="sgm" id="gmm"></span>';
+    host.parentNode.insertBefore(c,host);
+    drawMine();
+    var inp=c.querySelector("#gmq");
+    inp.addEventListener("input",function(){clearTimeout(tm);var v=inp.value;tm=setTimeout(function(){search(v)},400)});
+    inp.addEventListener("keydown",function(e){e.stopPropagation()});
+    c.addEventListener("click",function(e){
+      var b=e.target.closest&&e.target.closest("button[data-gid]");if(!b||b.disabled)return;e.stopPropagation();
+      var id=+b.getAttribute("data-gid"),a=b.getAttribute("data-act"),m=mine().slice();
+      if(a==="add"){if(has(id))return;if(m.length>=MAX){msg(T("full"));return}m.push({id:id,name:b.getAttribute("data-gn")||""})}
+      else m=m.filter(function(g){return g.id!==id});
+      save(m)})}
+  function wrap(){
+    var o=window.stgOpen;if(typeof o!=="function"||o.__gm)return false;
+    var n=function(){var r=o.apply(this,arguments);try{init()}catch(e){console.error(e)}return r};n.__gm=1;window.stgOpen=n;return true}
+  if(!wrap()){var k=setInterval(function(){if(wrap())clearInterval(k)},300)}
+})();
+</script>
 </body>
 </html>

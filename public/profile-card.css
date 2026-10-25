@@ -13,7 +13,7 @@ html:root body #profile.pop .pban::before,html:root body #fprof.pop .pban::befor
 html:root body #profile.pop .pban::after,html:root body #fprof.pop .pban::after{background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.35))}
 /* avatar + name */
 html:root body #profile.pop .ph0,html:root body #fprof.pop .ph0{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"av act" "nm nm";align-items:start;column-gap:14px;row-gap:12px;padding:0 24px;margin:-46px 0 0}
-html:root body #profile.pop .ph0>img:not(.vchk):not(.cflag):not(.gbadge),html:root body #fprof.pop .ph0>img:not(.vchk):not(.cflag):not(.gbadge){grid-area:av;width:92px;height:92px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 5px #fff,0 8px 22px -8px rgba(0,0,60,.5)}
+html:root body #profile.pop .ph0>img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk),html:root body #fprof.pop .ph0>img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){grid-area:av;width:92px;height:92px;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 5px #fff,0 8px 22px -8px rgba(0,0,60,.5)}
 html:root body #profile.pop .ph0>div,html:root body #fprof.pop .ph0>div{grid-area:nm;min-width:0}
 html:root body #profile.pop .ph0 b,html:root body #fprof.pop .ph0 b{display:block;font-size:1.35rem;font-weight:700;color:#0a0a0a;text-shadow:none;line-height:1.2}
 html:root body #profile.pop .ph0 b .vchk,html:root body #fprof.pop .ph0 b .vchk{width:1.1em;height:1.1em}
@@ -45,7 +45,7 @@ html:root body #profile.pop:has(.pban.aurf),html:root body #fprof.pop:has(.pban.
 html:root body #profile.pop:has(.pban.aurf)::after,html:root body #fprof.pop:has(.pban.aurf)::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;
   background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.75) 50%,rgba(255,170,178,.35) 54%,transparent 62%);background-size:250% 100%;animation:pcshine 3.4s ease-in-out infinite}
 html:root body #profile.pop:has(.pban.aurf) .pban.aurf,html:root body #fprof.pop:has(.pban.aurf) .pban.aurf{border:0!important;border-radius:0;box-shadow:none;animation:none}
-html:root body #profile.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge),html:root body #fprof.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge){width:92px;height:92px;animation:pcring 2.6s ease-in-out infinite}
+html:root body #profile.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk),html:root body #fprof.pop:has(.pban.aurf) .ph0 img:not(.vchk):not(.cflag):not(.gbadge):not(.botchk){width:92px;height:92px;animation:pcring 2.6s ease-in-out infinite}
 html:root body #profile.pop:has(.pban.aurf) .ph0 b,html:root body #fprof.pop:has(.pban.aurf) .ph0 b{color:#0a0a0a;text-shadow:none}
 html:root body #profile.pop:has(.pban.aurf) .ph0 small,html:root body #fprof.pop:has(.pban.aurf) .ph0 small,html:root body #fprof.pop:has(.pban.aurf) .fst{color:#333}
 html:root body #profile.pop:has(.pban.aurf) .ph0 small.rl.r-owner{color:#e0243a}

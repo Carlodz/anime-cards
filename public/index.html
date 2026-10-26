@@ -31,8 +31,10 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .me b{display:block;font-size:13px}.me small{color:var(--ok);font-size:11px}
 main{grid-row:2;min-width:0;overflow-y:auto;padding:18px 2px 20px;scrollbar-width:none}
 .hero{position:relative;min-height:320px;border-radius:22px;overflow:hidden;background:#1a1030 var(--hb) center 30%/cover;display:flex;align-items:flex-end;padding:34px}
-.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,9,18,.92) 8%,rgba(10,9,18,.3) 55%,transparent),linear-gradient(0deg,rgba(10,9,18,.85),transparent 55%)}
-.hero>div{position:relative;max-width:420px}
+.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.hero::before{z-index:1;content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,9,18,.92) 8%,rgba(10,9,18,.3) 55%,transparent),linear-gradient(0deg,rgba(10,9,18,.85),transparent 55%)}
+.hero>div{position:relative;z-index:2;max-width:420px}
+.hero>.dots{z-index:2}
 .hero small{color:var(--mu);font-weight:700;font-size:11px}
 .hero h1{margin:6px 0 8px;font-size:clamp(30px,4.4vw,54px);line-height:.95;font-weight:800;letter-spacing:-1px}
 .hero p{margin:0 0 18px;color:#c9c5de;font-size:13px}
@@ -41,18 +43,25 @@ main{grid-row:2;min-width:0;overflow-y:auto;padding:18px 2px 20px;scrollbar-widt
 .btn.g{background:none;color:var(--tx);padding:0 14px}
 .dots{position:absolute;bottom:14px;left:50%;display:flex;gap:5px}.dots i{width:16px;height:3px;border-radius:2px;background:rgba(255,255,255,.3)}.dots i:first-child{background:#fff}
 h2{font-size:16px;font-weight:700;margin:26px 0 14px}
-.row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(160px,1fr);gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
 .gc{border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s}
 .gc:hover{transform:translateY(-3px)}
 .gc .im{aspect-ratio:3/4;background:linear-gradient(160deg,#3a1d63,#14111f) center/cover}
 .gc div.t{padding:10px 12px 12px}.gc b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gc span{font-weight:700;font-size:13px}.gc em{font-style:normal;color:var(--mu);font-size:11px;margin-left:6px}.gc .own{color:var(--ok)}
 .rail{grid-row:2;padding-top:18px;overflow-y:auto;scrollbar-width:none;min-height:0}
+.pk{position:relative;border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.pk:hover{transform:translateY(-4px);box-shadow:0 14px 34px -14px var(--c,#8a4dff)}
+.pk .im{aspect-ratio:2/3;background:#14111f center/cover no-repeat}
+.pk .t{padding:10px 12px 12px}.pk b{display:block;font-size:13px}.pk small{color:var(--mu);font-size:11px}
+.pk .tag{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(10,9,18,.7);border:1px solid var(--line);color:var(--c,#fff);backdrop-filter:blur(6px)}
 .rail h3{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 12px;font-size:13px;font-weight:700}
 .rail h3 a{color:var(--mu);font-size:11px;font-weight:600}
 .fr{display:flex;align-items:center;gap:10px;padding:7px 0}.fr b{display:block;font-size:12.5px}.fr small{font-size:11px;color:var(--ok)}
 .ac{display:flex;gap:10px;padding:8px 0}.ac img{width:30px;height:30px;border-radius:8px;object-fit:cover;background:#2a2540}
 .ac small{display:block;color:var(--vio);font-size:10.5px;font-weight:700}.ac b{font-size:12px;display:block}.ac time{color:var(--mu);font-size:10.5px}
+.sc{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:520px}
+.sc .me img{width:56px;height:56px}
 .rail section+section{margin-top:26px}
 .empty{color:var(--mu);font-size:12px}
 #login{position:fixed;inset:0;background:rgba(10,9,18,.88);display:none;place-items:center;z-index:9}
@@ -74,18 +83,29 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <a class="on" href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 3l9 8v10H3z"/></svg><span>Home</span></a>
 <a href="/classic.html#library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="12" height="18" rx="2"/><path d="M19 6v14"/></svg><span>Library</span></a>
 <a href="/classic.html#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span>Store</span></a>
-<a href="/classic.html#friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6M17 4a3.5 3.5 0 0 1 0 7M22 20c0-3-1.5-5-4-5.5"/></svg><span>Friends</span></a>
+<a href="#settings" id="nset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
 <a href="/classic.html#trade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><span>Trade</span></a>
 <hr>
 <a href="/classic.html#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profile</span></a>
+<a href="/admin.html" id="nadm" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Admin</span></a>
+<a href="/auth/logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg><span>Log out</span></a>
 <div class="me" id="me"><img src="/favicon.png" alt=""><div><b>Guest</b><small>Offline</small></div></div>
 </nav>
 <main id="home">
-<section class="hero" id="hero" style="--hb:url(/themes/zero-bg.jpg)"><div>
-<small id="hk">NEW</small><h1 id="ht">Open today’s pack</h1><p id="hp">Pull anime cards, trade with friends and spend points in the store.</p>
-<a class="btn p" href="/classic.html#stage">Open pack</a><a class="btn g" href="/classic.html#library">View collection</a></div><div class="dots"><i></i><i></i><i></i><i></i></div></section>
-<h2>Recommended for you</h2><div class="row" id="rec"></div>
+<section class="hero" id="hero"><video poster="/packs-poster.jpg" src="/packs-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video><div>
+<small>FEATURED</small><h1>Anime Pack</h1><p>Pull anime cards, trade with friends and spend points in the store.</p>
+<a class="btn p" href="/classic.html#stage">Open pack</a><a class="btn g" href="/classic.html#library">View collection</a></div></section>
+<h2>Recommended for you</h2><div class="row" id="rec">
+<a class="pk" style="--c:#ff8a3d" href="/classic.html#stage"><span class="tag">DAILY</span><div class="im" style="background-image:url(/cardback.webp)"></div><div class="t"><b>Daily Pack</b><small>5 cards every day</small></div></a>
+<a class="pk" style="--c:#ffc22e" href="/classic.html#vault"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-leg.webp)"></div><div class="t"><b>Legendary Pack</b><small>1 legendary roll per week</small></div></a>
+<a class="pk" style="--c:#ff4f8b" href="/classic.html#cutepack"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-cute.webp)"></div><div class="t"><b>Cute Pack</b><small>1 cute roll per week</small></div></a>
+<a class="pk" style="--c:#8a4dff" href="/classic.html#aurav"><span class="tag">MONTHLY</span><div class="im" style="background-image:url(/cardback-aura.webp)"></div><div class="t"><b>Aura Pack</b><small>1 aura roll per month</small></div></a>
+</div>
 </main>
+<main id="settings" style="display:none"><h2 style="margin-top:8px">Settings</h2>
+<div class="sc"><div class="me" style="margin:0 0 14px"><img id="sp" src="/favicon.png" alt=""><div><b id="sn">Guest</b><small id="sr"></small></div></div>
+<p class="empty">Points: <b id="spt">0</b></p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn p" href="/classic.html#profile">Edit profile</a><a class="btn g" style="border:1px solid var(--line)" href="/classic.html#inbox">Notifications</a><a class="btn g" style="border:1px solid var(--line)" href="/auth/logout">Log out</a></div></div></main>
 <aside class="rail">
 <section><h3>Friends online <a href="/classic.html#friends">View all</a></h3><div id="fr"><p class="empty">Log in to see your friends.</p></div></section>
 <section><h3>Activity feed <a href="/classic.html#inbox">View all</a></h3><div id="ac"></div></section>
@@ -94,21 +114,31 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <div id="login"><form id="lf"><b>Log in to Wayanime</b><input name="username" placeholder="Username" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><p id="le"></p><button class="btn p" type="submit">Log in</button><a href="/classic.html" style="text-align:center;color:var(--mu);font-size:12px">Create an account</a></form></div>
 <script>
 const $=s=>document.querySelector(s),J=(u,o)=>fetch(u,o).then(r=>r.ok?r.json():Promise.reject(r.status)),E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const img=p=>!p?'/favicon.png':typeof p==='string'?p:(p.s||'/favicon.png');
+const BN={sky:'sky.jpg',night:'night.jpg',eyes:'eyes.gif',meadow:'meadow.jpg',ban09:'ban09.webp',ban10:'ban10.gif',ban11:'ban11.gif',ban12:'ban12.webp',ban13:'ban13.webp'};
+for(let i=1;i<=8;i++)BN['ban0'+i]='ban0'+i+'.jpg';for(let i=1;i<=14;i++){const k='pf'+String(i).padStart(2,'0');BN[k]=k+'.jpg'}
+const AURA=['madara','kira','sukuna','shanks','jinwoo','itachi'];
+const img=(p,av)=>{
+ if(p&&typeof p==='object'){
+  if(p.s)return'/shop/img/'+encodeURIComponent(p.s);
+  if(p.p&&BN[p.p])return'/banners/'+BN[p.p];
+  if(p.a==='aura'&&AURA[p.i])return'/aura/'+AURA[p.i]+'.jpg';
+  if(p.a&&Number.isInteger(p.i))return'/cardimg/'+encodeURIComponent(p.a)+'-'+p.i+'.jpg';
+ }else if(typeof p==='string'&&p)return p;
+ return av&&/^https?:\/\//.test(av)?av:'/favicon.png'};
 const ago=t=>{const m=(Date.now()-t)/6e4;return m<60?Math.max(1,m|0)+'m ago':m<1440?(m/60|0)+'h ago':(m/1440|0)+'d ago'};
 async function boot(){
  let me;try{me=(await J('/api/me')).user}catch{$('#login').style.display='grid';me=null}
- if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`<img src="${E(img(me.pic))}" alt=""><div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`}
- J('/api/announcements').then(d=>{const a=d.items||[];if(a[0]){$('#ht').textContent=a[0].title;$('#hp').textContent=a[0].text||'';$('#hk').textContent='ANNOUNCEMENT';if(a[0].img)$('#hero').style.setProperty('--hb',`url(${a[0].img})`)}
+ if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`<img src="${E(img(me.pic,me.avatar))}" alt=""><div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`;$('#sp').src=img(me.pic,me.avatar);$('#sn').textContent=me.username||me.name||'';$('#spt').textContent=(me.pts||0).toLocaleString();if(me.role){$('#nadm').style.display='';$('#sr').textContent=me.role}}
+ J('/api/announcements').then(d=>{const a=d.items||[];
   $('#ac').innerHTML=a.length?a.map(x=>`<div class="ac"><img src="${E(x.img||'/logo.png')}" alt=""><div><small>Announcement</small><b>${E(x.title)}</b><time>${ago(x.t)}</time></div></div>`).join(''):'<p class="empty">Nothing new yet.</p>'}).catch(()=>{});
  if(!me)return;
- J('/api/social').then(d=>{const f=d.friends||[];$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>`<div class="fr"><img src="${E(img(x.pic))}" alt=""><div><b>${E(x.username||x.name)}</b><small>● Online</small></div></div>`).join(''):'<p class="empty">Add friends to trade cards.</p>'}).catch(()=>{});
- J('/api/store').then(d=>{window.ITEMS=d.items||[];draw('')}).catch(()=>{});
+ J('/api/social').then(d=>{const f=d.friends||[];$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>`<div class="fr"><img src="${E(img(x.pic,x.avatar))}" alt=""><div><b>${E(x.username||x.name)}</b><small>● Online</small></div></div>`).join(''):'<p class="empty">Add friends to trade cards.</p>'}).catch(()=>{});
 }
-function draw(q){const l=(window.ITEMS||[]).filter(x=>!q||(x.name||'').toLowerCase().includes(q)).slice(0,14);
- $('#rec').innerHTML=l.length?l.map(x=>`<a class="gc" href="/classic.html#store"><div class="im" style="background-image:url(/shop/img/${E(x.id)})"></div><div class="t"><b>${E(x.name)}</b>${x.owned?'<span class="own">Owned</span>':`<span>${(x.price||0).toLocaleString()} pts</span>`}</div></a>`).join(''):'<p class="empty">No items match.</p>'}
+function draw(q){document.querySelectorAll('#rec .pk').forEach(c=>{c.style.display=!q||c.textContent.toLowerCase().includes(q)?'':'none'})}
 $('#q').addEventListener('input',e=>draw(e.target.value.trim().toLowerCase()));
 $('#lf').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);
  try{await J('/auth/loginpw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:f.get('username'),password:f.get('password')})});$('#login').style.display='none';boot()}catch(s){$('#le').textContent=s===429?'Too many attempts. Wait a minute.':'Wrong username or password.'}});
+function route(){const st=location.hash==='#settings';$('#home').style.display=st?'none':'';$('#settings').style.display=st?'block':'none';$('#nset').classList.toggle('on',st);document.querySelector('.side a[href="#home"]').classList.toggle('on',!st)}
+addEventListener('hashchange',route);route();
 boot();
 </script></body></html>

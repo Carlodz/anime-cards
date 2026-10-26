@@ -36,8 +36,11 @@ function speakBrowser(root,txt){
   try{
     var ar=isAr(txt),u=new SpeechSynthesisUtterance(txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,""));
     u.lang=ar?"ar":"en-US";u.rate=1;u.pitch=1.25;
+    var FEM=/female|woman|femme|zira|samantha|hoda|salma|laila|amira|zariyah|fatima|hala|mariam|aria|jenny|susan|hazel|karen|victoria|tessa|moira|google us english/i,MALE=/(^|[^a-z])male|naayf|hamed|shakir|maged|majed|david|mark|george|james|daniel|alex|fred|thomas|guy/i;
     var v=speechSynthesis.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(ar?"ar":"en")===0});
-    var f=v.filter(function(x){return /female|zira|samantha|google|hoda|salma|laila|amira/i.test(x.name)})[0]||v[0];if(f)u.voice=f;
+    var f=v.filter(function(x){return FEM.test(x.name)&&!MALE.test(x.name)})[0];
+    if(!f)return; /* no girl voice on this device: stay silent instead of using a man's voice */
+    u.voice=f;
     u.onstart=function(){root.classList.add("speak")};
     var end=function(){root.classList.remove("speak")};u.onend=end;u.onerror=end;speechSynthesis.speak(u)}catch(e){}}
 // Mira's voice = Gemini (cute voice, set on the server). If it fails, the browser voice is the fallback.

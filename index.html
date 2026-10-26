@@ -1432,16 +1432,17 @@ function load(){try{var s=localStorage.getItem(KEY);if(s)return JSON.parse(s);va
 function save(){mem=S;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 var S=load();S.off=0;
 function ds(o){var m={};new Intl.DateTimeFormat("en-US",{timeZone:"Africa/Algiers",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date(Date.now()+o*864e5)).forEach(function(x){m[x.type]=x.value});return m.year+"-"+m.month+"-"+m.day}
+function pds(o){var m={};new Intl.DateTimeFormat("en-US",{timeZone:"Africa/Algiers",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date(Date.now()+216e5+o*864e5)).forEach(function(x){m[x.type]=x.value});return m.year+"-"+m.month+"-"+m.day}
 function $(i){return document.getElementById(i)}
 function cs(){var id=A[S.cur].id;return S.a[id]||(S.a[id]={last:"",streak:0,got:{}})}
 function pick(boost){var t=0,i;for(i=0;i<4;i++)t+=boost?RS[i].b:RS[i].w;var r=Math.random()*t;for(i=0;i<4;i++){r-=boost?RS[i].b:RS[i].w;if(r<0)return i}return 0}
-function eff(st){return(st.last===ds(S.off)||st.last===ds(S.off-1))?st.streak:0}
+function eff(st){return(st.last===pds(S.off)||st.last===pds(S.off-1))?st.streak:0}
 function applyBg(){var l=$("bgl"),b=S.bg,an=null;if(b&&b.id==="aura"&&AU.i[b.i]){l.style.backgroundImage="url("+AU.i[b.i]+")";l.classList.add("on");return}if(b)for(var k=0;k<A.length;k++)if(A[k].id===b.id)an=A[k];if(an&&an.i[b.i]){l.style.backgroundImage="url("+an.i[b.i]+")";l.classList.add("on")}else{l.classList.remove("on")}}
 function render(){
   applyLang();applyBg();
-  var an=A[S.cur],st=cs(),can=!S.d||S.d.last!==ds(0),e=eff(S.d||{last:"",streak:0}),p=$("pack"),rs=document.documentElement.style;
+  var an=A[S.cur],st=cs(),can=!S.d||S.d.last!==pds(0),e=eff(S.d||{last:"",streak:0}),p=$("pack"),rs=document.documentElement.style;
   rs.setProperty("--g1","#ff5a2a");rs.setProperty("--g2","#ff8a1f");rs.setProperty("--g3","#ffc22e");
-  var _pk=(PKIMG===PKDEF);$("pimg").setAttribute("href",_pk?PKPHOTO:PKIMG);$("pimg").setAttribute("preserveAspectRatio",_pk?"xMidYMid slice":"xMidYMin slice");$("plogo").setAttribute("href",_pk?"":PKLOGO);$("bk").setAttribute("href",PKLOGO);
+  var _pk=(PKIMG===PKDEF);$("pimg").setAttribute("href",_pk?((window.__thPack&&window.__thPack())||PKPHOTO):PKIMG);$("pimg").setAttribute("preserveAspectRatio",_pk?"xMidYMid slice":"xMidYMin slice");$("plogo").setAttribute("href",_pk?"":PKLOGO);$("bk").setAttribute("href",PKLOGO);
   p.disabled=!can;$("ptxt").textContent=can?T("open"):T("back");
   $("status").textContent=can?(e===6?T("s7"):T("ready")):T("done");
   var s="";for(var i=1;i<=7;i++)s+='<i class="'+(i<=e?"on":"")+'">'+i+"</i>";$("streak").innerHTML=s;
@@ -2175,7 +2176,13 @@ html[data-theme="zero"]:root body .libwrap .vault.lib,html[data-theme="violet"]:
     red:[[228,348],[268,352],[285,358],[316,368],[335,374]],
     pink:[[228,322],[268,326],[285,332],[316,340],[335,346]],
     zero:[[228,336],[268,342],[285,348],[316,352],[335,356]],
-    violet:[[228,252],[268,262],[285,270],[316,280],[335,288]]
+    violet:[[228,252],[268,262],[285,270],[316,280],[335,288]],
+    green:[[228,150],[268,146],[285,142],[316,136],[335,130]],
+    orange:[[228,18],[268,24],[285,28],[316,34],[335,40]],
+    teal:[[228,176],[268,180],[285,184],[316,190],[335,196]],
+    gold:[[228,38],[268,42],[285,46],[316,50],[335,54]],
+    naruto:[[228,20],[268,25],[285,29],[316,33],[335,38]],
+    zoro:[[228,138],[268,142],[285,146],[316,150],[335,154]]
   };
   var VD={zero:"/themes/zero.mp4",violet:"/themes/violet.mp4"};
   function vid(k){var v=document.getElementById("thvid"),o=document.getElementById("thov");
@@ -2212,12 +2219,68 @@ html[data-theme="zero"]:root body .libwrap .vault.lib,html[data-theme="violet"]:
     vid(k);
     if(k===cur&&R.length)return;cur=k;
     document.documentElement.setAttribute("data-theme",k);
+    try{window.__thChange&&window.__thChange(k)}catch(e){}
     collect();
     for(var i=0;i<R.length;i++){var x=R[i],n=an?conv(x.o,an):x.o;if(n!==x.a){x.r.style.cssText=n;x.a=n}}
   }
   window.__applyTheme=apply;
   var st="";try{st=localStorage.getItem("wtheme")||""}catch(e){}
   if(st)apply(st);
+})();
+</script>
+<style id="chars-css">
+.chx{position:fixed;display:none;pointer-events:none;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+#chstand{right:18px;bottom:0;height:230px;width:auto;z-index:31;transform-origin:50% 100%}
+#chstand.on{display:block;animation:chrise .6s cubic-bezier(.2,.9,.3,1.1)}
+#chtop{z-index:72;width:auto}
+#chtop.on{display:block;animation:chslide .7s cubic-bezier(.2,.9,.3,1.15) backwards,chsway 3.4s ease-in-out .7s infinite}
+@keyframes chrise{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:none}}
+@keyframes chslide{from{opacity:0;transform:translateX(-90px)}to{opacity:1;transform:none}}
+@keyframes chsway{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+html.chs-on body #friends{padding-bottom:250px}
+@media (max-width:820px){#chstand{height:150px}html.chs-on body #friends{padding-bottom:170px}}
+@media (prefers-reduced-motion:reduce){#chstand.on,#chtop.on{animation:none}}
+</style>
+<script id="chars-js">
+/* Character themes (Naruto, Zero Two, Violet, Zoro): the theme's character on the pack photo, standing in the friends list and sitting on top of the profile card */
+(function(){
+  var P="/themes/";
+  var CH={
+    naruto:{pack:P+"naruto-pack.jpg",stand:P+"naruto-stand.webp",top:P+"naruto-sit.webp",th:150},
+    zero:{pack:P+"zero-pack.jpg",stand:P+"zero-stand.webp",top:P+"zero-sit.webp",th:112},
+    violet:{pack:P+"violet-pack.jpg",stand:P+"violet-stand.webp",top:null,th:0},
+    zoro:{pack:P+"zoro-pack.jpg",stand:P+"zoro-stand.webp",top:P+"zoro-sword.webp",th:170}
+  };
+  var de=document.documentElement,st=null,tp=null,was=false,keyNow="";
+  function mk(id){var i=document.createElement("img");i.id=id;i.className="chx";i.alt="";i.setAttribute("aria-hidden","true");i.draggable=false;document.body.appendChild(i);return i}
+  function cfg(){return CH[keyNow]||null}
+  function packPhoto(){var im=document.getElementById("pimg");
+    if(!im||typeof PKIMG==="undefined"||typeof PKDEF==="undefined"||PKIMG!==PKDEF)return;
+    var c=cfg();im.setAttribute("href",c?c.pack:PKPHOTO);im.setAttribute("preserveAspectRatio","xMidYMid slice")}
+  function shown(el){if(!el)return null;var cs=getComputedStyle(el);if(cs.display==="none"||cs.visibility==="hidden")return null;var r=el.getBoundingClientRect();return(r.width>40&&r.height>40)?r:null}
+  function popRect(){var ids=["fprof","profile"];
+    for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el&&el.classList.contains("pop")){var r=shown(el);if(r)return r}}return null}
+  function sync(){
+    var c=cfg();
+    if(!c){if(st)st.classList.remove("on");if(tp)tp.classList.remove("on");de.classList.remove("chs-on");was=false;return}
+    if(!st){st=mk("chstand");tp=mk("chtop")}
+    if(st.getAttribute("data-k")!==keyNow){st.setAttribute("data-k",keyNow);st.src=c.stand;tp.src=c.top||"";tp.style.height=c.th+"px"}
+    var fr=shown(document.getElementById("friends"));
+    st.classList.toggle("on",!!fr);de.classList.toggle("chs-on",!!fr);
+    var r=c.top?popRect():null;
+    if(r){
+      var top=r.top+6-c.th;if(top<4)top=4;
+      tp.style.left=Math.max(4,r.left+20)+"px";tp.style.top=top+"px";
+      if(!was){tp.classList.remove("on");void tp.offsetWidth}
+      tp.classList.add("on");was=true;
+    }else{tp.classList.remove("on");was=false}
+  }
+  window.__thPack=function(){var c=cfg();return c?c.pack:null};
+  window.__thChange=function(k){keyNow=k||"";packPhoto();sync()};
+  setInterval(sync,150);
+  addEventListener("resize",sync);
+  var s="";try{s=localStorage.getItem("wtheme")||""}catch(e){}
+  window.__thChange(de.getAttribute("data-theme")||s);
 })();
 </script>
 <script id="store-js">
@@ -2236,12 +2299,12 @@ html[data-theme="zero"]:root body .libwrap .vault.lib,html[data-theme="violet"]:
   function nav(){var a=$("j10");if(a)a.innerHTML="<span>"+t("n")+"</span>"+(ST?"<em>"+COIN+ST.pts+"</em>":"");
     var c=$("ptschip");if(!c){var bl=document.querySelector(".nav .navq")||$("nbell");if(!bl||!bl.parentNode)return;c=document.createElement("a");c.id="ptschip";c.href="#store";bl.parentNode.insertBefore(c,bl)}
     c.innerHTML=COIN+"<b>"+(ST?ST.pts:0)+"</b>"}
-  var THC={"default":["#1a0b34","#7c3aed","#e070ff"],blue:["#0a1630","#1f55e0","#4fb0ff"],red:["#2a0508","#c8142b","#ff6a52"],pink:["#2a0518","#e0348f","#ff9ccb"],zero:["#2a0510","#e0284f","#ffa0c4"],violet:["#0e0626","#6a35e8","#b48cff"]};
-  var THP={zero:"/themes/zero.jpg",violet:"/themes/violet.jpg"};
-  var THN={"default":{ar:"الأصلي (بنفسجي)",en:"Original (Purple)"},blue:{ar:"أزرق",en:"Blue"},red:{ar:"أحمر",en:"Red"},pink:{ar:"روز",en:"Pink"},zero:{ar:"زيرو تو (Zero Two)",en:"Zero Two"},violet:{ar:"فيوليت (Violet)",en:"Violet"}};
+  var THC={"default":["#1a0b34","#7c3aed","#e070ff"],blue:["#0a1630","#1f55e0","#4fb0ff"],red:["#2a0508","#c8142b","#ff6a52"],pink:["#2a0518","#e0348f","#ff9ccb"],zero:["#2a0510","#e0284f","#ffa0c4"],violet:["#0e0626","#6a35e8","#b48cff"],naruto:["#2a1204","#e8650f","#ffb066"],zoro:["#04180d","#14a85a","#6dffa8"],green:["#04180d","#14a85a","#6dffa8"],orange:["#2a1204","#e8650f","#ffb066"],teal:["#04191c","#0fa3a8","#6df0ee"],gold:["#241a04","#d9a20f","#ffe27a"]};
+  var THP={zero:"/themes/zero.jpg",violet:"/themes/violet.jpg",naruto:"/themes/naruto.jpg",zoro:"/themes/zoro.jpg"},THV={zero:1,violet:1};
+  var THN={"default":{ar:"الأصلي (بنفسجي)",en:"Original (Purple)"},blue:{ar:"أزرق",en:"Blue"},red:{ar:"أحمر",en:"Red"},pink:{ar:"روز",en:"Pink"},zero:{ar:"زيرو تو (Zero Two)",en:"Zero Two"},violet:{ar:"فيوليت (Violet)",en:"Violet"},green:{ar:"أخضر",en:"Green"},orange:{ar:"برتقالي",en:"Orange"},teal:{ar:"تركواز",en:"Teal"},gold:{ar:"ذهبي",en:"Gold"},naruto:{ar:"ناروتو",en:"Naruto"},zoro:{ar:"زورو",en:"Zoro"}};
   var sel=null;
   function isEn(){return lg()==="en"}
-  function isAn(x){return x.type==="theme"?!!THP[x.key]:/^(anim|bnr)-/.test(x.id)}
+  function isAn(x){return x.type==="theme"?!!THV[x.key]:/^(anim|bnr)-/.test(x.id)}
   function nm(x){var en=isEn(),m;
     if(x.name)return x.name;
     if(x.type==="theme")return(THN[x.key]||THN["default"])[en?"en":"ar"];
@@ -2250,7 +2313,7 @@ html[data-theme="zero"]:root body .libwrap .vault.lib,html[data-theme="violet"]:
     return x.type==="pic"?(en?"Profile photo":"صورة شخصية"):(en?"Banner":"بانر")}
   function kd(x){var en=isEn();return x.type==="theme"?(en?"Site theme":"ثيم الموقع"):x.type==="pic"?(en?"Profile photo":"صورة شخصية"):(en?"Banner":"بانر")}
   function ds(x){var en=isEn();
-    if(x.type==="theme")return THP[x.key]?(en?"A full set: animated video background and matching colors across the whole site.":"سيت كامل: فيديو متحرك كخلفية وألوان تتبدل ف الموقع كامل."):(en?"Changes the colors of the whole site.":"كيبدل ألوان الموقع كامل.");
+    if(x.type==="theme")return THP[x.key]?(en?"A full set: matching site colors, the character on your pack photo, in your friends list and on top of your profile card"+(THV[x.key]?", plus an animated video background.":"."):"سيت كامل: ألوان الموقع، الشخصية على صورة الباك، فقائمة الأصدقاء وفوق كارت البروفيل"+(THV[x.key]?"، مع فيديو متحرك كخلفية.":".")):(en?"Changes the colors of the whole site.":"كيبدل ألوان الموقع كامل.");
     if(x.type==="pic")return isAn(x)?(en?"An animated profile photo that moves everywhere your avatar appears.":"صورة بروفيل متحركة كتبان متحركة فكل بلاصة كتظهر فيها."):(en?"A profile photo for your account.":"صورة بروفيل لحسابك.");
     return isAn(x)?(en?"An animated banner for your profile.":"بانر متحرك للبروفيل ديالك."):(en?"A banner for your profile.":"بانر للبروفيل ديالك.")}
   function cur(x){return x.type==="pic"?ST.pic===x.id:x.type==="banner"?ST.banner===x.id:(ST.theme||"default")===x.key}
@@ -2489,7 +2552,7 @@ document.addEventListener("click",function(e){var a=e.target.closest&&e.target.c
 a.classList.remove("clk");void a.offsetWidth;a.classList.add("clk");
 clearTimeout(a._t);a._t=setTimeout(function(){a.classList.remove("clk")},900)},true);
 </script><script id="packtimer-js">
-/* Countdown under the title: time left until the next daily pack (day changes at midnight, Algeria time) */
+/* Countdown under the title: time left until the next daily pack (pack resets at 6 PM, Algeria time) */
 (function(){
   var box=document.getElementById("packtimer");if(!box)return;
   var L=box.querySelector(".pt-l"),T=box.querySelector(".pt-t"),dtf=null;
@@ -2498,12 +2561,12 @@ clearTimeout(a._t);a._t=setTimeout(function(){a.classList.remove("clk")},900)},t
     var h,m,s;
     if(dtf){var p={};dtf.formatToParts(new Date()).forEach(function(x){p[x.type]=+x.value});h=p.hour;m=p.minute;s=p.second}
     else{var d=new Date();h=d.getUTCHours()+1;if(h>23)h-=24;m=d.getUTCMinutes();s=d.getUTCSeconds()}
-    return 86400-(h*3600+m*60+s);
+    return 86400-((h*3600+m*60+s+21600)%86400);
   }
   function z(n){return(n<10?"0":"")+n}
   function tick(){
     var r=left(),pk=document.getElementById("pack"),ready=pk&&!pk.disabled;
-    L.textContent=ready?"Pack ready \u00b7 time left today":"Next pack in";
+    L.textContent=ready?"Pack ready \u00b7 time left":"Next pack in";
     T.textContent=z(Math.floor(r/3600))+":"+z(Math.floor(r%3600/60))+":"+z(r%60);
     box.classList.toggle("ready",!!ready);
   }

@@ -262,11 +262,14 @@ function countOf(a) { // base cards shipped with the site + cards added from the
 }
 const TZ = 'Africa/Algiers';
 const dfmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric' });
-function dstr(off = 0) {
+function dstr(off = 0, shift = 0) {
   const m = {};
-  dfmt.formatToParts(new Date(Date.now() + off * 864e5)).forEach((x) => (m[x.type] = x.value));
+  dfmt.formatToParts(new Date(Date.now() + shift + off * 864e5)).forEach((x) => (m[x.type] = x.value));
   return `${m.year}-${m.month}-${m.day}`;
 }
+// The daily pack opens at 18:00 (6 PM) Algiers time: the "pack day" changes then, not at midnight.
+const PACK_HOUR = 18;
+function pdstr(off = 0) { return dstr.call(null, off, (24 - PACK_HOUR) * 36e5); }
 function monthKey() { return dstr().split('-').slice(0, 2).join('-'); }
 function weekKey() {
   const [y, m, d] = dstr().split('-').map(Number);
@@ -283,13 +286,13 @@ function pickRarity(boost, weights) {
   for (let i = 0; i < 4; i++) { r -= w[i]; if (r < 0) return i; }
   return 0;
 }
-// When can the player open the next daily pack? The day changes at midnight Algiers time (UTC+1, no daylight saving).
+// When can the player open the next daily pack? The pack day changes at 6 PM Algiers time (UTC+1, no daylight saving).
 app.get('/api/packtime', (req, res) => {
   const id = sessionId(req);
   if (!id) return res.status(401).json({});
   const D = (stateOf(db[id]).d) || { last: '' };
-  const avail = D.last !== dstr() || D.bonus > 0;
-  const ms = 864e5 - ((Date.now() + 36e5) % 864e5);
+  const avail = D.last !== pdstr() || D.bonus > 0;
+  const ms = 864e5 - ((Date.now() + 36e5 + (24 - PACK_HOUR) * 36e5) % 864e5);
   res.json({ avail, ms: avail ? 0 : ms });
 });
 app.post('/api/open', (req, res) => {
@@ -300,14 +303,14 @@ app.post('/api/open', (req, res) => {
   if (!id) return res.status(401).json({});
   const st = stateOf(db[id]);
   const D = (st.d = st.d || { last: '', streak: 0 });
-  const used = D.last === dstr();
+  const used = D.last === pdstr();
   if (used && !(D.bonus > 0)) return res.status(409).json({ error: 'already opened', state: st });
   let boost = false;
   if (used) D.bonus = 0; // spending the extra pack: no streak change, no boost
   else {
-    const ns = D.last === dstr(-1) ? (D.streak || 0) + 1 : 1;
+    const ns = D.last === pdstr(-1) ? (D.streak || 0) + 1 : 1;
     boost = ns >= 7;
-    D.last = dstr();
+    D.last = pdstr();
     D.streak = boost ? 0 : ns;
   }
   const ids = Object.keys(COUNTS).concat(Object.keys(custom.packs)).filter((k) => countOf(k) > 0);
@@ -934,7 +937,7 @@ app.get('/shop/img/:id', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
 });
 // Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
-const THEMES = { blue: 300, red: 300, pink: 300, zero: 500, violet: 500, naruto: 300, zoro: 200 };
+const THEMES = { blue: 300, red: 300, pink: 300, green: 300, orange: 300, teal: 300, gold: 300, zero: 500, violet: 500, naruto: 300, zoro: 200 };
 app.get('/api/store', (req, res) => {
   const id = need(req, res); if (!id) return;
   const own = db[id].owned || [];
@@ -1722,7 +1725,7 @@ function siteFacts() {
   return ' Facts about WAYANIME Cards Pack: ' +
     'each player gets one free pack per day (the number of cards is random-looking, never state an exact count); the anime, the character and the rarity are random and the same card can drop twice. ' +
     'Rarities are iron, silver, gold, diamond, legendary (about a 5% chance per card) and epic (a rare black card that gives an extra pack). Opening a pack 7 days in a row makes the day-7 pack a guaranteed Gold or Diamond. ' +
-    'There is an Aura Vault with 6 special Aura cards that staff can gift. Players earn and spend coins (points) in the store: animated profile photos cost 150, animated banners 200, themes cost 200 to 500 (Zoro 200, Blue/Red/Pink/Naruto 300, Zero Two and Violet 500), and staff add more items. ' +
+    'There is an Aura Vault with 6 special Aura cards that staff can gift. Players earn and spend coins (points) in the store: animated profile photos cost 150, animated banners 200, themes cost 200 to 500 (Zoro 200, Blue/Red/Pink/Green/Orange/Teal/Gold/Naruto 300, Zero Two and Violet 500), and staff add more items. ' +
     'Special rolls: a weekly Legendary card for boys only (10% chance to win one of 10 legendary cards), a monthly Aura roll for everyone (one try per calendar month, 1% chance to win one of the 6 Aura cards), and a weekly Cute pack for girls only (25% chance to win a cute card). Epic cards are rare black cards worth more and each one unlocks one extra pack the same day. ' +
     'Coins (points) come from opening packs and from staff gifts, and are spent in the store. Staff can create gift codes that a player redeems for a card or coins. ' +
     'Trading: trade offers are only possible between friends; a player can also send a card directly to any player. A verified badge is given automatically to girls and to boys after 100 completed trades, and there is a top traders list. ' +
@@ -1997,7 +2000,7 @@ app.post('/api/gate/forgot', (req, res) => {
 });
 // ---- Daily pack reminder: the Discord bot asks who is linked, their gender and whether they already opened today's pack ----
 app.get('/api/bot/pack-reminders', botKey, (req, res) => {
-  const today = dstr(), users = [];
+  const today = pdstr(), users = [];
   for (const id of Object.keys(db)) {
     const u = db[id];
     if (!u || !u.local || !u.discord || !u.user) continue;

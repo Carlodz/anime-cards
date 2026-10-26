@@ -2121,7 +2121,7 @@ app.post('/api/mira-rps', (req, res) => {
 app.post('/api/zero-chat', chatRoute(ZERO_SYSTEM, zeroHits, 'zero-chat', 'Here you go, darling.'));
 app.post('/api/mira-chat', chatRoute(MIRA_SYSTEM, miraHits, 'mira-chat', 'Here you go.'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', setHeaders: (res, f) => { if (/\.(html|js|css)$/.test(f)) res.setHeader('Cache-Control', 'no-cache'); } }));
 initStore()
   .then(() => { addAtToOldNames(); return ensureAdminAccount(); })
   .then(() => setupBotProfile())

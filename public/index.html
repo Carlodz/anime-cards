@@ -62,6 +62,15 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 .ac small{display:block;color:var(--vio);font-size:10.5px;font-weight:700}.ac b{font-size:12px;display:block}.ac time{color:var(--mu);font-size:10.5px}
 .sc{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:520px}
 .sc .me img{width:56px;height:56px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.tabs button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-weight:700;font-size:12px;color:var(--mu)}.tabs button.on{color:#fff;background:linear-gradient(90deg,var(--a1),var(--a2));border-color:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.cd{position:relative;border-radius:14px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}.cd img{display:block;width:100%;aspect-ratio:3/4;object-fit:cover}.cd.no img{filter:grayscale(1) brightness(.35)}.cd i{position:absolute;top:6px;right:6px;background:rgba(10,9,18,.8);border-radius:99px;padding:2px 8px;font:700 11px/1.5 inherit;font-style:normal}
+.cd .t{padding:8px 10px}.cd b{display:block;font-size:12px}.cd small{color:var(--mu);font-size:11px}.cd .btn{height:30px;padding:0 12px;font-size:12px;margin-top:6px}
+.li{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:8px}.li img{width:38px;height:38px;border-radius:50%;object-fit:cover}.li div{flex:1;min-width:0}.li .btn{height:32px;padding:0 14px;font-size:12px}
+.pban{height:180px;border-radius:20px;background:#1a1030 center/cover}.pme{display:flex;align-items:center;gap:16px;margin:-40px 0 16px 22px}.pme img{width:84px;height:84px;border-radius:50%;object-fit:cover;border:4px solid var(--bg)}
+.pkv{display:grid;place-items:center;gap:16px;padding:10px 0;text-align:center}.pkv .big{width:min(240px,60vw);aspect-ratio:2/3;border-radius:18px;background:center/cover;box-shadow:0 24px 60px -20px var(--c,#8a4dff)}
+.rv{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;perspective:900px}.fl{width:150px;aspect-ratio:2/3;position:relative;transform-style:preserve-3d;transition:transform .7s;cursor:pointer}.fl.on{transform:rotateY(180deg)}.fl>div{position:absolute;inset:0;border-radius:14px;background:center/cover;backface-visibility:hidden;border:1px solid var(--line)}.fl .f{transform:rotateY(180deg)}.fl em{position:absolute;bottom:6px;left:6px;right:6px;font:800 10px/1 inherit;background:rgba(10,9,18,.75);border-radius:6px;padding:4px;text-align:center;font-style:normal;text-transform:uppercase}
+.inp{height:40px;border-radius:10px;border:1px solid var(--line);background:#0d0c17;color:var(--tx);padding:0 12px;font:inherit;min-width:0;flex:1}
 .rail section+section{margin-top:26px}
 .empty{color:var(--mu);font-size:12px}
 #login{position:fixed;inset:0;background:rgba(10,9,18,.88);display:none;place-items:center;z-index:9}
@@ -76,17 +85,17 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <div class="logo"><img src="/logo.png" alt=""><span>WAYANIME</span></div>
 <header class="top">
 <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d89a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" placeholder="Search cards, packs, themes…" aria-label="Search"></label>
-<a class="ibtn" href="/classic.html#inbox" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg></a>
+<a class="ibtn" href="#inbox" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg></a>
 <div class="pts"><i></i><span id="pts">0</span> pts</div>
 </header>
 <nav class="side" aria-label="Main">
 <a class="on" href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 3l9 8v10H3z"/></svg><span>Home</span></a>
-<a href="/classic.html#library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="12" height="18" rx="2"/><path d="M19 6v14"/></svg><span>Library</span></a>
-<a href="/classic.html#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span>Store</span></a>
+<a href="#library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="12" height="18" rx="2"/><path d="M19 6v14"/></svg><span>Library</span></a>
+<a href="#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span>Store</span></a>
 <a href="#settings" id="nset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a>
-<a href="/classic.html#trade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><span>Trade</span></a>
+<a href="#trade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><span>Trade</span></a>
 <hr>
-<a href="/classic.html#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profile</span></a>
+<a href="#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profile</span></a>
 <a href="/admin.html" id="nadm" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span>Admin</span></a>
 <a href="/auth/logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg><span>Log out</span></a>
 <div class="me" id="me"><img src="/favicon.png" alt=""><div><b>Guest</b><small>Offline</small></div></div>
@@ -94,24 +103,26 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <main id="home">
 <section class="hero" id="hero"><video poster="/packs-poster.jpg" src="/packs-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video><div>
 <small>FEATURED</small><h1>Anime Pack</h1><p>Pull anime cards, trade with friends and spend points in the store.</p>
-<a class="btn p" href="/classic.html#stage">Open pack</a><a class="btn g" href="/classic.html#library">View collection</a></div></section>
+<a class="btn p" href="#pack-daily">Open pack</a><a class="btn g" href="#library">View collection</a></div></section>
 <h2>Recommended for you</h2><div class="row" id="rec">
-<a class="pk" style="--c:#ff8a3d" href="/classic.html#stage"><span class="tag">DAILY</span><div class="im" style="background-image:url(/cardback.webp)"></div><div class="t"><b>Daily Pack</b><small>5 cards every day</small></div></a>
-<a class="pk" style="--c:#ffc22e" href="/classic.html#vault"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-leg.webp)"></div><div class="t"><b>Legendary Pack</b><small>1 legendary roll per week</small></div></a>
-<a class="pk" style="--c:#ff4f8b" href="/classic.html#cutepack"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-cute.webp)"></div><div class="t"><b>Cute Pack</b><small>1 cute roll per week</small></div></a>
-<a class="pk" style="--c:#8a4dff" href="/classic.html#aurav"><span class="tag">MONTHLY</span><div class="im" style="background-image:url(/cardback-aura.webp)"></div><div class="t"><b>Aura Pack</b><small>1 aura roll per month</small></div></a>
+<a class="pk" style="--c:#ff8a3d" href="#pack-daily"><span class="tag">DAILY</span><div class="im" style="background-image:url(/cardback.webp)"></div><div class="t"><b>Daily Pack</b><small>5 cards every day</small></div></a>
+<a class="pk" style="--c:#ffc22e" href="#pack-leg"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-leg.webp)"></div><div class="t"><b>Legendary Pack</b><small>1 legendary roll per week</small></div></a>
+<a class="pk" style="--c:#ff4f8b" href="#pack-cute"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-cute.webp)"></div><div class="t"><b>Cute Pack</b><small>1 cute roll per week</small></div></a>
+<a class="pk" style="--c:#8a4dff" href="#pack-aura"><span class="tag">MONTHLY</span><div class="im" style="background-image:url(/cardback-aura.webp)"></div><div class="t"><b>Aura Pack</b><small>1 aura roll per month</small></div></a>
 </div>
 </main>
+<main id="view" style="display:none"></main>
 <main id="settings" style="display:none"><h2 style="margin-top:8px">Settings</h2>
 <div class="sc"><div class="me" style="margin:0 0 14px"><img id="sp" src="/favicon.png" alt=""><div><b id="sn">Guest</b><small id="sr"></small></div></div>
 <p class="empty">Points: <b id="spt">0</b></p>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn p" href="/classic.html#profile">Edit profile</a><a class="btn g" style="border:1px solid var(--line)" href="/classic.html#inbox">Notifications</a><a class="btn g" style="border:1px solid var(--line)" href="/auth/logout">Log out</a></div></div></main>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn p" href="#profile">Edit profile</a><a class="btn g" style="border:1px solid var(--line)" href="#inbox">Notifications</a><a class="btn g" style="border:1px solid var(--line)" href="/auth/logout">Log out</a></div></div></main>
 <aside class="rail">
-<section><h3>Friends online <a href="/classic.html#friends">View all</a></h3><div id="fr"><p class="empty">Log in to see your friends.</p></div></section>
-<section><h3>Activity feed <a href="/classic.html#inbox">View all</a></h3><div id="ac"></div></section>
+<section><h3>Friends online <a href="#trade">View all</a></h3><div id="fr"><p class="empty">Log in to see your friends.</p></div></section>
+<section><h3>Activity feed <a href="#inbox">View all</a></h3><div id="ac"></div></section>
 </aside>
 </div>
-<div id="login"><form id="lf"><b>Log in to Wayanime</b><input name="username" placeholder="Username" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><p id="le"></p><button class="btn p" type="submit">Log in</button><a href="/classic.html" style="text-align:center;color:var(--mu);font-size:12px">Create an account</a></form></div>
+<div id="login"><form id="lf"><b>Log in to Wayanime</b><input name="username" placeholder="Username" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><p id="le"></p><button class="btn p" type="submit">Log in</button><a href="#" id="reg" style="text-align:center;color:var(--mu);font-size:12px">Create an account</a></form>
+<form id="rf" style="display:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;width:min(340px,92vw);gap:12px"><b>Create your account</b><input name="username" placeholder="Username" required><input name="password" type="password" placeholder="Password (6+)" required><input name="confirm" type="password" placeholder="Confirm password" required><select name="gender" style="height:42px;border-radius:10px;background:#0d0c17;color:var(--tx);border:1px solid var(--line);padding:0 10px"><option value="f">Girl</option><option value="m">Boy</option></select><p id="re"></p><button class="btn p" type="submit">Sign up</button><a href="#" id="bk" style="text-align:center;color:var(--mu);font-size:12px">Back to log in</a></form></div>
 <script>
 const $=s=>document.querySelector(s),J=(u,o)=>fetch(u,o).then(r=>r.ok?r.json():Promise.reject(r.status)),E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const BN={sky:'sky.jpg',night:'night.jpg',eyes:'eyes.gif',meadow:'meadow.jpg',ban09:'ban09.webp',ban10:'ban10.gif',ban11:'ban11.gif',ban12:'ban12.webp',ban13:'ban13.webp'};
@@ -138,7 +149,63 @@ function draw(q){document.querySelectorAll('#rec .pk').forEach(c=>{c.style.displ
 $('#q').addEventListener('input',e=>draw(e.target.value.trim().toLowerCase()));
 $('#lf').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);
  try{await J('/auth/loginpw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:f.get('username'),password:f.get('password')})});$('#login').style.display='none';boot()}catch(s){$('#le').textContent=s===429?'Too many attempts. Wait a minute.':'Wrong username or password.'}});
-function route(){const st=location.hash==='#settings';$('#home').style.display=st?'none':'';$('#settings').style.display=st?'block':'none';$('#nset').classList.toggle('on',st);document.querySelector('.side a[href="#home"]').classList.toggle('on',!st)}
+
+const PK=[['naruto',8],['dbz',8],['ds',8],['bb',6],['bc',8],['hxh',8],['mha',8],['jjk',7],['op',8],['aot',7],['cute',15],['leg',10]];
+const PN={leg:'Legendary',cute:'Cute'};let LIB='naruto',ME=null;
+const P=(u,b)=>J(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+const V=$('#view');
+const VIEWS={
+async library(){const st=(await J('/api/state')).state||{a:{}};const tabs=PK.map(([k])=>`<button class="${k===LIB?'on':''}" data-t="${k}">${PN[k]||k.toUpperCase()}</button>`).join('');
+ const n=PK.find(x=>x[0]===LIB)[1],got=((st.a||{})[LIB]||{}).got||{};
+ V.innerHTML=`<h2 style="margin-top:8px">Library</h2><div class="tabs">${tabs}</div><div class="grid">${Array.from({length:n},(_,i)=>{const g=got[i]||{},c=Object.values(g).reduce((a,b)=>a+b,0);return`<div class="cd ${c?'':'no'}"><img loading="lazy" src="/cardimg/${LIB}-${i}.jpg" alt="">${c?`<i>×${c}</i>`:''}</div>`}).join('')}</div>`;
+ V.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{LIB=b.dataset.t;VIEWS.library()})},
+async store(){const d=await J('/api/store');const it=d.items.filter(x=>!x.off);
+ const card=x=>`<div class="cd"><img loading="lazy" src="/shop/img/${E(x.id)}" alt=""><div class="t"><b>${E(x.name||x.id)}</b><small>${x.type}</small><br>${x.owned?`<button class="btn p" data-e="${E(x.id)}">Equip</button>`:`<button class="btn p" data-b="${E(x.id)}">${(x.price||0).toLocaleString()} pts</button>`}</div></div>`;
+ const th=d.themes.map(t=>`<div class="li"><b>${t.key}</b><span style="flex:1"></span>${t.owned?`<button class="btn p" data-e="${t.id}">Equip</button>`:`<button class="btn p" data-b="${t.id}">${t.price} pts</button>`}</div>`).join('');
+ V.innerHTML=`<h2 style="margin-top:8px">Store · ${d.pts.toLocaleString()} pts</h2><div class="grid">${it.map(card).join('')}</div><h2>Themes</h2>${th}`;
+ V.querySelectorAll('[data-b],[data-e]').forEach(b=>b.onclick=async()=>{try{await P(b.dataset.b?'/api/store/buy':'/api/store/equip',{id:b.dataset.b||b.dataset.e});boot();VIEWS.store()}catch(e){b.textContent=e===409?'Owned':'Not enough pts'}})},
+async trade(){const [s,bx]=await Promise.all([J('/api/social'),J('/api/box')]);
+ const u=x=>`<img src="${E(img(x.pic,x.avatar))}" alt=""><div><b>${E(x.username)}</b></div>`;
+ const sec=(h,l)=>l.length?`<h2>${h}</h2>`+l.join(''):'';
+ V.innerHTML=`<h2 style="margin-top:8px">Trade</h2>`+
+ sec('Friend requests',s.inc.map(x=>`<div class="li">${u(x)}<button class="btn p" data-a="${x.id}">Accept</button></div>`))+
+ sec('Offers',s.offers.map(o=>`<div class="li">${u(o.mine?o.to:o.from)}<small>${o.mine?'sent':'received'}</small>${o.mine?'':`<button class="btn p" data-o="${o.id}">Accept</button>`}</div>`))+
+ sec('Boxes to open',bx.in.map(b=>`<div class="li">${u(b.from)}<button class="btn p" data-x="${b.id}">Open</button></div>`))+
+ sec('Friends',s.friends.map(x=>`<div class="li">${u(x)}</div>`))||'<p class="empty">Nothing yet.</p>';
+ const go=(sel,f)=>V.querySelectorAll(sel).forEach(b=>b.onclick=async()=>{try{await P(f(b));VIEWS.trade()}catch(e){b.textContent='Error'}});
+ go('[data-a]',b=>'/api/friend/accept');V.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{try{await P('/api/friend/accept',{id:b.dataset.a});VIEWS.trade()}catch(e){b.textContent='Error'}});
+ go('[data-o]',b=>'/api/offer/'+b.dataset.o+'/accept');go('[data-x]',b=>'/api/box/'+b.dataset.x+'/open')},
+async profile(){const m=(await J('/api/me')).user;ME=m;const ban=m.banner?img(m.banner):'';
+ V.innerHTML=`<div class="pban" style="${ban?`background-image:url(${E(ban)})`:''}"></div><div class="pme"><img src="${E(img(m.pic,m.avatar))}" alt=""><div><b style="font-size:20px">${E(m.username)}</b><br><small class="empty">${E(m.status||'')} ${m.country?'· '+E(m.country):''}</small></div></div>
+ <div class="li"><div><b>${(m.pts||0).toLocaleString()}</b><br><small class="empty">points</small></div><div><b>${m.trades||0}</b><br><small class="empty">trades</small></div></div>
+ <h2>Profile photo</h2><div class="grid">${Array.from({length:14},(_,i)=>{const k='pf'+String(i+1).padStart(2,'0');return`<div class="cd"><img loading="lazy" src="/banners/${k}.jpg" data-p="${k}" style="cursor:pointer" alt=""></div>`}).join('')}</div>`;
+ V.querySelectorAll('[data-p]').forEach(i=>i.onclick=async()=>{await P('/api/profile/pic',{p:i.dataset.p});boot();VIEWS.profile()})},
+async inbox(){const d=await J('/api/inbox');
+ V.innerHTML=`<h2 style="margin-top:8px">Notifications</h2>`+(d.items.length?d.items.map(n=>`<div class="li"><div><b>${E(n.title||n.from||'Notification')}</b><br><small class="empty">${E(n.text||n.body||n.msg||'')}</small></div><time class="empty">${n.t?ago(n.t):''}</time></div>`).join(''):'<p class="empty">Nothing new yet.</p>');
+ P('/api/inbox/read').catch(()=>{})}};
+
+const PKS={daily:['/api/open','/cardback.webp','Daily Pack','#ff8a3d'],leg:['/api/legendary','/cardback-leg.webp','Legendary Pack','#ffc22e'],cute:['/api/cute','/cardback-cute.webp','Cute Pack','#ff4f8b'],aura:['/api/aura','/cardback-aura.webp','Aura Pack','#8a4dff']};
+const cimg=c=>c.a==='aura'||(!c.a&&PKS.aura&&c.aura)?'':c.a?'/cardimg/'+c.a+'-'+c.i+'.jpg':'';
+Object.keys(PKS).forEach(k=>{VIEWS['pack-'+k]=async()=>{const [u,bk,nm,col]=PKS[k];
+ V.innerHTML=`<div class="pkv" style="--c:${col}"><h2 style="margin:8px 0 0">${nm}</h2><div class="big" style="background-image:url(${bk})"></div><button class="btn p" id="go">Open pack</button><p class="empty" id="pm"></p><div class="rv" id="rv"></div></div>`;
+ $('#go').onclick=async()=>{$('#go').disabled=true;try{const r=await P(u);const cs=r.cards||(r.card?[r.card.a?r.card:{...r.card,a:k==='aura'?'aura':k==='leg'?'leg':'cute'}]:[]);boot();
+  if(!cs.length){$('#pm').textContent='No card this time. Try again next time!';return}
+  $('#rv').innerHTML=cs.map(c=>{const a=c.a||(k==='aura'?'aura':k==='leg'?'leg':'cute'),src=a==='aura'?'/aura/'+AURA[c.i]+'.jpg':'/cardimg/'+a+'-'+c.i+'.jpg';return`<div class="fl"><div style="background-image:url(${bk})"></div><div class="f" style="background-image:url(${src})"><em>${c.r||(a==='leg'?'legendary':a)}</em></div></div>`}).join('');
+  $('#rv').querySelectorAll('.fl').forEach((f,i)=>setTimeout(()=>{f.onclick=()=>f.classList.add('on')},i*60));$('#pm').textContent='Tap each card to reveal it';
+ }catch(e){$('#pm').textContent=e===409?'Already opened. Come back later.':e===403?'This pack is not available for your account.':'Log in first.';$('#go').disabled=false}}}});
+const pr0=VIEWS.profile;
+VIEWS.profile=async()=>{await pr0();const m=ME||{};
+ V.insertAdjacentHTML('beforeend',`<h2>Status</h2><div style="display:flex;gap:10px"><input class="inp" id="st" maxlength="60" value="${E(m.status||'')}" placeholder="Your status"><button class="btn p" id="ss">Save</button></div><h2>Banner</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">${['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08'].map(k=>`<div class="cd"><img src="/banners/${BN[k]}" data-bn="${k}" style="aspect-ratio:3/1;cursor:pointer" alt=""></div>`).join('')}</div>`);
+ $('#ss').onclick=async()=>{await P('/api/profile/status',{s:$('#st').value});$('#ss').textContent='Saved'};
+ V.querySelectorAll('[data-bn]').forEach(i=>i.onclick=async()=>{await P('/api/profile/banner',{p:i.dataset.bn});VIEWS.profile()})};
+const tr0=VIEWS.trade;
+VIEWS.trade=async()=>{await tr0();V.insertAdjacentHTML('afterbegin',`<div style="display:flex;gap:10px;margin:8px 0 6px"><input class="inp" id="fq" placeholder="Search a player to add…"><button class="btn p" id="fb">Search</button></div><div id="fres"></div>`);
+ $('#fb').onclick=async()=>{const d=await J('/api/users/search?q='+encodeURIComponent($('#fq').value));$('#fres').innerHTML=(d.users||[]).map(x=>`<div class="li"><img src="${E(img(x.pic,x.avatar))}" alt=""><div><b>${E(x.username)}</b></div><button class="btn p" data-f="${x.id}">Add</button></div>`).join('')||'<p class="empty">No player found.</p>';
+  $('#fres').querySelectorAll('[data-f]').forEach(b=>b.onclick=async()=>{try{await P('/api/friend/add',{id:b.dataset.f});b.textContent='Sent'}catch(e){b.textContent='Error'}})}};
+function route(){const h=location.hash.slice(1)||'home',v=VIEWS[h];$('#home').style.display=h==='home'?'':'none';$('#settings').style.display=h==='settings'?'block':'none';V.style.display=v?'block':'none';
+ document.querySelectorAll('.side a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+h));if(v)v().catch(()=>{V.innerHTML='<p class="empty">Log in to see this page.</p>'})}
 addEventListener('hashchange',route);route();
+$('#reg').onclick=e=>{e.preventDefault();$('#lf').style.display='none';$('#rf').style.display='grid'};$('#bk').onclick=e=>{e.preventDefault();$('#rf').style.display='none';$('#lf').style.display='grid'};
+$('#rf').addEventListener('submit',async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));try{await P('/auth/register',f);$('#login').style.display='none';boot();route()}catch(x){$('#re').textContent=x===409?'Username taken.':'Check your details.'}});
 boot();
 </script></body></html>

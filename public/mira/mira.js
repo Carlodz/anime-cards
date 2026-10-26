@@ -1,6 +1,6 @@
 /* Mira: assistant shown in every theme except Zero Two. Same behaviour as Zero Two (hello bubble, click to chat, owner card, Discord button). */
 (function(){
-var FW=290,FH=498,N=145,COLS=6,PER=30,FPS=24,SHEETS=5,V="1";
+var FW=290,FH=498,N=145,COLS=6,PER=30,FPS=24,SHEETS=5,V="2";
 var sheets=[],idle=new Image(),idleOk=false,ready=false,started=false;
 var hist=[],busy=false,tmr=null,anim=0,audio=null,myName="",myGender="",needName=false,songAudio=null,ICON_ON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',ICON_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="m16 9 5 6M21 9l-5 6"/></svg>',ICON_SEND='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;pointer-events:none"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>';
 var muted=false;try{muted=localStorage.getItem("mira_mute")==="1"}catch(e){}
@@ -28,26 +28,33 @@ function wave(root){
     if(t<fade){if(idleOk)ctx.drawImage(idle,0,0,FW,FH);drawFrame(0,t/fade)}else drawFrame(i);
     anim=requestAnimationFrame(step)})(t0)}
 function isAr(t){return /[\u0600-\u06FF]/.test(t)}
-var VOX={};
-try{if(window.speechSynthesis)speechSynthesis.addEventListener("voiceschanged",function(){VOX={}})}catch(e){}
-var RE_MALE=/(^|[^e])male\b|naayf|hamed|shakir|maged|tarik|fahed|omar|mehdi|henri|thomas|paul\b|claude|antoine|david|mark\b|james|george|daniel|alex\b|guy\b|ryan|fred\b|jorge|diego|rishi|oliver|christopher|eric\b|bruce|aaron|arthur|gordon|lee\b|reed|rocko|grandpa|ralph|albert|junior|kathy_/i,
-    RE_FEM=/female|femme|woman|zira|samantha|hoda|salma|laila|layla|zariyah|amira|hedda|aria\b|jenny|sara\b|hortense|denise|eloise|julie|siri|karen|moira|tessa|fiona|victoria|ava\b|allison|susan|catherine|amelie|am\u00e9lie|audrey|marie|google (?:us|uk|fran\u00e7ais|\u0627\u0644\u0639\u0631\u0628\u064a\u0629)/i;
-function pickVoice(pre){
-  if(VOX[pre]!==undefined)return VOX[pre];
-  var all=speechSynthesis.getVoices();if(!all.length)return null;
-  var L=all.filter(function(x){return String(x.lang||"").toLowerCase().replace("_","-").indexOf(pre)===0}),
-      v=L.filter(function(x){return RE_FEM.test(x.name)&&!RE_MALE.test(x.name)})[0]||L.filter(function(x){return !RE_MALE.test(x.name)})[0]||null;
-  VOX[pre]=v;return v}
-function speak(root,txt){
-  if(muted||!window.speechSynthesis||!txt)return;
+var voiceEl=null,voiceSeq=0;
+function stopVoice(){voiceSeq++;try{if(voiceEl){voiceEl.pause();voiceEl.removeAttribute("src");voiceEl.load()}}catch(e){}if(window.speechSynthesis)try{speechSynthesis.cancel()}catch(e){}}
+function unlockVoice(){try{if(!voiceEl)voiceEl=new Audio();voiceEl.src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";var p=voiceEl.play();if(p&&p.catch)p.catch(function(){})}catch(e){}}
+function speakBrowser(root,txt){
+  if(!window.speechSynthesis||!txt)return;
   try{
-    var ar=isAr(txt),fr=!ar&&(/[\u00e0\u00e2\u00e7\u00e9\u00e8\u00ea\u00eb\u00ee\u00ef\u00f4\u00f9\u00fb\u00fc\u0153]/i.test(txt)||/\b(le|la|les|je|tu|est|pas|des|une|bonjour|salut|merci)\b/i.test(txt)),
-        pre=ar?"ar":fr?"fr":"en",u=new SpeechSynthesisUtterance(txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,""));
-    u.lang=ar?"ar-SA":fr?"fr-FR":"en-US";
-    var v=pickVoice(pre);if(v){u.voice=v;u.lang=v.lang}
-    u.rate=1;u.pitch=v&&RE_FEM.test(v.name)?1.2:1.9; /* no female voice found: raise the pitch so she never sounds like a man */
+    var ar=isAr(txt),u=new SpeechSynthesisUtterance(txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,""));
+    u.lang=ar?"ar":"en-US";u.rate=1;u.pitch=1.25;
+    var v=speechSynthesis.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(ar?"ar":"en")===0});
+    var f=v.filter(function(x){return /female|zira|samantha|google|hoda|salma|laila|amira/i.test(x.name)})[0]||v[0];if(f)u.voice=f;
     u.onstart=function(){root.classList.add("speak")};
     var end=function(){root.classList.remove("speak")};u.onend=end;u.onerror=end;speechSynthesis.speak(u)}catch(e){}}
+// Mira's voice = Gemini (cute voice, set on the server). If it fails, the browser voice is the fallback.
+function speak(root,txt){
+  if(muted||!txt)return;
+  var clean=txt.replace(/[\u{1F000}-\u{1FFFF}\u2600-\u27BF]/gu,"").trim();if(!clean)return;
+  stopVoice();var my=voiceSeq;
+  fetch("/api/mira-tts",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:clean})})
+    .then(function(r){return r.ok?r.blob():Promise.reject(r.status)})
+    .then(function(b){
+      if(my!==voiceSeq||muted)return;
+      if(!voiceEl)voiceEl=new Audio();
+      var url=URL.createObjectURL(b),end=function(){root.classList.remove("speak");try{URL.revokeObjectURL(url)}catch(e){}};
+      voiceEl.onplay=function(){root.classList.add("speak")};voiceEl.onended=end;voiceEl.onerror=end;
+      voiceEl.src=url;var p=voiceEl.play();
+      if(p&&p.catch)p.catch(function(){end();if(my===voiceSeq)speakBrowser(root,txt)})})
+    .catch(function(){if(my===voiceSeq)speakBrowser(root,txt)})}
 function setReply(root,txt,ex){
   var r=root.querySelector(".mr-reply");r.textContent="";
   var t=document.createElement("div");t.textContent=txt;r.appendChild(t);
@@ -64,7 +71,12 @@ function setReply(root,txt,ex){
     c.appendChild(im);c.appendChild(nm);r.appendChild(c)}
   if(ex&&ex.action&&typeof ex.action.url==="string"&&ex.action.url.indexOf("https://discord.gg/")===0){
     extra=true;var a=document.createElement("a");a.className="zbtn";a.href=ex.action.url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Open Discord";r.appendChild(a)}
-  if(ex&&ex.song&&((typeof ex.song.yt==="string"&&/^[\w-]{11}$/.test(ex.song.yt))||(typeof ex.song.preview==="string"&&ex.song.preview.indexOf("https://")===0))){
+  if(ex&&ex.dlink&&typeof ex.dlink.url==="string"&&(ex.dlink.url==="/auth/discord/link"||ex.dlink.url.indexOf("https://discord.gg/")===0)){
+    extra=true;var dt=document.createElement("div");dt.textContent=String(ex.dlink.text||"").slice(0,220);dt.style.cssText="margin:8px 0 6px;font-weight:600";r.appendChild(dt);
+    var da=document.createElement("a");da.className="zbtn";da.href=ex.dlink.url;if(ex.dlink.url.charAt(0)!=="/"){da.target="_blank";da.rel="noopener noreferrer"}da.textContent=String(ex.dlink.label||"Discord").slice(0,24);r.appendChild(da);if(ex.dlink.auto===true&&ex.dlink.url==="/auth/discord/link")setTimeout(function(){location.href="/auth/discord/link"},1800)}
+  if(ex&&ex.anime&&typeof ex.anime.url==="string"&&ex.anime.url.indexOf("https://myanimelist.net/")===0){extra=true;var ac=document.createElement("div");ac.style.cssText="display:flex;gap:10px;align-items:center;margin:8px 0 6px";if(typeof ex.anime.pic==="string"&&ex.anime.pic.indexOf("https://cdn.myanimelist.net/")===0){var ai=document.createElement("img");ai.alt="";ai.referrerPolicy="no-referrer";ai.src=ex.anime.pic;ai.style.cssText="width:56px;height:80px;object-fit:cover;border-radius:8px";ac.appendChild(ai)}var ab=document.createElement("a");ab.className="zbtn";ab.href=ex.anime.url;ab.target="_blank";ab.rel="noopener noreferrer";ab.textContent="MyAnimeList";ac.appendChild(ab);r.appendChild(ac)}
+  if(ex&&ex.gsearch&&typeof ex.gsearch.g==="string"&&ex.gsearch.g.indexOf("https://www.google.com/search?q=")===0){extra=true;var gb=document.createElement("div");gb.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 6px";[["Google",ex.gsearch.g],["YouTube",ex.gsearch.y]].forEach(function(x){if(typeof x[1]!=="string"||x[1].indexOf("https://www.")!==0)return;var l=document.createElement("a");l.className="zbtn";l.href=x[1];l.target="_blank";l.rel="noopener noreferrer";l.textContent=x[0];gb.appendChild(l)});r.appendChild(gb)}
+  if(ex&&ex.song&&typeof ex.song.preview==="string"&&ex.song.preview.indexOf("https://")===0){
     extra=true;var sp=document.createElement("div");sp.className="zsong";
     var si=document.createElement("img");si.alt="";si.referrerPolicy="no-referrer";if(typeof ex.song.pic==="string"&&ex.song.pic.indexOf("https://")===0)si.src=ex.song.pic;
     var st=document.createElement("div");st.className="zs-t";var sb=document.createElement("b");sb.textContent=String(ex.song.artist||"").slice(0,60);var sm=document.createElement("small");sm.textContent=String(ex.song.title||"").slice(0,80);st.appendChild(sb);st.appendChild(sm);
@@ -84,69 +96,37 @@ function setReply(root,txt,ex){
     if(bx.childNodes.length)r.appendChild(bx)}
   r.classList.toggle("zx",extra);
   r.classList.add("on");clearTimeout(tmr);tmr=setTimeout(function(){r.classList.remove("on")},extra?60000:20000)}
-function close(root){stopSong(root);hideMe(root);root.classList.remove("talk","speak");root.querySelector(".mr-reply").classList.remove("on");hist=[];if(window.speechSynthesis)try{speechSynthesis.cancel()}catch(e){}}
+function close(root){stopSong(root);hideMe(root);root.classList.remove("talk","speak");root.querySelector(".mr-reply").classList.remove("on");hist=[];stopVoice()}
 var SV18='<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" style="display:block;pointer-events:none">',
     ICON_PLAY=SV18+'<path d="M8 5v14l11-7z"/></svg>',ICON_PAUSE=SV18+'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
     SILENT="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=",
-    RE_SING=/^\s*(?:(?:ya\s+|يا\s*)?(?:mira|ميرا)\s*[,،:!]*\s*)?(?:غنيلي|غنّيلي|غني ?لي|غنّي ?لي|غنى ?لي|غني|غنّي|ghanili+|ghenili+|ganili+|ghann?i ?li+|gann?i ?li+|ghanni|ghani|ganni|sing(?: me)?|chante(?:[- ]moi)?)\s+(.{2,80})$/i;
+    RE_SING=/^\s*(?:غنيلي|غنّيلي|غني ?لي|غنّي ?لي|غنى ?لي|غني|غنّي|ghanili|ghanni|ghani|sing(?: me)?|chante(?:[- ]moi)?)\s+(.{2,80})$/i;
 function showMe(root,t){var e=root.querySelector(".mr-me");if(!e)return;e.textContent=String(t).slice(0,80);e.classList.add("on");root.classList.add("hasme")}
 function hideMe(root){var e=root.querySelector(".mr-me");if(e)e.classList.remove("on");root.classList.remove("hasme")}
 function stopSong(root){if(songAudio){try{songAudio.pause()}catch(e){}}if(root)root.classList.remove("sing")}
-var yt={p:null,ready:false,paused:true,ended:false,root:null,fail:null,
-  pause:function(){try{if(this.p&&this.ready)this.p.pauseVideo()}catch(e){}},
-  play:function(){try{if(this.p&&this.ready)this.p.playVideo()}catch(e){}return Promise.resolve()},
-  set currentTime(v){try{if(this.p&&this.ready)this.p.seekTo(v,true)}catch(e){}}},ytApi=0;
-function ytLoad(){
-  if(window.YT&&window.YT.Player)return Promise.resolve();
-  return new Promise(function(res,rej){
-    if(ytApi){ytApi.push(res);return}
-    ytApi=[res];var prev=window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady=function(){try{if(prev)prev()}catch(e){}var q=ytApi;ytApi=0;(q||[]).forEach(function(f){f()})};
-    var sc=document.createElement("script");sc.src="https://www.youtube.com/iframe_api";sc.onerror=function(){ytApi=0;rej(new Error("yt"))};document.head.appendChild(sc)})}
-function ytState(e){
-  var st=e&&e.data,root=yt.root;if(!root)return;var b=root.querySelector(".zsong button");
-  if(st===1){yt.paused=false;yt.ended=false;root.classList.add("speak","sing");if(b)b.innerHTML=ICON_PAUSE}
-  else if(st===2||st===0){yt.paused=true;yt.ended=st===0;root.classList.remove("speak","sing");if(b)b.innerHTML=ICON_PLAY}}
-function startYt(root,vid){
-  songAudio=yt;yt.root=root;yt.paused=true;yt.ended=false;
-  return ytLoad().then(function(){return new Promise(function(res,rej){
-    var to=setTimeout(function(){rej(new Error("timeout"))},9000);
-    if(yt.p&&yt.ready){clearTimeout(to);try{yt.p.loadVideoById(vid)}catch(e){return rej(e)}res();return}
-    var old=document.getElementById("mr-yt-host");if(old)old.remove();
-    yt.p=null;yt.ready=false;
-    var host=document.createElement("div");host.id="mr-yt-host";host.style.cssText="position:fixed;left:-9999px;top:0;width:220px;height:220px;opacity:0;pointer-events:none";
-    var fr=document.createElement("iframe");fr.width="220";fr.height="220";fr.setAttribute("allow","autoplay; encrypted-media");fr.setAttribute("title","Mira");
-    fr.src="https://www.youtube.com/embed/"+vid+"?enablejsapi=1&autoplay=1&playsinline=1&controls=0&rel=0&fs=0&disablekb=1&origin="+encodeURIComponent(location.origin);
-    host.appendChild(fr);document.body.appendChild(host);
-    yt.p=new YT.Player(fr,{events:{
-      onReady:function(){clearTimeout(to);yt.ready=true;try{yt.p.setVolume(100);yt.p.playVideo()}catch(e){}res()},
-      onStateChange:ytState,
-      onError:function(){clearTimeout(to);yt.ready=false;if(yt.fail)yt.fail()}}})})})}
+var RE_GSEARCH=/^\s*(?:ابحث(?:ي)?(?:\s+لي)?(?:\s+(?:في|ف)\s+\S+)?(?:\s+عن)?|دور(?:ي)?(?:\s+لي)?\s+(?:على|عن)|بحث\s+عن|غوغل|قوقل|جوجل|google|search(?:\s+for)?|ab7ath|abhath|cherche(?:\s+moi)?)\s+(.{2,100})$/i;
+function searchReq(root,t,q){
+  var a=LG()==="ar";showMe(root,t);q=q.replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,100);if(!q)return;
+  var g="https://www.google.com/search?q="+encodeURIComponent(q),y="https://www.youtube.com/results?search_query="+encodeURIComponent(q);
+  try{var w=window.open(g,"_blank");if(w){try{w.opener=null}catch(e){}}}catch(e){}
+  setReply(root,a?"تفضل \uD83D\uDD0E فتحت لك نتائج البحث عن «"+q+"». إن لم تفتح الصفحة اضغط الزر":"Here you go \uD83D\uDD0E I opened the search results for \u201C"+q+"\u201D. If it didn't open, tap the button",{gsearch:{g:g,y:y}});
+}
 function songReq(root,t,q,inp,btn){
   var a=LG()==="ar";
   showMe(root,t);busy=true;btn.disabled=true;stopSong(root);
   if(audio){try{audio.pause()}catch(e){}}
-  var au=new Audio();au.src=SILENT;try{var pp=au.play();if(pp&&pp.catch)pp.catch(function(){})}catch(e){}
-  songAudio=au;ytLoad().catch(function(){});
+  songAudio=new Audio();songAudio.src=SILENT;try{var pp=songAudio.play();if(pp&&pp.catch)pp.catch(function(){})}catch(e){}
   setReply(root,a?"لحظة، أجهز الأغنية...":"One sec, getting the song ready...");
-  function getSong(prev){return fetch("/api/mira-song?q="+encodeURIComponent(q)+(prev?"&src=preview":""),{credentials:"same-origin"})
-    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})}
-  function usePreview(j){
-    if(!j||typeof j.preview!=="string"||j.preview.indexOf("https://")!==0)return Promise.reject(404);
-    songAudio=au;au.src=j.preview;au.volume=1;
-    au.onended=function(){root.classList.remove("speak","sing");var b=root.querySelector(".zsong button");if(b)b.innerHTML=ICON_PLAY};
-    var go=au.play(),p=go&&go.then?go:Promise.resolve();
-    return p.then(function(){root.classList.add("speak","sing")},function(){}).then(function(){
-      setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})})}
-  function viaPreview(){return getSong(true).then(usePreview)}
-  getSong(false).then(function(j){
-    if(j&&typeof j.yt==="string"&&/^[\w-]{11}$/.test(j.yt)){
-      yt.fail=function(){stopSong(root);viaPreview().catch(function(){root.classList.remove("speak","sing");setReply(root,a?"ما أقدر أشغل هذه الأغنية":"I can't play this one")})};
-      return startYt(root,j.yt).then(function(){setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})},function(){return Promise.reject("yt")})}
-    return usePreview(j)})
-    .catch(function(e){
-      if(e==="yt"||(e&&e.message))return viaPreview();
-      return Promise.reject(e)})
+  fetch("/api/mira-song?q="+encodeURIComponent(q),{credentials:"same-origin"})
+    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+    .then(function(j){
+      if(!j||typeof j.preview!=="string"||j.preview.indexOf("https://")!==0)return Promise.reject(404);
+      var au=songAudio;au.src=j.preview;au.volume=1;
+      au.onended=function(){root.classList.remove("speak","sing");var b=root.querySelector(".zsong button");if(b)b.innerHTML=ICON_PLAY};
+      var go=au.play();
+      var p=go&&go.then?go:Promise.resolve();
+      return p.then(function(){root.classList.add("speak","sing")},function(){}).then(function(){
+        setReply(root,a?"أغني لك الآن \u266A":"Singing for you \u266A",{song:j})})})
     .catch(function(e){root.classList.remove("speak","sing");setReply(root,e===404?(a?"ما لقيت هذه الأغنية":"I couldn't find that song"):e===429?(a?"مهلاً قليلاً":"Slow down a little"):(a?"ما أقدر أغني الآن...":"I can't sing right now..."))})
     .then(function(){busy=false;btn.disabled=false;inp.focus()})}
 function LG(){try{return LANG==="ar"?"ar":"en"}catch(e){return"en"}}
@@ -158,14 +138,14 @@ function saveName(root,t,inp){
   busy=true;
   fetch("/api/mira-name",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n})})
     .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
-    .then(function(j){myName=j.name;needName=false;var m=LG()==="ar"?"تشرفنا يا "+myName+"! كيف أقدر أساعدك؟":"Nice to meet you, "+myName+"! How can I help you?";setReply(root,m);speak(root,m)})
+    .then(function(j){myName=j.name;needName=false;var m=renaming?T("تم! سأناديك "+myName+" من الآن \uD83D\uDC96","Done! I'll call you "+myName+" from now on \uD83D\uDC96"):(LG()==="ar"?"تشرفنا يا "+myName+"! كيف أقدر أساعدك؟":"Nice to meet you, "+myName+"! How can I help you?");var wasR=renaming;renaming=false;setReply(root,m);speak(root,m);if(wasR)addMenu(root)})
     .catch(function(e){setReply(root,e===429?"Slow down a little":"I can't save it right now...")})
     .then(function(){busy=false;if(inp)inp.focus()})}
 function onGender(g){
   myGender=g;var root=document.querySelector(".mr");if(!root||!root.offsetWidth)return;
   var a=LG()==="ar",msg=a?(g==="f"?"أهلاً بكِ يا جميلة \uD83D\uDC96 أنا ميرا، سعيدة جداً بتعرفي عليكِ":"أهلاً بك! أنا ميرا، سعيدة بتعرفي عليك"):(g==="f"?"Welcome, beautiful \uD83D\uDC96 I'm Mira, so happy to meet you":"Welcome! I'm Mira, happy to meet you");
   root.classList.add("talk");wave(root);setReply(root,msg);speak(root,msg);
-}
+  if(!myName)setTimeout(function(){needName=true;setReply(root,askMsg());var i=root.querySelector(".mr-in input");if(i)i.focus()},3800)}
 (function(){var f0=window.fetch;if(!f0||f0.__mgd)return;
   var nf=function(u,o){var p=f0.apply(this,arguments);
     try{var url=typeof u==="string"?u:(u&&u.url)||"";
@@ -185,23 +165,83 @@ function nameCheck(n){
       needName=true;root.classList.add("talk");wave(root);setReply(root,askMsg());
       var i=root.querySelector(".mr-in input");if(i)setTimeout(function(){i.focus()},50)},2500)
   }).catch(function(){setTimeout(function(){nameCheck(n+1)},5000)})}
+/* ===== Mira menu: change name, advice, rock-paper-scissors (a win = 10 points, once a day) ===== */
+var renaming=false;
+function T(ar,en){return LG()==="ar"?ar:en}
+function btnRow(root,items){
+  var r=root.querySelector(".mr-reply");if(!r)return;
+  var w=document.createElement("div");w.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px";
+  items.forEach(function(it){
+    var b=document.createElement("button");b.type="button";b.className="zbtn";b.textContent=it[0];
+    b.style.cssText="border:0;cursor:pointer;margin-top:0;padding:7px 12px;font-family:inherit";
+    b.addEventListener("click",function(e){e.stopPropagation();it[1](root)});w.appendChild(b)});
+  r.appendChild(w)}
+function addMenu(root){
+  btnRow(root,[[T("\u270F\uFE0F \u063A\u064A\u0651\u0631 \u0627\u0633\u0645\u064A","\u270F\uFE0F Change my name"),menuName],[T("\uD83D\uDCA1 \u0646\u0635\u064A\u062D\u0629","\uD83D\uDCA1 Advice"),menuAdvice],[T("\u270A \u062D\u062C\u0631 \u0648\u0631\u0642\u0629 \u0645\u0642\u0635","\u270A Rock Paper Scissors"),menuRps]])}
+function showMenu(root){
+  needName=false;renaming=false;
+  if(!root.classList.contains("talk")){hideMe(root);root.classList.add("talk");wave(root)}
+  var m=T("\u0645\u0627\u0630\u0627 \u062A\u062D\u0628 \u0623\u0646 \u0646\u0641\u0639\u0644 \u0627\u0644\u064A\u0648\u0645\u061F \uD83D\uDC96","What would you like to do? \uD83D\uDC96");
+  setReply(root,m);addMenu(root)}
+function menuName(root){
+  needName=true;renaming=true;
+  setReply(root,T("\u0627\u0643\u062A\u0628 \u0627\u0633\u0645\u0643 \u0627\u0644\u062C\u062F\u064A\u062F \u0645\u0646 \u0641\u0636\u0644\u0643 \u270F\uFE0F","Write your new name please \u270F\uFE0F"));
+  btnRow(root,[[T("\u0631\u062C\u0648\u0639","Back"),showMenu]]);
+  var i=root.querySelector(".mr-in input");if(i)setTimeout(function(){i.focus()},50)}
+function menuAdvice(root){
+  if(busy)return;busy=true;setReply(root,"...");
+  fetch("/api/mira-advice?lang="+LG(),{credentials:"same-origin"})
+    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+    .then(function(j){setReply(root,j.text);speak(root,j.text);btnRow(root,[[T("\uD83D\uDCA1 \u0646\u0635\u064A\u062D\u0629 \u0623\u062E\u0631\u0649","\uD83D\uDCA1 Another one"),menuAdvice],[T("\u0627\u0644\u0642\u0627\u0626\u0645\u0629","Menu"),showMenu]])})
+    .catch(function(e){setReply(root,e===429?T("\u0645\u0647\u0644\u0627\u064B \u0642\u0644\u064A\u0644\u0627\u064B","Slow down a little"):T("\u0645\u0627 \u0623\u0642\u062F\u0631 \u0627\u0644\u0622\u0646...","I can't right now..."));btnRow(root,[[T("\u0627\u0644\u0642\u0627\u0626\u0645\u0629","Menu"),showMenu]])})
+    .then(function(){busy=false})}
+var RPS_E={rock:"\u270A",paper:"\u270B",scissors:"\u270C\uFE0F"};
+function rpsButtons(root){
+  btnRow(root,[[T("\u270A \u062D\u062C\u0631","\u270A Rock"),function(r){playRps(r,"rock")}],[T("\u270B \u0648\u0631\u0642\u0629","\u270B Paper"),function(r){playRps(r,"paper")}],[T("\u270C\uFE0F \u0645\u0642\u0635","\u270C\uFE0F Scissors"),function(r){playRps(r,"scissors")}],[T("\u0627\u0644\u0642\u0627\u0626\u0645\u0629","Menu"),showMenu]])}
+function menuRps(root){
+  if(busy)return;busy=true;
+  fetch("/api/mira-rps",{credentials:"same-origin"})
+    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+    .then(function(j){
+      var m=j.taken
+        ?T("\u0623\u062E\u0630\u062A \u0647\u062F\u064A\u062A\u0643 \u0627\u0644\u064A\u0648\u0645 \uD83C\uDF81 \u0644\u0643\u0646 \u064A\u0645\u0643\u0646\u0646\u0627 \u0623\u0646 \u0646\u0644\u0639\u0628 \u0644\u0644\u0645\u062A\u0639\u0629!","You already took today's gift \uD83C\uDF81 but we can still play for fun!")
+        :T("\u0625\u0630\u0627 \u0641\u0632\u062A \u0639\u0644\u064A\u0651 \u062A\u0623\u062E\u0630 "+j.gift+" \u0646\u0642\u0627\u0637 \u0647\u062F\u064A\u0629 (\u0645\u0631\u0629 \u0648\u0627\u062D\u062F\u0629 \u0643\u0644 \u064A\u0648\u0645) \uD83C\uDF81 \u0627\u062E\u062A\u0631:","Beat me and win "+j.gift+" points (once a day) \uD83C\uDF81 Choose:");
+      setReply(root,m);rpsButtons(root)})
+    .catch(function(){setReply(root,T("\u0645\u0627 \u0623\u0642\u062F\u0631 \u0627\u0644\u0622\u0646...","I can't right now..."));btnRow(root,[[T("\u0627\u0644\u0642\u0627\u0626\u0645\u0629","Menu"),showMenu]])})
+    .then(function(){busy=false})}
+function playRps(root,mv){
+  if(busy)return;busy=true;
+  fetch("/api/mira-rps",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({move:mv})})
+    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
+    .then(function(j){
+      var e=RPS_E[j.bot]||"",m;
+      if(j.result==="draw")m=T("\u0627\u062E\u062A\u0631\u062A "+e+" \u0623\u064A\u0636\u0627\u064B\u060C \u062A\u0639\u0627\u062F\u0644! \uD83D\uDE04","I chose "+e+" too, a draw! \uD83D\uDE04");
+      else if(j.result==="lose")m=T("\u0627\u062E\u062A\u0631\u062A "+e+" \u0648\u0641\u0632\u062A \u0647\u0630\u0647 \u0627\u0644\u0645\u0631\u0629 \uD83C\uDF38 \u062D\u0638\u0627\u064B \u0623\u0648\u0641\u0631\u060C \u062C\u0631\u0651\u0628 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649!","I chose "+e+" and I won this time \uD83C\uDF38 Better luck, try again!");
+      else if(j.gift>0)m=T("\u0627\u062E\u062A\u0631\u062A "+e+" \u0648\u0623\u0646\u062A \u0641\u0632\u062A! \uD83C\uDF89 \u0647\u062F\u064A\u062A\u0643: "+j.gift+" \u0646\u0642\u0627\u0637 \uD83C\uDF81","I chose "+e+" and you won! \uD83C\uDF89 Your gift: "+j.gift+" points \uD83C\uDF81");
+      else m=T("\u0627\u062E\u062A\u0631\u062A "+e+" \u0648\u0623\u0646\u062A \u0641\u0632\u062A! \uD83C\uDF89 \u0644\u0643\u0646\u0643 \u0623\u062E\u0630\u062A \u0647\u062F\u064A\u062A\u0643 \u0627\u0644\u064A\u0648\u0645 \u0628\u0627\u0644\u0641\u0639\u0644\u060C \u062A\u0639\u0627\u0644 \u063A\u062F\u0627\u064B \uD83C\uDF81","I chose "+e+" and you won! \uD83C\uDF89 But you already took your gift today, come back tomorrow \uD83C\uDF81");
+      setReply(root,m);speak(root,m);rpsButtons(root);
+      if(j.gift>0){try{window.dispatchEvent(new CustomEvent("mira-pts",{detail:{pts:j.pts}}))}catch(x){}}})
+    .catch(function(e){setReply(root,e===429?T("\u0645\u0647\u0644\u0627\u064B \u0642\u0644\u064A\u0644\u0627\u064B","Slow down a little"):T("\u0645\u0627 \u0623\u0642\u062F\u0631 \u0627\u0644\u0622\u0646...","I can't right now..."));btnRow(root,[[T("\u0627\u0644\u0642\u0627\u0626\u0645\u0629","Menu"),showMenu]])})
+    .then(function(){busy=false})}
 function build(st){
   var root=document.createElement("div");root.className="mr";
   root.innerHTML='<div class="mr-sh"></div><div class="mr-nt" aria-hidden="true"><i>\u266A</i><i>\u266B</i><i>\u266A</i></div><canvas class="mr-cv" width="'+FW+'" height="'+FH+'" aria-hidden="true"></canvas>'+
-    '<div class="mr-sg" aria-hidden="true"><img class="mr-sg-l" src="/mira/sing.webp?v=3" alt="" draggable="false"><img class="mr-sg-t" src="/mira/base.webp?v=3" alt="" draggable="false"><img class="mr-sg-h" src="/mira/hair.webp?v=3" alt="" draggable="false"><img class="mr-sg-m" src="/mira/mouth.webp?v=3" alt="" draggable="false"></div>'+
     '<button class="mr-hit" type="button" aria-label="Talk to Mira"></button>'+
     '<div class="mr-hello" aria-hidden="true">Hello<i>\uD83D\uDC4B</i></div>'+
     '<div class="mr-me"></div><div class="mr-reply" role="status"></div>'+
-    '<div class="mr-in"><button class="mr-mute" type="button" aria-label="Sound">'+(muted?ICON_OFF:ICON_ON)+'</button><input type="text" maxlength="200" placeholder="..." aria-label="Message"><button class="mr-send" type="button" aria-label="Send">'+ICON_SEND+'</button></div>';
+    '<div class="mr-in"><button class="mr-mute" type="button" aria-label="Sound">'+(muted?ICON_OFF:ICON_ON)+'</button><button class="mr-mute mr-menu" type="button" aria-label="Menu" style="font-size:1rem">\uD83C\uDFAE</button><input type="text" maxlength="200" placeholder="..." aria-label="Message"><button class="mr-send" type="button" aria-label="Send">'+ICON_SEND+'</button></div>';
   cvs=root.querySelector(".mr-cv");ctx=cvs.getContext("2d");redraw();
   var hit=root.querySelector(".mr-hit"),f=root.querySelector(".mr-in"),rep=root.querySelector(".mr-reply"),
       inp=f.querySelector("input"),btn=f.querySelector(".mr-send"),mb=f.querySelector(".mr-mute");
+  f.querySelector(".mr-menu").addEventListener("click",function(e){e.stopPropagation();showMenu(root)});
   function send(){
     var t=inp.value.trim();if(!t||busy)return;
     if(needName){inp.value="";showMe(root,t);saveName(root,t,inp);return}
+    var gs=RE_GSEARCH.exec(t);
+    if(gs){inp.value="";searchReq(root,t,gs[1]);return}
     var ms=RE_SING.exec(t);
     if(ms){inp.value="";songReq(root,t,ms[1].trim(),inp,btn);return}
-    if(window.speechSynthesis){try{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(""))}catch(e){}}
+    unlockVoice();if(window.speechSynthesis){try{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(""))}catch(e){}}
     inp.value="";busy=true;btn.disabled=true;showMe(root,t);hist.push({role:"user",content:t});setReply(root,"...");
     fetch("/api/mira-chat",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist})})
       .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
@@ -210,9 +250,9 @@ function build(st){
       .then(function(){busy=false;btn.disabled=false;inp.focus()})}
   hit.addEventListener("click",function(e){e.stopPropagation();
     if(root.classList.contains("talk")){close(root);return}
-    hideMe(root);root.classList.add("talk");wave(root);setReply(root,greet());setTimeout(function(){inp.focus()},50)});
+    hideMe(root);root.classList.add("talk");wave(root);setReply(root,greet());if(!needName)addMenu(root);setTimeout(function(){inp.focus()},50)});
   btn.addEventListener("click",send);
-  mb.addEventListener("click",function(e){e.stopPropagation();muted=!muted;mb.innerHTML=muted?ICON_OFF:ICON_ON;try{localStorage.setItem("mira_mute",muted?"1":"0")}catch(x){}if(muted&&window.speechSynthesis)try{speechSynthesis.cancel()}catch(x){}});
+  mb.addEventListener("click",function(e){e.stopPropagation();muted=!muted;mb.innerHTML=muted?ICON_OFF:ICON_ON;try{localStorage.setItem("mira_mute",muted?"1":"0")}catch(x){}if(muted)stopVoice()});
   inp.addEventListener("keydown",function(e){if(e.key==="Enter")send();else if(e.key==="Escape")close(root)});
   document.addEventListener("click",function(e){if(root.classList.contains("talk")&&!f.contains(e.target)&&!rep.contains(e.target))close(root)});
   st.appendChild(root)}
@@ -248,7 +288,6 @@ Z+".mr.hasme.talk .mr-reply.on{top:calc(30% + 98px)!important}"+
 ".mr-nt i{position:absolute;bottom:0;font-style:normal;font-size:1.3rem;font-weight:800;color:#ff9ad5;text-shadow:0 2px 8px rgba(255,100,190,.8);opacity:0;animation:ntUp 2.4s ease-in infinite}"+
 ".mr-nt i:nth-child(1){left:5%}.mr-nt i:nth-child(2){left:45%;animation-delay:.8s}.mr-nt i:nth-child(3){left:80%;animation-delay:1.6s}"+
 "@keyframes ntUp{0%{opacity:0;transform:translateY(0) rotate(-8deg)}15%{opacity:1}100%{opacity:0;transform:translateY(-46px) rotate(12deg)}}";
-s.textContent+='.mr-sg{display:none;position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));animation:sgDance 1.1s ease-in-out infinite;transform-origin:50% 90%}.mr-sg img{position:absolute;left:0;top:0;width:100%;height:100%;display:block;-webkit-user-drag:none;user-select:none}.mr.sing .mr-cv{opacity:0;animation:none}.mr.sing .mr-sg{display:block}.mr-sg-l{clip-path:inset(52% 0 0 0);transform-origin:55% 62%;animation:sgLeg 0.9s ease-in-out infinite}.mr-sg-t{clip-path:inset(0 0 38% 0);animation:sgTorso 1.1s ease-in-out infinite}.mr-sg-h{transform-origin:31.8% 23.4%;animation:sgHair 1.4s ease-in-out infinite}.mr-sg-m{transform-origin:56.1% 15.9%;animation:sgMouth .65s ease-in-out infinite}@keyframes sgDance{0%,100%{transform:translateY(0) rotate(0) scale(1)}15%{transform:translateY(-7px) rotate(-2.5deg) scale(1.02)}30%{transform:translateY(0) rotate(0) scale(1)}45%{transform:translateY(-5px) rotate(2.8deg) scale(1.015)}60%{transform:translateY(0) rotate(0)}75%{transform:translateY(-6px) rotate(-1.8deg) scale(1.01)}90%{transform:translateY(-1px) rotate(1.2deg)}}@keyframes sgTorso{0%,100%{transform:rotate(0)}25%{transform:rotate(-1.5deg)}50%{transform:rotate(0)}75%{transform:rotate(1.8deg)}}@keyframes sgLeg{0%,100%{transform:rotate(5deg) translateX(0)}20%{transform:rotate(-3deg) translateX(-3px)}50%{transform:rotate(-6deg) translateX(2px)}80%{transform:rotate(2deg) translateX(-1px)}}@keyframes sgHair{0%,100%{transform:rotate(2deg) translateX(0)}25%{transform:rotate(-4deg) translateX(-2px)}50%{transform:rotate(3deg) translateX(1px)}75%{transform:rotate(-2.5deg) translateX(1px)}}@keyframes sgMouth{0%,100%{transform:scaleY(.1) scaleX(.92)}10%{transform:scaleY(1.05) scaleX(1.08)}22%{transform:scaleY(.3) scaleX(1)}35%{transform:scaleY(.95) scaleX(1.06)}48%{transform:scaleY(.2) scaleX(.96)}60%{transform:scaleY(1.1) scaleX(1.1)}75%{transform:scaleY(.35) scaleX(1)}88%{transform:scaleY(.15) scaleX(.94)}}@media (prefers-reduced-motion:reduce){.mr-sg,.mr-sg-l,.mr-sg-t,.mr-sg-h,.mr-sg-m{animation:none!important}}';
 document.head.appendChild(s)})();
 nameCheck();
 })();

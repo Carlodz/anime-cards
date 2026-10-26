@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wayanime Play</title>
+<link rel="icon" href="/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0912;--panel:#12111d;--line:rgba(255,255,255,.07);--tx:#f2f0fa;--mu:#8d89a6;--a1:#ff8a3d;--a2:#ff4f8b;--vio:#8a4dff;--ok:#38d6a0}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(900px 600px at 30% 0,#2a1440 0,transparent 70%),radial-gradient(700px 500px at 100% 100%,#3a1650 0,transparent 70%),var(--bg);color:var(--tx);font:500 14px/1.45 "Plus Jakarta Sans",system-ui,sans-serif}
+a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+.app{display:grid;grid-template-columns:200px 1fr 250px;grid-template-rows:auto 1fr;height:100vh;gap:0 20px;padding:18px 20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.3px}
+.logo img{width:28px;height:28px;border-radius:8px;object-fit:cover}
+.top{display:flex;gap:12px;align-items:center}
+.search{flex:1;max-width:520px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 14px;height:42px}
+.search input{flex:1;background:none;border:0;color:var(--tx);font:inherit;outline:0}
+.search input::placeholder{color:var(--mu)}
+.ibtn{width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center}
+.pts{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;height:42px;padding:0 14px;font-weight:700}
+.pts i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2))}
+.side{grid-row:2;display:flex;flex-direction:column;gap:4px;padding-top:18px;min-height:0}
+.side a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:var(--mu);font-weight:600}
+.side a:hover{color:var(--tx);background:rgba(255,255,255,.04)}
+.side a.on{color:var(--tx);background:linear-gradient(90deg,rgba(255,79,139,.22),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line)}
+.side svg{width:18px;height:18px;flex:none}
+.side hr{border:0;border-top:1px solid var(--line);width:100%;margin:10px 0}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.me img,.fr img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#2a2540;flex:none}
+.me b{display:block;font-size:13px}.me small{color:var(--ok);font-size:11px}
+main{grid-row:2;min-width:0;overflow-y:auto;padding:18px 2px 20px;scrollbar-width:none}
+.hero{position:relative;min-height:320px;border-radius:22px;overflow:hidden;background:#1a1030 var(--hb) center 30%/cover;display:flex;align-items:flex-end;padding:34px}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,9,18,.92) 8%,rgba(10,9,18,.3) 55%,transparent),linear-gradient(0deg,rgba(10,9,18,.85),transparent 55%)}
+.hero>div{position:relative;max-width:420px}
+.hero small{color:var(--mu);font-weight:700;font-size:11px}
+.hero h1{margin:6px 0 8px;font-size:clamp(30px,4.4vw,54px);line-height:.95;font-weight:800;letter-spacing:-1px}
+.hero p{margin:0 0 18px;color:#c9c5de;font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border-radius:10px;border:0;font-weight:700}
+.btn.p{background:linear-gradient(90deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 24px -8px var(--a2)}
+.btn.g{background:none;color:var(--tx);padding:0 14px}
+.dots{position:absolute;bottom:14px;left:50%;display:flex;gap:5px}.dots i{width:16px;height:3px;border-radius:2px;background:rgba(255,255,255,.3)}.dots i:first-child{background:#fff}
+h2{font-size:16px;font-weight:700;margin:26px 0 14px}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.gc{border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s}
+.gc:hover{transform:translateY(-3px)}
+.gc .im{aspect-ratio:3/4;background:linear-gradient(160deg,#3a1d63,#14111f) center/cover}
+.gc div.t{padding:10px 12px 12px}.gc b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc span{font-weight:700;font-size:13px}.gc em{font-style:normal;color:var(--mu);font-size:11px;margin-left:6px}.gc .own{color:var(--ok)}
+.rail{grid-row:2;padding-top:18px;overflow-y:auto;scrollbar-width:none;min-height:0}
+.rail h3{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 12px;font-size:13px;font-weight:700}
+.rail h3 a{color:var(--mu);font-size:11px;font-weight:600}
+.fr{display:flex;align-items:center;gap:10px;padding:7px 0}.fr b{display:block;font-size:12.5px}.fr small{font-size:11px;color:var(--ok)}
+.ac{display:flex;gap:10px;padding:8px 0}.ac img{width:30px;height:30px;border-radius:8px;object-fit:cover;background:#2a2540}
+.ac small{display:block;color:var(--vio);font-size:10.5px;font-weight:700}.ac b{font-size:12px;display:block}.ac time{color:var(--mu);font-size:10.5px}
+.rail section+section{margin-top:26px}
+.empty{color:var(--mu);font-size:12px}
+#login{position:fixed;inset:0;background:rgba(10,9,18,.88);display:none;place-items:center;z-index:9}
+#login form{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;width:min(340px,92vw);display:grid;gap:12px}
+#login input{height:42px;border-radius:10px;border:1px solid var(--line);background:#0d0c17;color:var(--tx);padding:0 12px;font:inherit}
+#login p{margin:0;color:var(--a2);font-size:12px;min-height:16px}
+@media(max-width:1100px){.app{grid-template-columns:64px 1fr}.rail{display:none}.side a span,.logo span,.me div{display:none}.side a{justify-content:center;padding:12px}.me{justify-content:center;padding:6px}}
+@media(max-width:720px){.app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100vh;padding:12px}.side{grid-row:2;flex-direction:row;overflow-x:auto;padding:12px 0 0}.side hr,.me{display:none}.pts{display:none}main{grid-row:3;overflow:visible}.hero{padding:22px;min-height:280px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="app">
+<div class="logo"><img src="/logo.png" alt=""><span>WAYANIME</span></div>
+<header class="top">
+<label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d89a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" placeholder="Search cards, packs, themes…" aria-label="Search"></label>
+<a class="ibtn" href="/#inbox" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg></a>
+<div class="pts"><i></i><span id="pts">0</span> pts</div>
+</header>
+<nav class="side" aria-label="Main">
+<a class="on" href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 3l9 8v10H3z"/></svg><span>Home</span></a>
+<a href="/#library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="12" height="18" rx="2"/><path d="M19 6v14"/></svg><span>Library</span></a>
+<a href="/#store"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span>Store</span></a>
+<a href="/#friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6M17 4a3.5 3.5 0 0 1 0 7M22 20c0-3-1.5-5-4-5.5"/></svg><span>Friends</span></a>
+<a href="/#trade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><span>Trade</span></a>
+<hr>
+<a href="/#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profile</span></a>
+<div class="me" id="me"><img src="/favicon.png" alt=""><div><b>Guest</b><small>Offline</small></div></div>
+</nav>
+<main id="home">
+<section class="hero" id="hero" style="--hb:url(/themes/zero-bg.jpg)"><div>
+<small id="hk">NEW</small><h1 id="ht">Open today’s pack</h1><p id="hp">Pull anime cards, trade with friends and spend points in the store.</p>
+<a class="btn p" href="/#stage">Open pack</a><a class="btn g" href="/#library">View collection</a></div><div class="dots"><i></i><i></i><i></i><i></i></div></section>
+<h2>Recommended for you</h2><div class="row" id="rec"></div>
+</main>
+<aside class="rail">
+<section><h3>Friends online <a href="/#friends">View all</a></h3><div id="fr"><p class="empty">Log in to see your friends.</p></div></section>
+<section><h3>Activity feed <a href="/#inbox">View all</a></h3><div id="ac"></div></section>
+</aside>
+</div>
+<div id="login"><form id="lf"><b>Log in to Wayanime</b><input name="username" placeholder="Username" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><p id="le"></p><button class="btn p" type="submit">Log in</button></form></div>
+<script>
+const $=s=>document.querySelector(s),J=(u,o)=>fetch(u,o).then(r=>r.ok?r.json():Promise.reject(r.status)),E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const img=p=>!p?'/favicon.png':typeof p==='string'?p:(p.s||'/favicon.png');
+const ago=t=>{const m=(Date.now()-t)/6e4;return m<60?Math.max(1,m|0)+'m ago':m<1440?(m/60|0)+'h ago':(m/1440|0)+'d ago'};
+async function boot(){
+ let me;try{me=(await J('/api/me')).user}catch{$('#login').style.display='grid';me=null}
+ if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`<img src="${E(img(me.pic))}" alt=""><div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`}
+ J('/api/announcements').then(d=>{const a=d.items||[];if(a[0]){$('#ht').textContent=a[0].title;$('#hp').textContent=a[0].text||'';$('#hk').textContent='ANNOUNCEMENT';if(a[0].img)$('#hero').style.setProperty('--hb',`url(${a[0].img})`)}
+  $('#ac').innerHTML=a.length?a.map(x=>`<div class="ac"><img src="${E(x.img||'/logo.png')}" alt=""><div><small>Announcement</small><b>${E(x.title)}</b><time>${ago(x.t)}</time></div></div>`).join(''):'<p class="empty">Nothing new yet.</p>'}).catch(()=>{});
+ if(!me)return;
+ J('/api/social').then(d=>{const f=d.friends||[];$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>`<div class="fr"><img src="${E(img(x.pic))}" alt=""><div><b>${E(x.username||x.name)}</b><small>● Online</small></div></div>`).join(''):'<p class="empty">Add friends to trade cards.</p>'}).catch(()=>{});
+ J('/api/store').then(d=>{window.ITEMS=d.items||[];draw('')}).catch(()=>{});
+}
+function draw(q){const l=(window.ITEMS||[]).filter(x=>!q||(x.name||'').toLowerCase().includes(q)).slice(0,14);
+ $('#rec').innerHTML=l.length?l.map(x=>`<a class="gc" href="/#store"><div class="im" style="background-image:url(/shop/img/${E(x.id)})"></div><div class="t"><b>${E(x.name)}</b>${x.owned?'<span class="own">Owned</span>':`<span>${(x.price||0).toLocaleString()} pts</span>`}</div></a>`).join(''):'<p class="empty">No items match.</p>'}
+$('#q').addEventListener('input',e=>draw(e.target.value.trim().toLowerCase()));
+$('#lf').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);
+ try{await J('/auth/loginpw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:f.get('username'),password:f.get('password')})});$('#login').style.display='none';boot()}catch(s){$('#le').textContent=s===429?'Too many attempts. Wait a minute.':'Wrong username or password.'}});
+boot();
+</script></body></html>

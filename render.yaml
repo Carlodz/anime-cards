@@ -16,11 +16,3 @@ services:
         sync: false
       - key: BOT_ACCOUNT_PASSWORD
         sync: false
-      - key: YOUTUBE_API_KEY
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: DISCORD_MIRA_CHAT
-        sync: false
-      - key: DISCORD_MIRA_CHANNEL_ID
-        sync: false

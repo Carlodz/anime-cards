@@ -1991,7 +1991,9 @@ app.post('/api/mira-tts', async (req, res) => {
   if (!key) return res.status(503).json({ error: 'not configured' });
   const text = String((req.body || {}).text || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 300);
   if (!text) return res.status(400).json({ error: 'empty' });
-  const voice = /^[A-Za-z]{3,20}$/.test(String(process.env.MIRA_VOICE || '').trim()) ? String(process.env.MIRA_VOICE).trim() : 'Leda';
+  const GIRL_VOICES = ['Zephyr', 'Kore', 'Leda', 'Aoede', 'Callirrhoe', 'Autonoe', 'Despina', 'Erinome', 'Laomedeia', 'Achernar', 'Gacrux', 'Pulcherrima', 'Vindemiatrix', 'Sulafat'];
+  const wantVoice = String(process.env.MIRA_VOICE || '').trim();
+  const voice = GIRL_VOICES.find((v) => v.toLowerCase() === wantVoice.toLowerCase()) || 'Leda'; // only girl voices allowed
   const ck = voice + '|' + text, hit = ttsCache.get(ck);
   if (hit) { res.set('Content-Type', 'audio/wav'); res.set('Cache-Control', 'private, max-age=86400'); return res.send(hit); }
   const now = Date.now(), h = (ttsT[id] = (ttsT[id] || []).filter((t) => now - t < 60000));
@@ -2000,19 +2002,27 @@ app.post('/api/mira-tts', async (req, res) => {
   const wantModel = String(process.env.MIRA_TTS_MODEL || '').trim().replace(/^models\//, '');
   const model = /^[a-z0-9][a-z0-9.\-]{2,60}$/.test(wantModel) ? wantModel : 'gemini-2.5-flash-preview-tts';
   try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: 'Say this in a cute, sweet, cheerful and playful girl voice, in the same language as the text: ' + text }] }],
-        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
-      }),
-      signal: AbortSignal.timeout(25000),
-    });
-    if (!r.ok) { console.error('mira-tts: Gemini returned', r.status, (await r.text()).slice(0, 300)); return res.status(502).json({ error: 'tts error' }); }
-    const j = await r.json();
-    const part = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).find((p) => p.inlineData && p.inlineData.data);
-    if (!part) { console.error('mira-tts: no audio', JSON.stringify(j).slice(0, 300)); return res.status(502).json({ error: 'tts error' }); }
+    // Gemini preview TTS sometimes fails (500 / no audio). Retry, switching to another girl voice, so the browser (often male) voice is rarely needed.
+    const tryVoices = [voice, voice, voice === 'Aoede' ? 'Kore' : 'Aoede'];
+    let part = null;
+    for (const vn of tryVoices) {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Say this in a cute, sweet, cheerful and playful girl voice, in the same language as the text: ' + text }] }],
+          generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: vn } } } },
+        }),
+        signal: AbortSignal.timeout(25000),
+      });
+      if (r.status === 429) { console.error('mira-tts: Gemini rate limit (429)'); break; }
+      if (!r.ok) { console.error('mira-tts: Gemini returned', r.status, (await r.text()).slice(0, 300)); continue; }
+      const j = await r.json();
+      part = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).find((q) => q.inlineData && q.inlineData.data);
+      if (part) break;
+      console.error('mira-tts: no audio', JSON.stringify(j).slice(0, 300));
+    }
+    if (!part) return res.status(502).json({ error: 'tts error' });
     const rate = Number((/rate=(\d+)/.exec(part.inlineData.mimeType || '') || [])[1]) || 24000;
     const wav = wavOf(Buffer.from(part.inlineData.data, 'base64'), rate);
     ttsCache.set(ck, wav); if (ttsCache.size > 60) ttsCache.delete(ttsCache.keys().next().value);

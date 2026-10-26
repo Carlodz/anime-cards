@@ -57,7 +57,7 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 .pk .tag{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(10,9,18,.7);border:1px solid var(--line);color:var(--c,#fff);backdrop-filter:blur(6px)}
 .rail h3{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 12px;font-size:13px;font-weight:700}
 .rail h3 a{color:var(--mu);font-size:11px;font-weight:600}
-.fr{display:flex;align-items:center;gap:10px;padding:7px 0}.fr b{display:block;font-size:12.5px}.fr small{font-size:11px;color:var(--ok)}
+.fr{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:6px;border-radius:14px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}.fr[style]{background:linear-gradient(90deg,rgba(10,9,18,.88) 25%,rgba(10,9,18,.35)),var(--fb) center/cover;border-color:rgba(255,255,255,.18)}.fr>*{position:relative}.fr b{display:block;font-size:12.5px}.fr small{font-size:11px;color:var(--ok)}
 .ac{display:flex;gap:10px;padding:8px 0}.ac img{width:30px;height:30px;border-radius:8px;object-fit:cover;background:#2a2540}
 .ac small{display:block;color:var(--vio);font-size:10.5px;font-weight:700}.ac b{font-size:12px;display:block}.ac time{color:var(--mu);font-size:10.5px}
 .sc{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:520px}
@@ -71,6 +71,28 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 .pkv{display:grid;place-items:center;gap:16px;padding:10px 0;text-align:center}.pkv .big{width:min(240px,60vw);aspect-ratio:2/3;border-radius:18px;background:center/cover;box-shadow:0 24px 60px -20px var(--c,#8a4dff)}
 .rv{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;perspective:900px}.fl{width:150px;aspect-ratio:2/3;position:relative;transform-style:preserve-3d;transition:transform .7s;cursor:pointer}.fl.on{transform:rotateY(180deg)}.fl>div{position:absolute;inset:0;border-radius:14px;background:center/cover;backface-visibility:hidden;border:1px solid var(--line)}.fl .f{transform:rotateY(180deg)}.fl em{position:absolute;bottom:6px;left:6px;right:6px;font:800 10px/1 inherit;background:rgba(10,9,18,.75);border-radius:6px;padding:4px;text-align:center;font-style:normal;text-transform:uppercase}
 .inp{height:40px;border-radius:10px;border:1px solid var(--line);background:#0d0c17;color:var(--tx);padding:0 12px;font:inherit;min-width:0;flex:1}
+#pm{position:fixed;inset:0;background:rgba(5,4,10,.72);backdrop-filter:blur(6px);display:none;place-items:center;z-index:20;padding:16px}
+.pc{position:relative;width:min(560px,100%);min-height:300px;border-radius:26px;overflow:hidden;background:var(--panel);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 80px -20px #000;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;text-align:left;padding:22px 24px}
+.pc .bg{position:absolute;background:#1a1030 center/cover;z-index:0}
+.pc.top .bg{inset:0 0 auto 0;height:62%;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.pc.bot .bg{inset:0 0 0 auto;width:70%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 60%);mask-image:linear-gradient(90deg,transparent,#000 60%)}
+.pc>*:not(.bg){position:relative;z-index:1}
+.pc .av{width:78px;height:78px;border-radius:50%;object-fit:cover;border:3px solid var(--panel);background:#2a2540;margin-bottom:10px}.pc.top .av{margin-top:70px}.pc.bot .av{margin-top:60px}
+.pc h4{margin:0;font-size:20px;font-weight:800}.pc .st{color:#cfcbe3;font-size:13px;margin:2px 0 4px}.pc .mt{color:var(--mu);font-size:12px}
+.pc .stats{display:flex;align-items:center;gap:0;margin-top:18px}.pc .stats div{padding:0 18px;border-left:1px solid var(--line);text-align:center}.pc .stats div:first-child{padding-left:0;border:0;text-align:left}.pc .stats b{display:block;font-size:14px}.pc .stats small{color:var(--mu);font-size:11px}
+.pc .act{position:absolute;right:24px;bottom:22px;z-index:2}.pc.top .act{bottom:22px}
+.pc .x{position:absolute;top:16px;right:16px;z-index:3;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#111;font-weight:800}
+.fr,.me{cursor:pointer}
+#em{position:fixed;inset:0;background:rgba(5,4,10,.7);backdrop-filter:blur(8px);display:none;place-items:center;z-index:30;padding:16px;opacity:0;transition:opacity .3s}#em.on{opacity:1}
+.ec{width:min(540px,100%);max-height:92vh;overflow-y:auto;scrollbar-width:none;background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:28px;box-shadow:0 40px 90px -20px #000;transform:translateY(70px) scale(.96);opacity:0;transition:transform .55s cubic-bezier(.2,1.1,.3,1),opacity .4s}#em.on .ec{transform:none;opacity:1}
+.ec .bn{height:120px;margin:8px 8px 0;border-radius:22px 22px 26px 26px;background:#1a1030 center/cover}
+.ec .hd{display:flex;justify-content:space-between;align-items:flex-start;padding:0 26px}.ec .hd img{width:78px;height:78px;border-radius:50%;object-fit:cover;border:4px solid var(--panel);margin-top:-39px;background:#2a2540}
+.ec .bd{padding:6px 26px 22px}.ec h4{margin:8px 0 2px;font-size:21px;font-weight:800;display:flex;gap:8px;align-items:center}.ec .sub{color:var(--mu);font-size:12.5px}
+.ec .stt{display:flex;margin:18px 0;padding:14px 0;border-block:1px solid var(--line)}.ec .stt div{flex:1;padding-left:16px;border-left:1px solid var(--line)}.ec .stt div:first-child{padding:0;border:0}.ec .stt small{color:var(--mu);font-size:11px}.ec .stt b{display:block;font-size:15px;margin-top:2px}
+.ec .rw{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);align-items:start}.ec .rw b{font-size:14px}.ec .rw small{display:block;color:var(--mu);font-size:11.5px;margin-top:3px}
+.ec .strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}.ec .strip img{height:44px;border-radius:10px;cursor:pointer;opacity:.55;border:2px solid transparent;transition:.2s}.ec .strip img.sel{opacity:1;border-color:var(--a1)}.ec .strip.pf img{width:44px;border-radius:50%;object-fit:cover}
+.ec .ft{display:flex;gap:10px;justify-content:flex-end;padding-top:18px}.ec .ft .btn{height:42px}.ec .ghost{border:1px solid var(--line);background:none}
+@media(max-width:520px){.ec .rw{grid-template-columns:1fr}}
 .rail section+section{margin-top:26px}
 .empty{color:var(--mu);font-size:12px}
 #login{position:fixed;inset:0;background:rgba(10,9,18,.88);display:none;place-items:center;z-index:9}
@@ -115,35 +137,39 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <main id="settings" style="display:none"><h2 style="margin-top:8px">Settings</h2>
 <div class="sc"><div class="me" style="margin:0 0 14px"><img id="sp" src="/favicon.png" alt=""><div><b id="sn">Guest</b><small id="sr"></small></div></div>
 <p class="empty">Points: <b id="spt">0</b></p>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn p" href="#profile">Edit profile</a><a class="btn g" style="border:1px solid var(--line)" href="#inbox">Notifications</a><a class="btn g" style="border:1px solid var(--line)" href="/auth/logout">Log out</a></div></div></main>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn p" href="#" data-edit="1">Edit profile</a><a class="btn g" style="border:1px solid var(--line)" href="#inbox">Notifications</a><a class="btn g" style="border:1px solid var(--line)" href="/auth/logout">Log out</a></div></div></main>
 <aside class="rail">
 <section><h3>Friends online <a href="#trade">View all</a></h3><div id="fr"><p class="empty">Log in to see your friends.</p></div></section>
 <section><h3>Activity feed <a href="#inbox">View all</a></h3><div id="ac"></div></section>
 </aside>
 </div>
+<div id="pm"></div>
+<div id="em"></div>
 <div id="login"><form id="lf"><b>Log in to Wayanime</b><input name="username" placeholder="Username" autocomplete="username" required><input name="password" type="password" placeholder="Password" autocomplete="current-password" required><p id="le"></p><button class="btn p" type="submit">Log in</button><a href="#" id="reg" style="text-align:center;color:var(--mu);font-size:12px">Create an account</a></form>
 <form id="rf" style="display:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;width:min(340px,92vw);gap:12px"><b>Create your account</b><input name="username" placeholder="Username" required><input name="password" type="password" placeholder="Password (6+)" required><input name="confirm" type="password" placeholder="Confirm password" required><select name="gender" style="height:42px;border-radius:10px;background:#0d0c17;color:var(--tx);border:1px solid var(--line);padding:0 10px"><option value="f">Girl</option><option value="m">Boy</option></select><p id="re"></p><button class="btn p" type="submit">Sign up</button><a href="#" id="bk" style="text-align:center;color:var(--mu);font-size:12px">Back to log in</a></form></div>
 <script>
 const $=s=>document.querySelector(s),J=(u,o)=>fetch(u,o).then(r=>r.ok?r.json():Promise.reject(r.status)),E=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const BN={sky:'sky.jpg',night:'night.jpg',eyes:'eyes.gif',meadow:'meadow.jpg',ban09:'ban09.webp',ban10:'ban10.gif',ban11:'ban11.gif',ban12:'ban12.webp',ban13:'ban13.webp'};
 for(let i=1;i<=8;i++)BN['ban0'+i]='ban0'+i+'.jpg';for(let i=1;i<=14;i++){const k='pf'+String(i).padStart(2,'0');BN[k]=k+'.jpg'}
-const AURA=['madara','kira','sukuna','shanks','jinwoo','itachi'];
+const KNOWN=new Set(['naruto','dbz','ds','bb','bc','hxh','mha','jjk','op','aot','cute','leg']);const AURA=['madara','kira','sukuna','shanks','jinwoo','itachi'];
 const img=(p,av)=>{
  if(p&&typeof p==='object'){
   if(p.s)return'/shop/img/'+encodeURIComponent(p.s);
   if(p.p&&BN[p.p])return'/banners/'+BN[p.p];
   if(p.a==='aura'&&AURA[p.i])return'/aura/'+AURA[p.i]+'.jpg';
-  if(p.a&&Number.isInteger(p.i))return'/cardimg/'+encodeURIComponent(p.a)+'-'+p.i+'.jpg';
+  if(p.a&&Number.isInteger(p.i)){if(KNOWN.has(p.a))return'/cardimg/'+encodeURIComponent(p.a)+'-'+p.i+'.jpg';const c=window.CUS&&window.CUS.cards&&window.CUS.cards[p.a];if(c&&c[p.i]&&c[p.i].img)return c[p.i].img}
  }else if(typeof p==='string'&&p)return p;
  return av&&/^https?:\/\//.test(av)?av:'/favicon.png'};
+const bnr=p=>{const u=img(p,'');return u==='/favicon.png'?'':u};
+const IM=(src)=>`<img src="${E(src)}" alt="" decoding="async" onerror="this.onerror=null;this.src='/favicon.png'">`;
 const ago=t=>{const m=(Date.now()-t)/6e4;return m<60?Math.max(1,m|0)+'m ago':m<1440?(m/60|0)+'h ago':(m/1440|0)+'d ago'};
 async function boot(){
  let me;try{me=(await J('/api/me')).user}catch{$('#login').style.display='grid';me=null}
- if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`<img src="${E(img(me.pic,me.avatar))}" alt=""><div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`;$('#sp').src=img(me.pic,me.avatar);$('#sn').textContent=me.username||me.name||'';$('#spt').textContent=(me.pts||0).toLocaleString();if(me.role){$('#nadm').style.display='';$('#sr').textContent=me.role}}
+ if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`${IM(img(me.pic,me.avatar))}<div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`;$('#sp').src=img(me.pic,me.avatar);window.MY=me;$('#sn').textContent=me.username||me.name||'';$('#spt').textContent=(me.pts||0).toLocaleString();if(me.role){$('#nadm').style.display='';$('#sr').textContent=me.role}}
  J('/api/announcements').then(d=>{const a=d.items||[];
   $('#ac').innerHTML=a.length?a.map(x=>`<div class="ac"><img src="${E(x.img||'/logo.png')}" alt=""><div><small>Announcement</small><b>${E(x.title)}</b><time>${ago(x.t)}</time></div></div>`).join(''):'<p class="empty">Nothing new yet.</p>'}).catch(()=>{});
  if(!me)return;
- J('/api/social').then(d=>{const f=d.friends||[];$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>`<div class="fr"><img src="${E(img(x.pic,x.avatar))}" alt=""><div><b>${E(x.username||x.name)}</b><small>● Online</small></div></div>`).join(''):'<p class="empty">Add friends to trade cards.</p>'}).catch(()=>{});
+ Promise.all([J('/api/social'),J('/api/custom').catch(()=>null)]).then(([d,c])=>{window.CUS=c;const f=d.friends||[];$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>{const b=bnr(x.banner);window.FR=window.FR||{};FR[x.id]=x;return`<div class="fr" data-id="${E(x.id)}"${b?` style="--fb:url('${E(b)}')"`:''}>${IM(img(x.pic,x.avatar))}<div><b>${E(x.username||x.name)}</b><small>● Online</small></div></div>`}).join(''):'<p class="empty">Add friends to trade cards.</p>';$('#fr').querySelectorAll('.fr').forEach(r=>r.onclick=()=>openProfile(FR[r.dataset.id],'top'))}).catch(()=>{});
 }
 function draw(q){document.querySelectorAll('#rec .pk').forEach(c=>{c.style.display=!q||c.textContent.toLowerCase().includes(q)?'':'none'})}
 $('#q').addEventListener('input',e=>draw(e.target.value.trim().toLowerCase()));
@@ -202,10 +228,44 @@ const tr0=VIEWS.trade;
 VIEWS.trade=async()=>{await tr0();V.insertAdjacentHTML('afterbegin',`<div style="display:flex;gap:10px;margin:8px 0 6px"><input class="inp" id="fq" placeholder="Search a player to add…"><button class="btn p" id="fb">Search</button></div><div id="fres"></div>`);
  $('#fb').onclick=async()=>{const d=await J('/api/users/search?q='+encodeURIComponent($('#fq').value));$('#fres').innerHTML=(d.users||[]).map(x=>`<div class="li"><img src="${E(img(x.pic,x.avatar))}" alt=""><div><b>${E(x.username)}</b></div><button class="btn p" data-f="${x.id}">Add</button></div>`).join('')||'<p class="empty">No player found.</p>';
   $('#fres').querySelectorAll('[data-f]').forEach(b=>b.onclick=async()=>{try{await P('/api/friend/add',{id:b.dataset.f});b.textContent='Sent'}catch(e){b.textContent='Error'}})}};
+
+async function openProfile(u,mode){const m=$('#pm');m.style.display='grid';
+ const own=mode==='bot',b=bnr(u.banner)||'',pic=img(u.pic,u.avatar);
+ let cards='…',x2='';m.innerHTML=`<div class="pc ${mode}"><div class="bg" style="${b?`background-image:url('${E(b)}')`:''}"></div><button class="x" aria-label="Close">✕</button><img class="av" src="${E(pic)}" alt="" onerror="this.src='/favicon.png'"><h4>${E(u.username||'')}</h4><div class="st">${E(u.status||'')}</div><div class="mt">${E(u.role||'Player')}${u.country?' · '+E(u.country):''}${u.games&&u.games.length?' · '+E(u.games.slice(0,2).map(g=>g.name||g).join(', ')):''}</div><div class="stats" id="ps"><div><b>…</b><small>cards</small></div></div><div class="act">${own?'<a class="btn p" href="#" id="pa" data-edit="1">Edit profile</a>':'<a class="btn p" href="#trade" id="pa">Trade</a>'}</div></div>`;
+ const close=()=>{m.style.display='none'};m.onclick=e=>{if(e.target===m)close()};m.querySelector('.x').onclick=close;$('#pa').onclick=close;
+ try{if(own){const st=(await J('/api/state')).state||{a:{}};let n=0;Object.values(st.a||{}).forEach(p=>Object.values(p.got||{}).forEach(g=>n+=Object.values(g).reduce((a,c)=>a+c,0)));
+  $('#ps').innerHTML=`<div><b>${n}</b><small>cards</small></div><div><b>${(u.pts||0).toLocaleString()}</b><small>points</small></div><div><b>${u.trades||0}</b><small>trades</small></div>`}
+ else{const d=await J('/api/friend/'+encodeURIComponent(u.id)+'/cards');$('#ps').innerHTML=`<div><b>${(d.cards||[]).length}</b><small>cards</small></div><div><b>${(d.auras||[]).length}</b><small>aura</small></div>`}}catch(e){$('#ps').innerHTML=''}}
+
+const PFS=Array.from({length:14},(_,i)=>'pf'+String(i+1).padStart(2,'0')),BNS=['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08'];
+async function openEdit(){let m;try{m=(await J('/api/me')).user}catch(e){return}
+ const E_=$('#em');let pp=null,pb=null;const st0=m.status||'';
+ const cur=img(m.pic,m.avatar),bcur=bnr(m.banner);
+ let n=0;try{const st=(await J('/api/state')).state||{a:{}};Object.values(st.a||{}).forEach(p=>Object.values(p.got||{}).forEach(g=>n+=Object.values(g).reduce((a,c)=>a+c,0)))}catch(e){}
+ E_.innerHTML=`<div class="ec"><div class="bn" id="ebn" style="${bcur?`background-image:url('${E(bcur)}')`:''}"></div><div class="hd"><img id="eav" src="${E(cur)}" alt="" onerror="this.src='/favicon.png'"><a class="btn g ghost" style="height:34px;margin-top:12px" href="#profile" id="evp">View profile</a></div>
+ <div class="bd"><h4>${E(m.username||'')}${m.ver?'<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4aa8ff" d="m12 1 2.6 2 3.2-.3 1.2 3 2.9 1.5-.6 3.2L23 13l-2 2.5.3 3.2-3 1.2-1.5 2.9-3.2-.6L11 24l-2.5-2-3.2.3-1.2-3-2.9-1.5.6-3.2L1 11l2-2.5-.3-3.2 3-1.2L7.2 1.2l3.2.6z"/><path fill="none" stroke="#fff" stroke-width="2.4" d="m8 12.5 3 3 5-6"/></svg>':''}</h4><div class="sub">${E(m.role||'Player')}${m.country?' · '+E(m.country):''}</div>
+ <div class="stt"><div><small>Cards</small><b>${n}</b></div><div><small>Points</small><b>${(m.pts||0).toLocaleString()}</b></div><div><small>Trades</small><b>${m.trades||0}</b></div><div><small>Role</small><b>${E(m.role||'Player')}</b></div></div>
+ <div class="rw"><div><b>Public profile</b><small>This will be displayed on your profile.</small></div><div style="display:grid;gap:10px"><input class="inp" id="est" maxlength="60" value="${E(st0)}" placeholder="Status"><input class="inp" id="eco" maxlength="2" value="${E(m.country||'')}" placeholder="Country code (DZ, FR…)"></div></div>
+ <div class="rw"><div><b>Profile photo</b><small>Pick a photo.</small></div><div class="strip pf">${PFS.map(k=>`<img data-pp="${k}" src="/banners/${BN[k]}" alt="">`).join('')}</div></div>
+ <div class="rw"><div><b>Banner</b><small>Shown behind your profile.</small></div><div class="strip">${BNS.map(k=>`<img data-pb="${k}" src="/banners/${BN[k]}" alt="">`).join('')}</div></div>
+ <div class="rw" style="border:0"><div><b>Log out</b><small>Sign out of this device.</small></div><div><a class="btn g ghost" href="/auth/logout" style="height:36px">Log out</a></div></div>
+ <p class="empty" id="eer" style="min-height:16px;margin:0"></p><div class="ft"><button class="btn g ghost" id="ecx">Cancel</button><button class="btn p" id="esv">Save changes</button></div></div></div>`;
+ E_.style.display='grid';requestAnimationFrame(()=>requestAnimationFrame(()=>E_.classList.add('on')));
+ const close=()=>{E_.classList.remove('on');setTimeout(()=>{E_.style.display='none'},450)};
+ E_.onclick=e=>{if(e.target===E_)close()};$('#ecx').onclick=close;$('#evp').onclick=close;
+ E_.querySelectorAll('[data-pp]').forEach(i=>i.onclick=()=>{pp=i.dataset.pp;E_.querySelectorAll('[data-pp]').forEach(x=>x.classList.toggle('sel',x===i));$('#eav').src=i.src});
+ E_.querySelectorAll('[data-pb]').forEach(i=>i.onclick=()=>{pb=i.dataset.pb;E_.querySelectorAll('[data-pb]').forEach(x=>x.classList.toggle('sel',x===i));$('#ebn').style.backgroundImage=`url('${i.src}')`});
+ $('#esv').onclick=async()=>{$('#esv').disabled=true;$('#eer').textContent='';try{
+  if($('#est').value!==st0)await P('/api/profile/status',{s:$('#est').value});
+  const c=$('#eco').value.trim().toUpperCase();if(c&&c!==(m.country||'')){try{await P('/api/profile/country',{c})}catch(e){$('#eer').textContent='Unknown country code.';$('#esv').disabled=false;return}}
+  if(pp)await P('/api/profile/pic',{p:pp});if(pb)await P('/api/profile/banner',{p:pb});
+  boot();close();if((location.hash||'#home')==='#profile')route()}catch(e){$('#eer').textContent='Could not save. Try again.';$('#esv').disabled=false}}}
 function route(){const h=location.hash.slice(1)||'home',v=VIEWS[h];$('#home').style.display=h==='home'?'':'none';$('#settings').style.display=h==='settings'?'block':'none';V.style.display=v?'block':'none';
  document.querySelectorAll('.side a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+h));if(v)v().catch(()=>{V.innerHTML='<p class="empty">Log in to see this page.</p>'})}
 addEventListener('hashchange',route);route();
 $('#reg').onclick=e=>{e.preventDefault();$('#lf').style.display='none';$('#rf').style.display='grid'};$('#bk').onclick=e=>{e.preventDefault();$('#rf').style.display='none';$('#lf').style.display='grid'};
 $('#rf').addEventListener('submit',async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));try{await P('/auth/register',f);$('#login').style.display='none';boot();route()}catch(x){$('#re').textContent=x===409?'Username taken.':'Check your details.'}});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-edit]');if(a){e.preventDefault();openEdit()}});
+$('#me').onclick=()=>window.MY&&openProfile(window.MY,'bot');
 boot();
 </script></body></html>

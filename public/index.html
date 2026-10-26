@@ -20,6 +20,7 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .search input::placeholder{color:var(--mu)}
 .ibtn{width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center}
 .pts{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;height:42px;padding:0 14px;font-weight:700}
+.pts .pcoin{width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(255,170,40,.55));transition:transform .25s}.pts:hover .pcoin{transform:rotate(-12deg) scale(1.12)}
 .pts i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2))}
 .side{grid-row:2;display:flex;flex-direction:column;gap:4px;padding-top:18px;min-height:0}
 .side a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:var(--mu);font-weight:600}
@@ -42,6 +43,7 @@ main{grid-row:2;min-width:0;overflow-y:auto;padding:18px 2px 20px;scrollbar-widt
 .hero p{margin:0 0 18px;color:#c9c5de;font-size:13px}
 .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border-radius:10px;border:0;font-weight:700}
 .btn.p{background:linear-gradient(90deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 24px -8px var(--a2)}
+.btn.p:disabled,.btn.p.off{background:#3a3744;color:#8d8999;box-shadow:none;cursor:not-allowed;filter:grayscale(1)}
 .btn.g{background:none;color:var(--tx);padding:0 14px}
 .dots{position:absolute;bottom:14px;left:50%;display:flex;gap:5px}.dots i{width:16px;height:3px;border-radius:2px;background:rgba(255,255,255,.3)}.dots i:first-child{background:#fff}
 h2{font-size:16px;font-weight:700;margin:26px 0 14px}
@@ -83,6 +85,8 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 .pc.bot .bg{inset:0 0 0 auto;width:70%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 60%);mask-image:linear-gradient(90deg,transparent,#000 60%)}
 .pc>*:not(.bg){position:relative;z-index:1}
 .pc .av{width:78px;height:78px;border-radius:50%;object-fit:cover;border:3px solid var(--panel);background:#2a2540;margin-bottom:10px}.pc.top .av{margin-top:70px}.pc.bot .av{margin-top:60px}
+.rbi{width:17px;height:17px;margin-inline-start:6px;vertical-align:middle;object-fit:contain}.rb{display:inline-flex;align-items:center;margin-inline-start:4px;padding:1px 8px;border-radius:99px;font:800 9.5px/1.6 system-ui,sans-serif;letter-spacing:.06em;vertical-align:middle;white-space:nowrap}.rb.o{background:linear-gradient(90deg,#ff5757,#d61f1f);color:#fff;box-shadow:0 0 12px -2px #ff3b3b}.rb.m{background:linear-gradient(90deg,#ffd84a,#e8a800);color:#2a1d00;box-shadow:0 0 12px -2px #ffc82e}
+.pact{display:grid;gap:6px;margin:8px 0}.pact:empty{display:none}.pa{display:flex;align-items:center;gap:10px;text-align:start;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line)}.pa .pi{width:38px;height:38px;border-radius:8px;object-fit:cover;display:grid;place-items:center;font-size:22px;flex:none;background:rgba(138,77,255,.25)}.pa div{min-width:0;display:flex;flex-direction:column;line-height:1.25}.pa small{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#43d17a}.pa b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pa em{font-style:normal;font-size:11px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pc h4{margin:0;font-size:20px;font-weight:800}.pc .st{color:#cfcbe3;font-size:13px;margin:2px 0 4px}.pc .mt{color:var(--mu);font-size:12px}
 .pc .stats{display:flex;align-items:center;gap:0;margin-top:18px}.pc .stats div{padding:0 18px;border-left:1px solid var(--line);text-align:center}.pc .stats div:first-child{padding-left:0;border:0;text-align:left}.pc .stats b{display:block;font-size:14px}.pc .stats small{color:var(--mu);font-size:11px}
 .pc .act{position:absolute;right:24px;bottom:22px;z-index:2}.pc.top .act{bottom:22px}
@@ -114,7 +118,7 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 <header class="top">
 <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d89a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" placeholder="Search cards, packs, themes…" aria-label="Search"></label>
 <a class="ibtn" href="#inbox" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg></a>
-<div class="pts"><i></i><span id="pts">0</span> pts</div>
+<div class="pts"><img class="pcoin" src="/coin.png" alt="" width="24" height="24"><span id="pts">0</span> pts</div>
 </header>
 <nav class="side" aria-label="Main">
 <a class="on" href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 3l9 8v10H3z"/></svg><span>Home</span></a>
@@ -167,6 +171,15 @@ const img=(p,av)=>{
  }else if(typeof p==='string'&&p)return p;
  return av&&/^https?:\/\//.test(av)?av:'/favicon.png'};
 const bnr=p=>{const u=img(p,'');return u==='/favicon.png'?'':u};
+const RB=(r,o)=>{if(r!=='owner'&&r!=='mod')return'';const g=o&&(o.girl||o.gender==='f'),ic=g?'/verified-girl.gif':r==='owner'?'/verified-red.png':'/verified-yellow.png';return`<img class="rbi" src="${ic}" alt="" title="${r==='owner'?'Owner':'Admin'}"><span class="rb ${r==='owner'?'o':'m'}">${r==='owner'?'OWNER':'ADMIN'}</span>`};
+function PACT(id,el){if(!el||!/^\d{17,20}$/.test(String(id)))return;let t;
+ const run=async()=>{if(!document.body.contains(el)){clearInterval(t);return}
+  try{const d=await J('/api/presence/'+id);if(!d||!d.ok){el.innerHTML='';return}const r=[];
+   if(d.game)r.push(`<div class="pa"><span class="pi">\u{1F3AE}</span><div><small>Playing</small><b>${E(d.game.name)}</b>${d.game.details?`<em>${E(d.game.details)}</em>`:''}</div></div>`);
+   if(d.watch)r.push(`<div class="pa"><span class="pi">\u{1F4FA}</span><div><small>Watching</small><b>${E(d.watch.name)}</b>${d.watch.details?`<em>${E(d.watch.details)}</em>`:''}</div></div>`);
+   if(d.spotify)r.push(`<div class="pa">${d.spotify.art?`<img class="pi" src="${E(d.spotify.art)}" alt="">`:'<span class="pi">\u{1F3A7}</span>'}<div><small>Listening to Spotify</small><b>${E(d.spotify.song)}</b><em>${E(d.spotify.artist)}</em></div></div>`);
+   el.innerHTML=r.join('')}catch(e){}};
+ t=setInterval(run,20000);run()}
 const IM=(src)=>`<img src="${E(src)}" alt="" decoding="async" onerror="this.onerror=null;this.src='/favicon.png'">`;
 const ago=t=>{const m=(Date.now()-t)/6e4;return m<60?Math.max(1,m|0)+'m ago':m<1440?(m/60|0)+'h ago':(m/1440|0)+'d ago'};
 
@@ -183,12 +196,12 @@ function loadPack(){PT.t=Date.now();return J('/api/packtime').then(d=>{PT.avail=
 if(!window.PTI)window.PTI=setInterval(packUI,1000);
 async function boot(){
  let me;try{me=(await J('/api/me')).user}catch{$('#login').style.display='grid';me=null}
- if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`${IM(img(me.pic,me.avatar))}<div><b>${E(me.username||me.name)}</b><small>● Online</small></div>`;$('#sp').src=img(me.pic,me.avatar);window.MY=me;$('#sn').textContent=me.username||me.name||'';$('#spt').textContent=(me.pts||0).toLocaleString();if(me.role){$('#nadm').style.display='';$('#sr').textContent=me.role}}
+ if(me){$('#pts').textContent=(me.pts||0).toLocaleString();$('#me').innerHTML=`${IM(img(me.pic,me.avatar))}<div><b>${E(me.username||me.name)}${RB(me.role,me)}</b><small>● Online</small></div>`;$('#sp').src=img(me.pic,me.avatar);window.MY=me;$('#sn').textContent=me.username||me.name||'';$('#spt').textContent=(me.pts||0).toLocaleString();if(me.role){$('#nadm').style.display='';$('#sr').textContent=me.role}}
  J('/api/announcements').then(d=>{const a=d.items||[];
   $('#ac').innerHTML=a.length?a.map(x=>`<div class="ac"><img src="${E(x.img||'/logo.png')}" alt=""><div><small>Announcement</small><b>${E(x.title)}</b><time>${ago(x.t)}</time></div></div>`).join(''):'<p class="empty">Nothing new yet.</p>'}).catch(()=>{});
  if(!me)return;
  loadPack();
- const loadFr=()=>Promise.all([J('/api/social'),J('/api/custom').catch(()=>null)]).then(([d,c])=>{window.CUS=c;const ORD={online:0,idle:1,dnd:2,offline:3},f=(d.friends||[]).slice().sort((a,b)=>(ORD[a.st]??3)-(ORD[b.st]??3));$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>{const b=bnr(x.banner);window.FR=window.FR||{};FR[x.id]=x;return`<div class="fr" data-id="${E(x.id)}"${b?` style="--fb:url('${E(b)}')"`:''}>${IM(img(x.pic,x.avatar))}<div><b>${E(x.username||x.name)}</b><small class="st-${E(x.st||'offline')}">● ${({online:'Online',idle:'Idle',dnd:'Do not disturb'})[x.st]||'Offline'}</small></div></div>`}).join(''):'<p class="empty">Add friends to trade cards.</p>';$('#fr').querySelectorAll('.fr').forEach(r=>r.onclick=()=>openProfile(FR[r.dataset.id],'top'))}).catch(()=>{});
+ const loadFr=()=>Promise.all([J('/api/social'),J('/api/custom').catch(()=>null)]).then(([d,c])=>{window.CUS=c;const ORD={online:0,idle:1,dnd:2,offline:3},f=(d.friends||[]).slice().sort((a,b)=>(ORD[a.st]??3)-(ORD[b.st]??3));$('#fr').innerHTML=f.length?f.slice(0,8).map(x=>{const b=bnr(x.banner);window.FR=window.FR||{};FR[x.id]=x;return`<div class="fr" data-id="${E(x.id)}"${b?` style="--fb:url('${E(b)}')"`:''}>${IM(img(x.pic,x.avatar))}<div><b>${E(x.username||x.name)}${RB(x.role,x)}</b><small class="st-${E(x.st||'offline')}">● ${({online:'Online',idle:'Idle',dnd:'Do not disturb'})[x.st]||'Offline'}</small></div></div>`}).join(''):'<p class="empty">Add friends to trade cards.</p>';$('#fr').querySelectorAll('.fr').forEach(r=>r.onclick=()=>openProfile(FR[r.dataset.id],'top'))}).catch(()=>{});
  loadFr();setInterval(loadFr,30000);
 }
 function draw(q){document.querySelectorAll('#rec .pk').forEach(c=>{c.style.display=!q||c.textContent.toLowerCase().includes(q)?'':'none'})}
@@ -224,7 +237,7 @@ async trade(){const [s,bx]=await Promise.all([J('/api/social'),J('/api/box')]);
  go('[data-a]',b=>'/api/friend/accept');V.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{try{await P('/api/friend/accept',{id:b.dataset.a});VIEWS.trade()}catch(e){b.textContent='Error'}});
  go('[data-o]',b=>'/api/offer/'+b.dataset.o+'/accept');go('[data-x]',b=>'/api/box/'+b.dataset.x+'/open')},
 async profile(){const m=(await J('/api/me')).user;ME=m;const ban=m.banner?img(m.banner):'';
- V.innerHTML=`<div class="pban" style="${ban?`background-image:url(${E(ban)})`:''}"></div><div class="pme"><img src="${E(img(m.pic,m.avatar))}" alt=""><div><b style="font-size:20px">${E(m.username)}</b><br><small class="empty">${E(m.status||'')} ${m.country?'· '+E(m.country):''}</small></div></div>
+ V.innerHTML=`<div class="pban" style="${ban?`background-image:url(${E(ban)})`:''}"></div><div class="pme"><img src="${E(img(m.pic,m.avatar))}" alt=""><div><b style="font-size:20px">${E(m.username)}${RB(m.role,m)}</b><br><small class="empty">${E(m.status||'')} ${m.country?'· '+E(m.country):''}</small></div></div>
  <div class="li"><div><b>${(m.pts||0).toLocaleString()}</b><br><small class="empty">points</small></div><div><b>${m.trades||0}</b><br><small class="empty">trades</small></div></div>
  <h2>Profile photo</h2><div class="grid">${Array.from({length:14},(_,i)=>{const k='pf'+String(i+1).padStart(2,'0');return`<div class="cd"><img loading="lazy" src="/banners/${k}.jpg" data-p="${k}" style="cursor:pointer" alt=""></div>`}).join('')}</div>`;
  V.querySelectorAll('[data-p]').forEach(i=>i.onclick=async()=>{await P('/api/profile/pic',{p:i.dataset.p});boot();VIEWS.profile()})},
@@ -236,17 +249,21 @@ const PKS={daily:['/api/open','/cardback.webp','Daily Pack','#ff8a3d'],leg:['/ap
 const cimg=c=>c.a==='aura'||(!c.a&&PKS.aura&&c.aura)?'':c.a?'/cardimg/'+c.a+'-'+c.i+'.jpg':'';
 Object.keys(PKS).forEach(k=>{VIEWS['pack-'+k]=async()=>{const [u,bk,nm,col]=PKS[k];
  V.innerHTML=`<div class="pkv" style="--c:${col}"><h2 style="margin:8px 0 0">${nm}</h2><div class="big" style="background-image:url(${bk})"></div><button class="btn p" id="go">Open pack</button><p class="empty" id="pm"></p><div class="rv" id="rv"></div></div>`;
- $('#go').onclick=async()=>{$('#go').disabled=true;try{const r=await P(u);const cs=r.cards||(r.card?[r.card.a?r.card:{...r.card,a:k==='aura'?'aura':k==='leg'?'leg':'cute'}]:[]);boot();
+ const lockGo=t=>{const g=$('#go');if(!g)return;g.disabled=true;g.classList.add('off');g.textContent=t},unlockGo=()=>{const g=$('#go');if(!g)return;g.disabled=false;g.classList.remove('off');g.textContent='Open pack'};
+ if(k==='daily'){const hms=ms=>{const s=Math.max(0,Math.floor(ms/1000)),p=n=>String(n).padStart(2,'0');return p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60)};
+  const tick=()=>{const g=$('#go');if(!g||!document.body.contains(g)){clearInterval(ti);return}if(PT.avail)unlockGo();else if(PT.end>Date.now())lockGo('Next pack in '+hms(PT.end-Date.now()));else if(Date.now()-PT.t>3000)loadPack()};
+  const ti=setInterval(tick,1000);lockGo('...');loadPack().then(tick)}
+ $('#go').onclick=async()=>{$('#go').disabled=true;try{const r=await P(u);const cs=r.cards||(r.card?[r.card.a?r.card:{...r.card,a:k==='aura'?'aura':k==='leg'?'leg':'cute'}]:[]);boot();if(k==='daily')loadPack();else lockGo('Opened');
   if(!cs.length){$('#pm').textContent='No card this time. Try again next time!';return}
   $('#rv').innerHTML=cs.map(c=>{const a=c.a||(k==='aura'?'aura':k==='leg'?'leg':'cute'),src=a==='aura'?'/aura/'+AURA[c.i]+'.jpg':'/cardimg/'+a+'-'+c.i+'.jpg';return`<div class="fl"><div style="background-image:url(${bk})"></div><div class="f" style="background-image:url(${src})"><em>${c.r||(a==='leg'?'legendary':a)}</em></div></div>`}).join('');
   $('#rv').querySelectorAll('.fl').forEach((f,i)=>setTimeout(()=>{f.onclick=()=>f.classList.add('on')},i*60));$('#pm').textContent='Tap each card to reveal it';
- }catch(e){$('#pm').textContent=e===409?'Already opened. Come back later.':e===403?'This pack is not available for your account.':'Log in first.';$('#go').disabled=false}}}});
+ }catch(e){$('#pm').textContent=e===409?'Already opened. Come back later.':e===403?'This pack is not available for your account.':'Log in first.';if(e===409){k==='daily'?loadPack():lockGo('Already opened')}else $('#go').disabled=false}}}});
 VIEWS.aura=async()=>{let st={a:{}};try{st=(await J('/api/state')).state||{a:{}}}catch(e){}
  const got=((st.a||{}).aura||{}).got||{},nm=s=>s[0].toUpperCase()+s.slice(1);
  const have=AURA.filter((_,i)=>Object.values(got[i]||{}).some(n=>n>0)).length;
  V.innerHTML=`<h2 style="margin-top:8px">Aura cards</h2><p class="empty" style="text-align:left">${have}/${AURA.length} collected${have?'':' \u00b7 open the monthly Aura pack to win one'}</p><div class="grid">${AURA.map((a,i)=>{const c=Object.values(got[i]||{}).reduce((x,y)=>x+y,0);return`<div class="cd ${c?'':'no'}"><img loading="lazy" src="/aura/${a}.jpg" alt="${nm(a)}">${c?`<i>\u00d7${c}</i>`:''}</div>`}).join('')}</div>`};
 const pr0=VIEWS.profile;
-VIEWS.profile=async()=>{await pr0();const m=ME||{};
+VIEWS.profile=async()=>{await pr0();const m=ME||{};{const pm=V.querySelector('.pme');if(pm){const d=document.createElement('div');d.className='pact';pm.after(d);PACT(m.id,d)}}
  V.insertAdjacentHTML('beforeend',`<h2>Status</h2><div style="display:flex;gap:10px"><input class="inp" id="st" maxlength="60" value="${E(m.status||'')}" placeholder="Your status"><button class="btn p" id="ss">Save</button></div><h2>Banner</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">${['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08'].map(k=>`<div class="cd"><img src="/banners/${BN[k]}" data-bn="${k}" style="aspect-ratio:3/1;cursor:pointer" alt=""></div>`).join('')}</div>`);
  $('#ss').onclick=async()=>{await P('/api/profile/status',{s:$('#st').value});$('#ss').textContent='Saved'};
  V.querySelectorAll('[data-bn]').forEach(i=>i.onclick=async()=>{await P('/api/profile/banner',{p:i.dataset.bn});VIEWS.profile()})};
@@ -257,8 +274,8 @@ VIEWS.trade=async()=>{await tr0();V.insertAdjacentHTML('afterbegin',`<div style=
 
 async function openProfile(u,mode){const m=$('#pm');m.style.display='grid';
  const own=mode==='bot',b=bnr(u.banner)||'',pic=img(u.pic,u.avatar);
- let cards='…',x2='';m.innerHTML=`<div class="pc ${mode}"><div class="bg" style="${b?`background-image:url('${E(b)}')`:''}"></div><button class="x" aria-label="Close">✕</button><img class="av" src="${E(pic)}" alt="" onerror="this.src='/favicon.png'"><h4>${E(u.username||'')}</h4><div class="st">${E(u.status||'')}</div><div class="mt">${E(u.role||'Player')}${u.country?' · '+E(u.country):''}${u.games&&u.games.length?' · '+E(u.games.slice(0,2).map(g=>g.name||g).join(', ')):''}</div><div class="stats" id="ps"><div><b>…</b><small>cards</small></div></div><div class="act">${own?'<a class="btn p" href="#" id="pa" data-edit="1">Edit profile</a>':'<a class="btn p" href="#trade" id="pa">Trade</a>'}</div></div>`;
- const close=()=>{m.style.display='none'};m.onclick=e=>{if(e.target===m)close()};m.querySelector('.x').onclick=close;$('#pa').onclick=close;
+ let cards='…',x2='';m.innerHTML=`<div class="pc ${mode}"><div class="bg" style="${b?`background-image:url('${E(b)}')`:''}"></div><button class="x" aria-label="Close">✕</button><img class="av" src="${E(pic)}" alt="" onerror="this.src='/favicon.png'"><h4>${E(u.username||'')}${RB(u.role,u)}</h4><div class="st">${E(u.status||'')}</div><div class="mt">${E(u.role||'Player')}${u.country?' · '+E(u.country):''}${u.games&&u.games.length?' · '+E(u.games.slice(0,2).map(g=>g.name||g).join(', ')):''}</div><div class="pact" id="pact"></div><div class="stats" id="ps"><div><b>…</b><small>cards</small></div></div><div class="act">${own?'<a class="btn p" href="#" id="pa" data-edit="1">Edit profile</a>':'<a class="btn p" href="#trade" id="pa">Trade</a>'}</div></div>`;
+ const close=()=>{m.style.display='none'};m.onclick=e=>{if(e.target===m)close()};m.querySelector('.x').onclick=close;$('#pa').onclick=close;PACT(u.id,$('#pact'));
  try{if(own){const st=(await J('/api/state')).state||{a:{}};let n=0;Object.values(st.a||{}).forEach(p=>Object.values(p.got||{}).forEach(g=>n+=Object.values(g).reduce((a,c)=>a+c,0)));
   $('#ps').innerHTML=`<div><b>${n}</b><small>cards</small></div><div><b>${(u.pts||0).toLocaleString()}</b><small>points</small></div><div><b>${u.trades||0}</b><small>trades</small></div>`}
  else{const d=await J('/api/friend/'+encodeURIComponent(u.id)+'/cards');$('#ps').innerHTML=`<div><b>${(d.cards||[]).length}</b><small>cards</small></div><div><b>${(d.auras||[]).length}</b><small>aura</small></div>`}}catch(e){$('#ps').innerHTML=''}}
@@ -269,7 +286,7 @@ async function openEdit(){let m;try{m=(await J('/api/me')).user}catch(e){return}
  const cur=img(m.pic,m.avatar),bcur=bnr(m.banner);
  let n=0;try{const st=(await J('/api/state')).state||{a:{}};Object.values(st.a||{}).forEach(p=>Object.values(p.got||{}).forEach(g=>n+=Object.values(g).reduce((a,c)=>a+c,0)))}catch(e){}
  E_.innerHTML=`<div class="ec"><div class="bn" id="ebn" style="${bcur?`background-image:url('${E(bcur)}')`:''}"></div><div class="hd"><img id="eav" src="${E(cur)}" alt="" onerror="this.src='/favicon.png'"></div>
- <div class="bd"><h4>${E(m.username||'')}${m.ver?'<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4aa8ff" d="m12 1 2.6 2 3.2-.3 1.2 3 2.9 1.5-.6 3.2L23 13l-2 2.5.3 3.2-3 1.2-1.5 2.9-3.2-.6L11 24l-2.5-2-3.2.3-1.2-3-2.9-1.5.6-3.2L1 11l2-2.5-.3-3.2 3-1.2L7.2 1.2l3.2.6z"/><path fill="none" stroke="#fff" stroke-width="2.4" d="m8 12.5 3 3 5-6"/></svg>':''}</h4><div class="sub">${E(m.role||'Player')}${m.country?' · '+E(m.country):''}</div>
+ <div class="bd"><h4>${E(m.username||'')}${RB(m.role,m)}${m.ver?'<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4aa8ff" d="m12 1 2.6 2 3.2-.3 1.2 3 2.9 1.5-.6 3.2L23 13l-2 2.5.3 3.2-3 1.2-1.5 2.9-3.2-.6L11 24l-2.5-2-3.2.3-1.2-3-2.9-1.5.6-3.2L1 11l2-2.5-.3-3.2 3-1.2L7.2 1.2l3.2.6z"/><path fill="none" stroke="#fff" stroke-width="2.4" d="m8 12.5 3 3 5-6"/></svg>':''}</h4><div class="sub">${E(m.role||'Player')}${m.country?' · '+E(m.country):''}</div>
  <div class="stt"><div><small>Cards</small><b>${n}</b></div><div><small>Points</small><b>${(m.pts||0).toLocaleString()}</b></div><div><small>Trades</small><b>${m.trades||0}</b></div><div><small>Role</small><b>${E(m.role||'Player')}</b></div></div>
  <div class="rw"><div><b>Public profile</b><small>This will be displayed on your profile.</small></div><div style="display:grid;gap:10px"><input class="inp" id="est" maxlength="60" value="${E(st0)}" placeholder="Status"><input class="inp" id="eco" maxlength="2" value="${E(m.country||'')}" placeholder="Country code (DZ, FR…)"></div></div>
  <div class="rw"><div><b>Profile photo</b><small>Pick a photo.</small></div><div class="strip pf">${PFS.map(k=>`<img data-pp="${k}" src="/banners/${BN[k]}" alt="">`).join('')}</div></div>

@@ -283,6 +283,15 @@ function pickRarity(boost, weights) {
   for (let i = 0; i < 4; i++) { r -= w[i]; if (r < 0) return i; }
   return 0;
 }
+// When can the player open the next daily pack? The day changes at midnight Algiers time (UTC+1, no daylight saving).
+app.get('/api/packtime', (req, res) => {
+  const id = sessionId(req);
+  if (!id) return res.status(401).json({});
+  const D = (stateOf(db[id]).d) || { last: '' };
+  const avail = D.last !== dstr() || D.bonus > 0;
+  const ms = 864e5 - ((Date.now() + 36e5) % 864e5);
+  res.json({ avail, ms: avail ? 0 : ms });
+});
 app.post('/api/open', (req, res) => {
   // One pack per day in total. Each pack holds 5 cards; luck picks the anime, the character and the rarity of each one, and the same card can drop twice.
   // Day 7 of a streak: the first card is guaranteed Gold or Diamond.
@@ -442,12 +451,33 @@ function befriend(a, b) {
   if (!B.f.includes(a)) B.f.push(a);
 }
 
-app.get('/api/social', (req, res) => {
+// Real Discord status of a site user: only users who linked Discord (or logged in with Discord) can be online. Everyone else = offline.
+async function liveStatus(uid) {
+  try {
+    const u = db[uid]; if (!u) return 'offline';
+    const did = u.local ? u.discord : (/^\d{17,20}$/.test(uid) ? uid : null);
+    if (!did || !/^\d{17,20}$/.test(String(did))) return 'offline';
+    if (botGuild && botGuild.members.cache.has(did)) { const bp = botPres.get(did); return bp ? bp.status : 'offline'; }
+    const hit = presCache.get(did);
+    if (hit && Date.now() - hit.t < 20000) return hit.v && hit.v.ok ? hit.v.status : 'offline';
+    let v = { ok: false, reason: 'unavailable' };
+    try {
+      const r = await fetch('https://api.lanyard.rest/v1/users/' + did, { signal: AbortSignal.timeout(3000) });
+      const j = await r.json().catch(() => null);
+      if (j && j.success && j.data) v = { ok: true, status: ['online', 'idle', 'dnd', 'offline'].includes(j.data.discord_status) ? j.data.discord_status : 'offline' };
+    } catch (e) { /* timeout: offline */ }
+    presCache.set(did, { t: Date.now(), v });
+    return v.ok ? v.status : 'offline';
+  } catch (e) { return 'offline'; }
+}
+app.get('/api/social', async (req, res) => {
   const id = need(req, res); if (!id) return;
   const s = socOf(id), list = (a) => a.map(pub).filter(Boolean);
   const mine = Object.entries(offers).filter(([, o]) => o.from === id || o.to === id)
     .map(([oid, o]) => ({ id: oid, from: pub(o.from), to: pub(o.to), give: o.give, want: o.want, t: o.t, mine: o.from === id }));
-  res.json({ friends: list(s.f), inc: list(s.i), out: list(s.o), offers: mine });
+  const friends = list(s.f);
+  await Promise.all(friends.map(async (f) => { f.st = await liveStatus(f.id); }));
+  res.json({ friends, inc: list(s.i), out: list(s.o), offers: mine });
 });
 
 app.get('/api/top-traders', (req, res) => { // ranking of the players with the most completed trades

@@ -20,7 +20,3 @@ Set `DISCORD_WEBHOOK_URL` (Channel settings > Integrations > Webhooks) and every
 ## Steam on profiles (optional)
 Players link Steam from Settings > Games > Link Steam (Steam OpenID, so nobody can claim someone else's account). Their most played games then show on their profile automatically, with a "Playing on Steam" badge while they play.
 Needs: `BASE_URL` (your site address, e.g. https://yoursite.onrender.com) and `STEAM_API_KEY` (https://steamcommunity.com/dev/apikey) in your host's environment variables, never in the code. The player's Steam privacy must have Game details set to Public.
-
-
-## Mira songs (YouTube)
-Set `YOUTUBE_API_KEY` (YouTube Data API v3, enable it in Google Cloud Console). Mira then plays the full song in the chat with the YouTube player. Without the key she falls back to a 30-second Deezer/iTunes preview. Each search costs 100 quota units (10,000/day free = ~100 new searches); results are cached for 6 hours.

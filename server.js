@@ -508,7 +508,8 @@ app.get('/api/users/search', (req, res) => {
   res.json({ users: out });
 });
 
-app.post('/api/friend/add', (req, res) => {
+// FOLLOW (Instagram style): following someone sends them a follow; when both follow each other they become friends.
+const followHandler = (req, res) => {
   const id = need(req, res); if (!id) return;
   const t = String((req.body || {}).id || '');
   if (!isId(t) || t === id) return res.status(400).json({ error: 'bad id' });
@@ -521,10 +522,55 @@ app.post('/api/friend/add', (req, res) => {
     if (!a.o.includes(t)) a.o.push(t);
     if (!b.i.includes(id)) b.i.push(id);
   }
-  logEvent(id, 'friend', 'Friend request / add -> ' + db[t].user.username);
+  { // inbox note for the person who got followed (shown in Notifications with a Follow back button)
+    const L = (notes[t] = notes[t] || []);
+    for (let k = L.length - 1; k >= 0; k--) if (L[k].type === 'follow' && L[k].uid === id) L.splice(k, 1);
+    L.push({ id: rid(), t: Date.now(), type: 'follow', uid: id, read: false });
+    if (L.length > 100) L.splice(0, L.length - 100);
+  }
+  logEvent(id, 'friend', 'Follow -> ' + db[t].user.username);
   if (t === botId() && b.i.includes(id)) obPush({ type: 'friend', from: plainName(id), fromDiscordId: whoDiscord(id), requestId: id }, true); // tell the owner on Discord (Accept button)
   persist();
   res.json({ ok: true });
+};
+app.post('/api/friend/add', followHandler);
+app.post('/api/follow', followHandler);
+
+// Unfollow: a friend who is unfollowed keeps following you (like Instagram), so you stop being friends.
+app.post('/api/unfollow', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const t = String((req.body || {}).id || '');
+  if (!isId(t) || !db[t]) return res.status(404).json({ error: 'not found' });
+  const A = socOf(id), B = socOf(t);
+  if (A.f.includes(t)) { // they keep following me
+    A.f = A.f.filter((x) => x !== t); B.f = B.f.filter((x) => x !== id);
+    if (!B.o.includes(id)) B.o.push(id);
+    if (!A.i.includes(t)) A.i.push(t);
+    dropOffers(id, t);
+  } else {
+    A.o = A.o.filter((x) => x !== t); B.i = B.i.filter((x) => x !== id);
+  }
+  const L = notes[t] || [];
+  for (let k = L.length - 1; k >= 0; k--) if (L[k].type === 'follow' && L[k].uid === id) L.splice(k, 1);
+  logEvent(id, 'friend', 'Unfollowed ' + db[t].user.username);
+  persist();
+  res.json({ ok: true });
+});
+
+// Follow counts of a player, or the lists (?list=followers|following|friends)
+app.get('/api/follow/:id', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const t = String(req.params.id);
+  if (!isId(t) || !db[t] || !db[t].user) return res.status(404).json({ error: 'not found' });
+  const T = socOf(t), S = socOf(id), uniq = (a) => [...new Set(a)];
+  const followers = uniq([...T.i, ...T.f]), following = uniq([...T.o, ...T.f]);
+  const relOf = (x) => S.f.includes(x) ? 'friend' : S.o.includes(x) ? 'out' : S.i.includes(x) ? 'in' : '';
+  const k = String(req.query.list || '');
+  if (k) {
+    const src = k === 'followers' ? followers : k === 'following' ? following : k === 'friends' ? T.f : [];
+    return res.json({ users: src.slice(0, 200).map((x) => { const p = pub(x); return p && { ...p, rel: relOf(x), self: x === id }; }).filter(Boolean) });
+  }
+  res.json({ followers: followers.length, following: following.length, friends: T.f.length, rel: t === id ? '' : relOf(t), self: t === id });
 });
 
 app.post('/api/friend/accept', (req, res) => {
@@ -1061,6 +1107,19 @@ app.get('/api/store', (req, res) => {
   const themes = Object.keys(THEMES).map((k) => ({ id: 'theme-' + k, key: k, price: THEMES[k], owned: own.includes('theme-' + k) }));
   res.json({ pts: db[id].pts || 0, items, themes, theme: db[id].theme || null, pic: pic || null, banner: ban || null, rates: PTS });
 });
+// Hero of the Store: the most bought theme; with no sales yet it rotates through the themes every 10 minutes.
+app.get('/api/store/top-theme', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const keys = Object.keys(THEMES), cnt = {};
+  keys.forEach((k) => { cnt[k] = 0; });
+  for (const u of Object.values(db)) if (u && Array.isArray(u.owned)) u.owned.forEach((o) => { if (/^theme-/.test(o) && cnt[o.slice(6)] !== undefined) cnt[o.slice(6)]++; });
+  const slot = 10 * 60 * 1000, next = slot - (Date.now() % slot);
+  let key = keys.slice().sort((a, b) => cnt[b] - cnt[a])[0], rotating = false;
+  if (!cnt[key]) { key = keys[Math.floor(Date.now() / slot) % keys.length]; rotating = true; }
+  const own = db[id].owned || [];
+  res.set('Cache-Control', 'no-store');
+  res.json({ key, buyers: cnt[key], rotating, price: THEMES[key], owned: own.includes('theme-' + key), equipped: db[id].theme === key, next });
+});
 app.post('/api/store/buy', (req, res) => {
   const id = need(req, res); if (!id) return;
   const bid = String((req.body || {}).id);
@@ -1572,7 +1631,13 @@ app.get('/api/inbox', (req, res) => {
   const id = need(req, res); if (!id) return;
   const L = notes[id] || [];
   res.set('Cache-Control', 'no-store');
-  res.json({ items: L.slice(-50).reverse(), unread: L.filter((n) => !n.read).length });
+  const S = socOf(id);
+  const items = L.slice(-50).reverse().map((n) => {
+    if (n.type !== 'follow') return n;
+    const u = pub(n.uid); if (!u || !(S.i.includes(n.uid) || S.f.includes(n.uid))) return null; // they unfollowed
+    return { ...n, u, rel: S.f.includes(n.uid) ? 'friend' : S.o.includes(n.uid) ? 'out' : S.i.includes(n.uid) ? 'in' : '' };
+  }).filter(Boolean);
+  res.json({ items, unread: L.filter((n) => !n.read).length });
 });
 app.post('/api/inbox/read', (req, res) => {
   const id = need(req, res); if (!id) return;

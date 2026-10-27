@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin — WAYANIME</title>
+<style>
+:root{--bg:#07030f;--panel:#150a2a;--panel2:#1c1030;--tx:#fbf4ff;--mut:#b7a3d6;--line:#3a2461;--ac:#b04bff;--ac2:#ff7ad9;--ok:#1f9d55;--bad:#d64545}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Space Grotesk",system-ui,sans-serif;padding:20px 16px 60px;max-width:980px;margin-inline:auto}
+h1{margin:0 0 14px;font-size:1.5rem}
+h2{margin:0 0 12px;font-size:1.05rem}
+h3{margin:18px 0 8px;font-size:.92rem;color:var(--mut)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.tabs button{background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font:inherit;font-size:.85rem;cursor:pointer}
+.tabs button.on{background:linear-gradient(135deg,var(--ac2),var(--ac));border-color:transparent;font-weight:700}
+.sec{display:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.sec.on{display:block}
+label{display:block;font-size:.78rem;color:var(--mut);margin:12px 0 5px}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:.9rem}
+textarea{min-height:92px;resize:vertical}
+input[type=file]{width:100%;font-size:.82rem;color:var(--mut)}
+input[type=color]{width:54px;height:36px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:2px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1 1 200px}
+.btn{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:0;border-radius:10px;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer;margin-top:16px}
+.btn.g{background:var(--panel2);border:1px solid var(--line);font-weight:600}
+.btn.s{padding:6px 12px;margin:0;font-size:.78rem}
+.btn:disabled{opacity:.5;cursor:default}
+.note{font-size:.8rem;color:var(--mut);margin:8px 0 0}
+.res{margin-top:12px;font-size:.85rem;min-height:1.2em}.res.ok{color:#5be39a}.res.bad{color:#ff8a8a}
+.aupick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.aupick label{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--tx);cursor:pointer;font-size:.85rem}
+.aupick input{position:absolute;opacity:0;pointer-events:none}
+.aupick img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px}
+.aupick label.on{border-color:#ff2d3d;box-shadow:0 0 0 1px #ff2d3d,0 0 18px -4px rgba(255,45,61,.7)}
+.prev{margin-top:8px;max-height:200px;max-width:100%;border-radius:10px;display:none;border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px}
+.cd{background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.74rem}
+.cd img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.cd div{padding:6px 8px}
+.cd b{display:block}
+.ulist{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:6px}
+.ulist label{display:flex;gap:8px;align-items:center;margin:0;padding:6px 8px;font-size:.86rem;color:var(--tx);cursor:pointer}
+table{width:100%;border-collapse:collapse;background:var(--panel2);border-radius:12px;overflow:hidden}
+th,td{padding:9px 10px;text-align:left;font-size:.82rem;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-size:.7rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:700;background:#5865F2;margin-inline-start:6px}
+.muted{color:var(--mut)}
+.ev{background:var(--panel2);border:1px solid var(--line);border-radius:12px;max-height:360px;overflow:auto}
+.ev div{display:flex;gap:10px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--line);font-size:.82rem}
+.ev time{color:var(--mut);font-size:.72rem;white-space:nowrap}
+.tag{font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#2b3c68;white-space:nowrap}
+.li{display:flex;gap:12px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px;font-size:.85rem}
+.li img{width:48px;height:48px;object-fit:contain;border-radius:8px;flex:none;background:#0b0516}
+.li .t{flex:1;min-width:0}
+.sw{display:flex;gap:8px;align-items:center}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 16px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:1.4rem}.stat span{font-size:.72rem;color:var(--mut)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px}.bar>*{flex:1 1 130px;margin:0}
+.bar .btn{margin:0;padding:9px 14px;flex:0 0 auto}
+.mini{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font:inherit;font-size:.74rem;cursor:pointer;margin:1px}
+.mini:hover{border-color:var(--ac2)}
+.tw{overflow-x:auto}.tw table{min-width:640px}
+tr.new td:first-child{border-left:3px solid var(--ac2)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;display:none;z-index:99}
+#toast.bad{background:var(--bad)}
+
+/* ---- pro layout ---- */
+body{max-width:1180px;margin-inline:auto;background:radial-gradient(900px 420px at 85% -10%,#2b1054 0,transparent 60%),var(--bg)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+.top h1{margin:0;font-size:1.35rem}.chips{display:flex;gap:8px;align-items:center}
+.chip{font-size:.72rem;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 11px;display:flex;gap:6px;align-items:center}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(31,157,85,.7);animation:pl 2s infinite}.chip.off i{background:#888;animation:none}
+@keyframes pl{70%{box-shadow:0 0 0 7px rgba(31,157,85,0)}100%{box-shadow:0 0 0 0 rgba(31,157,85,0)}}
+kbd{font:inherit;font-size:.7rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 6px;color:var(--mut);cursor:pointer;background:var(--panel)}
+.brand{display:none}
+@media(min-width:900px){
+ body{padding-left:250px;max-width:none;margin:0;padding-right:28px}
+ .tabs{position:fixed;left:0;top:0;bottom:0;width:224px;flex-direction:column;flex-wrap:nowrap;gap:3px;margin:0;padding:16px 12px;background:#0b0518;border-right:1px solid var(--line);overflow:auto;z-index:20}
+ .tabs button{border-radius:10px;text-align:left;border:0;background:none;color:var(--mut);padding:10px 12px}
+ .tabs button:hover{background:var(--panel2);color:var(--tx)}
+ .tabs button.on{background:linear-gradient(135deg,rgba(255,122,217,.2),rgba(176,75,255,.22));color:#fff;box-shadow:inset 3px 0 var(--ac2)}
+ .brand{display:flex;align-items:center;gap:10px;font-weight:700;padding:6px 8px 18px;font-size:1.02rem}.brand img{width:30px;height:30px;border-radius:8px}.brand small{display:block;color:var(--mut);font-weight:400;font-size:.68rem}
+ .top{padding-top:22px}
+}
+@media(max-width:899px){.tabs{flex-wrap:nowrap;overflow-x:auto;position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 0;margin-bottom:12px}.tabs button{flex:0 0 auto}}
+.sec{box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.stat{transition:transform .15s,border-color .15s}.stat:hover{transform:translateY(-2px);border-color:var(--ac)}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin:0 0 18px}@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}.card h3{margin:0 0 10px}
+.card .it{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:.82rem}.card .it:last-child{border:0}
+thead th{position:sticky;top:0;background:#120826}tbody tr:hover{background:rgba(176,75,255,.08)}
+.ulnk{color:var(--tx);font-weight:700;text-decoration:none}.ulnk:hover{color:var(--ac2)}
+#bulk{display:none;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--ac);border-radius:12px;padding:8px 12px;margin:8px 0;flex-wrap:wrap;font-size:.82rem}
+#pg{display:flex;gap:10px;justify-content:center;align-items:center;margin:12px 0;font-size:.82rem;color:var(--mut)}
+#dr{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--panel);border-left:1px solid var(--line);padding:20px;z-index:60;transform:translateX(105%);transition:transform .2s;overflow:auto}#dr.on{transform:none}
+#dr .it{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+#pal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;padding-top:14vh;z-index:90}#pal.on{display:flex}
+#pal>div{width:min(520px,92vw);background:var(--panel);border:1px solid var(--ac);border-radius:14px;padding:10px}
+#pal-l button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--tx);padding:9px 10px;border-radius:8px;font:inherit;font-size:.88rem;cursor:pointer}#pal-l button:hover,#pal-l button.f{background:var(--panel2)}
+</style>
+<link rel="stylesheet" href="/site-font.css"></head>
+<body>
+<div class="top"><h1 id="ttl">Overview</h1><div class="chips"><span class="chip" id="live"><i></i>Live</span><span class="chip" id="clock"></span><kbd id="kbd">Ctrl K</kbd></div></div>
+<div class="tabs" id="tabs">
+  <button data-t="ov" class="on">Overview</button>
+  <button data-t="nt">Notify users</button>
+  <button data-t="pk">Packs &amp; cards</button>
+  <button data-t="st">Store</button>
+  <button data-t="pb">Announcements</button>
+  <button data-t="bp">Bot posts</button>
+  <button data-t="dm">Message a user</button>
+  <button data-t="au">Aura card</button>
+  <button data-t="rp" id="tab-rp" style="display:none">Reset password</button>
+  <button data-t="sf" id="tab-sf" style="display:none">Staff</button>
+  <button data-t="tr" id="tab-tr" style="display:none">Transfer account</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="sec on" id="s-ov">
+  <div class="stats" id="stats"></div><div id="dash"></div>
+  <h2>Accounts</h2>
+  <div class="bar">
+    <input type="text" id="u-q" placeholder="Search user… (press /)">
+    <select id="u-f"><option value="all">All</option><option value="new">New (24h)</option><option value="act">Active (24h)</option><option value="idle">Inactive 7d+</option><option value="ver">Verified</option><option value="adm">Admins</option></select>
+    <select id="u-s"><option value="last">Last login</option><option value="cards">Most cards</option><option value="trades">Most trades</option><option value="new">Newest</option><option value="name">Name A-Z</option></select>
+    <button class="btn" id="u-csv">Export CSV</button>
+  </div>
+  <p class="note" id="u-cnt"></p>
+  <div id="msg" class="muted">Loading…</div>
+  <div class="tw"><table id="tbl" style="display:none"><thead><tr><th><input type="checkbox" id="u-all"></th><th>User</th><th>Trades</th><th>Cards</th><th>Last login</th><th>Quick actions</th></tr></thead><tbody id="rows"></tbody></table></div><div id="pg"></div>
+  <div id="bulk"><b id="bulk-n"></b><button class="mini" id="b-pts">± Points</button><button class="mini" id="b-nt">Notify</button><button class="mini" id="b-clr">Clear</button></div>
+  <h2 style="margin-top:22px">Live activity</h2>
+  <div class="bar">
+    <select id="l-t"><option value="">All types</option></select>
+    <input type="text" id="l-q" placeholder="Filter log (user or text)">
+    <button class="btn" id="l-p">Pause</button>
+  </div>
+  <div class="ev" id="ev"><div class="muted">Loading…</div></div>
+</div>
+<div id="toast"></div><div id="dr"></div><div id="pal"><div><input type="text" id="pal-q" placeholder="Jump to a section or user…"><div id="pal-l"></div></div></div>
+
+<!-- TRANSFER -->
+<div class="sec" id="s-tr">
+  <h2>Transfer an account</h2>
+  <p class="note">Use it when a player lost access (forgot the password, no Discord linked) and made a new account. Cards, points, items, friends, trades and Discord link move from the OLD account to the NEW one. The old account is emptied and locked. This cannot be undone.</p>
+  <div class="row"><div><label>Old account (source)</label><input type="text" id="tr-from" list="dm-names" placeholder="@old_name"></div><div><label>New account (destination)</label><input type="text" id="tr-to" list="dm-names" placeholder="@new_name"></div></div>
+  <button class="btn" id="tr-pv">Preview</button>
+  <div id="tr-box"></div>
+  <div class="res" id="tr-res"></div>
+</div>
+
+<!-- NOTIFY -->
+<div class="sec" id="s-nt">
+  <h2>Send a notification</h2>
+  <p class="note">It shows up in the bell icon on the site.</p>
+  <label>Send to</label>
+  <select id="nt-to"><option value="all">All users</option><option value="sel">Selected users</option></select>
+  <div id="nt-pick" style="display:none">
+    <label>Search</label><input type="text" id="nt-q" placeholder="username">
+    <div class="ulist" id="nt-list"></div>
+    <p class="note" id="nt-cnt">0 selected</p>
+  </div>
+  <label>Title</label><input type="text" id="nt-title" maxlength="80" dir="auto">
+  <label>Text</label><textarea id="nt-text" maxlength="500" dir="auto"></textarea>
+  <button class="btn" id="nt-go">Send notification</button>
+  <div class="res" id="nt-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Discord webhook</h3>
+  <div class="muted" id="wh-st">Loading…</div>
+  <label>Webhook URL (owner only)</label>
+  <input type="text" id="wh-url" placeholder="https://discord.com/api/webhooks/…" autocomplete="off">
+  <button class="btn" id="wh-save">Save webhook</button>
+  <button class="btn" id="wh-test">Send test</button>
+  <button class="btn" id="wh-del">Remove</button>
+  <div class="res" id="wh-res"></div>
+</div>
+
+<!-- STORE -->
+<div class="sec" id="s-st">
+  <h3>Send points to a user</h3>
+  <label>Username</label><input type="text" id="pt-user" list="dm-names" placeholder="@username">
+  <label>Points (use a negative number to remove)</label><input type="number" id="pt-n" step="1" value="100">
+  <button class="btn" id="pt-go">Send points</button>
+  <div class="res" id="pt-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Change a user's gender</h3>
+  <label>Username</label><input type="text" id="gd-user" list="dm-names" placeholder="@username">
+  <label>Gender</label><select id="gd-g"><option value="f">Girl (f)</option><option value="m">Boy (m)</option></select>
+  <button class="btn" id="gd-go">Change gender</button>
+  <div class="res" id="gd-res"></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h3>Verified badge (girls get the girl badge)</h3>
+  <label>Username</label><input type="text" id="vf-user" list="dm-names" placeholder="@username">
+  <label>Action</label><select id="vf-on"><option value="1">Verify</option><option value="0">Remove verified</option></select>
+  <button class="btn" id="vf-go">Apply</button>
+  <div class="res" id="vf-res"></div>
+  <div id="bl-box" style="display:none">
+    <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+    <h3>Blue check <span class="badge">owner only</span></h3>
+    <label>Username</label><input type="text" id="bl-user" list="dm-names" placeholder="@username">
+    <label>Action</label><select id="bl-on"><option value="1">Give blue check</option><option value="0">Remove blue check</option></select>
+    <button class="btn" id="bl-go">Apply</button>
+    <div class="res" id="bl-res"></div>
+  </div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h2>Add to the Store</h2>
+  <label>Type</label>
+  <select id="st-type"><option value="pic">Profile photo</option><option value="banner">Banner</option></select>
+  <label>Name (shown in the Store, optional)</label>
+  <input type="text" id="st-name" maxlength="40" placeholder="e.g. Sakura Petals">
+  <label>Image</label>
+  <input type="file" id="st-img" accept="image/*"><img class="prev" id="st-prev" alt="">
+  <label>Price (points)</label>
+  <input type="number" id="st-price" min="0" step="1" value="50">
+  <button class="btn" id="st-go">Add to Store</button>
+  <div class="res" id="st-res"></div>
+  <h3>Store items</h3>
+  <div id="st-list" class="muted">None yet.</div>
+</div>
+<!-- PACKS & CARDS -->
+<div class="sec" id="s-pk">
+  <h2>New pack</h2>
+  <div class="row">
+    <div><label>Name (Arabic)</label><input type="text" id="pk-ar" maxlength="40" dir="rtl"></div>
+    <div><label>Name (English)</label><input type="text" id="pk-en" maxlength="40"></div>
+  </div>
+  <label>Anime logo (png with transparent background works best)</label>
+  <input type="file" id="pk-logo" accept="image/*"><img class="prev" id="pk-prev" alt="">
+  <label>Pack colors</label>
+  <div class="sw"><input type="color" id="pk-c1" value="#2a0f4d"><input type="color" id="pk-c2" value="#7c3aed"><input type="color" id="pk-c3" value="#ff7ad9"></div>
+  <button class="btn" id="pk-go">Create pack</button>
+  <div class="res" id="pk-res"></div>
+  <h3>Packs you created</h3>
+  <div id="pk-list" class="muted">None yet.</div>
+
+  <hr style="border:0;border-top:1px solid var(--line);margin:26px 0">
+  <h2>Add a card</h2>
+  <label>Pack</label>
+  <select id="cd-pack"></select>
+  <p class="note" id="cd-note"></p>
+  <label>Character image</label>
+  <input type="file" id="cd-img" accept="image/*"><img class="prev" id="cd-prev" alt="">
+  <div class="row">
+    <div><label>Character name (Arabic)</label><input type="text" id="cd-ar" maxlength="40" dir="rtl"></div>
+    <div><label>Character name (English)</label><input type="text" id="cd-en" maxlength="40"></div>
+  </div>
+  <button class="btn" id="cd-go">Add card</button>
+  <div class="res" id="cd-res"></div>
+  <h3>Cards added from here (this pack)</h3>
+  <div class="grid" id="cd-grid"></div>
+</div>
+
+<!-- ANNOUNCEMENTS -->
+<div class="sec" id="s-pb">
+  <h2>New announcement</h2>
+  <p class="note">A banner shown at the top of the site for everyone, e.g. “A new pack is coming”.</p>
+  <label>Title</label><input type="text" id="pb-title" maxlength="80" dir="auto">
+  <label>Text (optional)</label><textarea id="pb-text" maxlength="300" dir="auto"></textarea>
+  <label>Image or pack logo (optional)</label>
+  <input type="file" id="pb-img" accept="image/*"><img class="prev" id="pb-prev" alt="">
+  <label>Show for how many days (0 = until you delete it)</label>
+  <input type="number" id="pb-days" min="0" max="365" value="7">
+  <button class="btn" id="pb-go">Publish</button>
+  <div class="res" id="pb-res"></div>
+  <h3>Current announcements</h3>
+  <div id="pb-list" class="muted">None.</div>
+</div>
+
+<!-- BOT POSTS -->
+<div class="sec" id="s-bp">
+  <h2>Discord bot posts</h2>
+  <p class="note">What the Discord bot posts on its own: every new store item, and the pack announcements. Images and texts are optional; without an image the pack announcement uses the pack card back.</p>
+  <div id="bp-box"></div>
+</div>
+
+<!-- DIRECT MESSAGE -->
+<div class="sec" id="s-dm">
+  <h2>Message one user</h2>
+  <label>Username</label><input type="text" id="dm-user" list="dm-names" placeholder="@username">
+  <datalist id="dm-names"></datalist>
+  <label>Title (optional)</label><input type="text" id="dm-title" maxlength="80" dir="auto" placeholder="Message from admin">
+  <label>Message</label><textarea id="dm-text" maxlength="500" dir="auto"></textarea>
+  <button class="btn" id="dm-go">Send message</button>
+  <div class="res" id="dm-res"></div>
+</div>
+
+<!-- AURA CARD -->
+<div class="sec" id="s-au">
+  <h2>Give an Aura card</h2>
+  <label>Username</label><input type="text" id="au-user" list="dm-names" placeholder="@username">
+  <label>Character</label>
+  <div class="aupick" id="au-pick">
+    <label data-i="0"><input type="radio" name="au-c" value="0"><img src="/aura/madara.jpg" alt=""><span>Madara</span></label>
+    <label data-i="1"><input type="radio" name="au-c" value="1"><img src="/aura/kira.jpg" alt=""><span>Kira</span></label>
+    <label data-i="2"><input type="radio" name="au-c" value="2"><img src="/aura/sukuna.jpg" alt=""><span>Sukuna</span></label>
+    <label data-i="3"><input type="radio" name="au-c" value="3"><img src="/aura/shanks.jpg" alt=""><span>Shanks</span></label>
+    <label data-i="4"><input type="radio" name="au-c" value="4"><img src="/aura/jinwoo.jpg" alt=""><span>Jinwoo</span></label>
+    <label data-i="5"><input type="radio" name="au-c" value="5"><img src="/aura/itachi.jpg" alt=""><span>Itachi</span></label>
+  </div>
+  <label>Message (optional)</label><textarea id="au-text" maxlength="300" dir="auto" placeholder="Shown to the player with the notification"></textarea>
+  <button class="btn" id="au-go">Send Aura card</button>
+  <div class="res" id="au-res"></div>
+</div>
+
+<!-- STAFF (owner only) -->
+<div class="sec" id="s-sf">
+  <h2>Staff</h2>
+  <p class="note">Only the owner can remove or restore staff. A removed staff member loses admin access and disappears from the staff card.</p>
+  <div id="sf-list"></div>
+  <div class="res" id="sf-res"></div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div class="sec" id="s-rp">
+  <h2>Reset a user's password</h2>
+  <p class="note">This sends the user a link to pick a new password themselves. You will never see or set the password directly — the account owner is the only one who chooses it.</p>
+  <label>Username</label><input type="text" id="rp-user" list="dm-names" placeholder="@username">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn" id="rp-go">Send reset link</button>
+    <button class="btn g" id="rp-copy">Copy link</button>
+  </div>
+  <div class="res" id="rp-res"></div>
+  <input type="text" id="rp-link" readonly onclick="this.select()" style="display:none;margin-top:8px">
+</div>
+
+<script>
+const SV = (d, f) => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="${f ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.125em" aria-hidden="true" focusable="false">${d}</svg>`;
+const SVB = '<svg width="15" height="15" viewBox="0 0 24 24" style="vertical-align:-3px"><path fill="#1d9bf0" d="m12 1 2.6 2 3.2-.3 1.2 3 2.9 1.5-.6 3.2L23 13l-2 2.5.3 3.2-3 1.2-1.5 2.9-3.2-.6L11 24l-2.5-2-3.2.3-1.2-3-2.9-1.5.6-3.2L1 11l2-2.5-.3-3.2 3-1.2L7.2 1.2l3.2.6z"/><path fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m8 12.5 3 3 5-6"/></svg>';
+const SVC = SV('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), SVX = SV('<path d="M6 6l12 12M18 6L6 18"/>');
+const IC = {
+  ov: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  nt: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>',
+  pk: '<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M3 7v10M21 7v10"/>',
+  st: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .6h9.2a1 1 0 0 0 1-.8L21 8H6"/>',
+  pb: '<path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>',
+  bp: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13v1M15 13v1"/>',
+  dm: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  au: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  rp: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
+  sf: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  tr: '<path d="M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4"/>',
+  bag: '<path d="M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0"/>',
+  crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+};
+
+const $ = id => document.getElementById(id);
+const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = t => t ? new Date(t).toLocaleString() : '—';
+async function api(m, u, b){
+  try{
+    const r = await fetch(u, { method: m, credentials: 'same-origin', headers: b ? {'Content-Type':'application/json'} : {}, body: b ? JSON.stringify(b) : undefined });
+    let j = {}; try{ j = await r.json() }catch(e){}
+    return { ok: r.ok, status: r.status, j };
+  }catch(e){ return { ok: false, status: 0, j: { error: 'network error' } } }
+}
+function say(id, ok, t){ const e = $(id); e.className = 'res ' + (ok ? 'ok' : 'bad'); e.textContent = t }
+function shrink(file, maxW, type){ // resize in the browser so uploads stay small
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => {
+      let w = maxW;
+      for(;;){
+        const k = Math.min(1, w / im.width), c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+        const x = c.getContext('2d');
+        if(type === 'image/jpeg'){ x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height) }
+        x.drawImage(im, 0, 0, c.width, c.height);
+        const d = c.toDataURL(type, .84);
+        if(d.length < 420000 || w < 120) return res(d);
+        w = Math.round(w * .75);
+      }
+    }; im.onerror = rej; im.src = fr.result };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+function bindImg(inp, prev, maxW, type, store){
+  $(inp).onchange = async e => {
+    const f = e.target.files[0]; store.v = null; $(prev).style.display = 'none';
+    if(!f) return;
+    try{ store.v = await shrink(f, maxW, type); $(prev).src = store.v; $(prev).style.display = 'block' }catch(x){ store.v = null }
+  };
+}
+// tabs
+$('tabs').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.sec').forEach(x => x.classList.toggle('on', x.id === 's-' + b.dataset.t));
+  if(b.dataset.t === 'pk') loadCustom();
+  if(b.dataset.t === 'st') loadShop();
+  if(b.dataset.t === 'nt') loadHook();
+  if(b.dataset.t === 'pb') loadAnn();
+  if(b.dataset.t === 'bp') loadBp();
+  if(b.dataset.t === 'sf') loadStaff();
+};
+
+// ---- overview ----
+let USERS = [], LOG = [], PAUSED = false, ME_OWNER = false;
+const DAY = 864e5;
+function toast(t, ok = true){ const e = $('toast'); e.textContent = t; e.className = ok ? '' : 'bad'; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 2500) }
+function filtered(){
+  const q = $('u-q').value.trim().toLowerCase(), f = $('u-f').value, s = $('u-s').value, now = Date.now();
+  let L = USERS.filter(u => (!q || u.username.toLowerCase().includes(q)) && (
+    f === 'all' || (f === 'new' && u.created && now - u.created < DAY) || (f === 'act' && u.lastLogin && now - u.lastLogin < DAY) ||
+    (f === 'idle' && (!u.lastLogin || now - u.lastLogin > 7 * DAY)) || (f === 'ver' && u.verified) || (f === 'adm' && u.admin)));
+  const k = { last: (a, b) => (b.lastLogin || 0) - (a.lastLogin || 0), cards: (a, b) => b.cards - a.cards, trades: (a, b) => b.trades - a.trades,
+    new: (a, b) => (b.created || 0) - (a.created || 0), name: (a, b) => a.username.localeCompare(b.username) }[s];
+  return L.sort(k);
+}
+function drawStats(){
+  const now = Date.now(), n = USERS.length;
+  const st = [[n, 'Accounts'], [USERS.filter(u => u.created && now - u.created < DAY).length, 'New today'], [USERS.filter(u => u.lastLogin && now - u.lastLogin < DAY).length, 'Active 24h'],
+    [USERS.filter(u => u.verified).length, 'Verified'], [USERS.reduce((a, u) => a + u.cards, 0), 'Total cards'], [USERS.reduce((a, u) => a + u.trades, 0), 'Total trades']];
+  $('stats').innerHTML = st.map(x => `<div class="stat"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+}
+function drawUsers(){
+  const L = filtered(), now = Date.now();
+  $('u-cnt').textContent = L.length + ' / ' + USERS.length + ' accounts';
+  $('rows').innerHTML = L.map(u => `<tr class="${u.created && now - u.created < DAY ? 'new' : ''}"><td>${esc(u.username)}${u.admin ? '<span class="badge">admin</span>' : ''}${u.verified ? ' ' + SVC : ''}${u.blue ? ' ' + SVB : ''}${u.movedTo ? ' <span class="muted">→ ' + esc(u.movedTo) + '</span>' : ''}</td><td>${u.trades}</td><td>${u.cards}</td><td class="muted">${fmt(u.lastLogin)}</td>
+    <td><button class="mini" data-a="pts" data-u="${esc(u.id)}">± Points</button><button class="mini" data-a="ver" data-u="${esc(u.id)}">${u.verified ? 'Unverify' : 'Verify'}</button>${ME_OWNER ? `<button class="mini" data-a="blue" data-u="${esc(u.id)}">${u.blue ? 'Remove blue' : 'Blue check'}</button>` : ''}<button class="mini" data-a="dm" data-u="${esc(u.id)}">Message</button><button class="mini" data-a="cp" data-u="${esc(u.id)}">Copy name</button></td></tr>`).join('') || '<tr><td colspan="5" class="muted">No match.</td></tr>';
+}
+async function loadUsers(){
+  const r = await api('GET', '/api/admin/users');
+  if(r.status === 401){ $('msg').textContent = 'Log in first.'; return }
+  if(r.status === 403){ $('msg').textContent = 'This account has no access to this page.'; return }
+  if(!r.ok){ $('msg').textContent = 'Server error.'; return }
+  USERS = r.j.users;
+  ME_OWNER = r.j.me === 'owner'; if(r.j.me === 'owner'){ $('tab-rp').style.display = ''; $('tab-sf').style.display = ''; $('tab-tr').style.display = ''; $('bl-box').style.display = '' }
+  $('msg').style.display = 'none'; $('tbl').style.display = 'table';
+  $('dm-names').innerHTML = USERS.map(u => `<option value="${esc(u.username)}">`).join('');
+  drawStats(); drawUsers(); drawPick();
+}
+['u-q', 'u-f', 'u-s'].forEach(i => $(i).oninput = drawUsers);
+$('rows').onclick = async e => {
+  const b = e.target.closest('button[data-a]'); if(!b) return;
+  const u = USERS.find(x => x.id === b.dataset.u); if(!u) return;
+  if(b.dataset.a === 'cp'){ try{ await navigator.clipboard.writeText(u.username); toast('Copied') }catch(x){ toast('Copy failed', false) } }
+  if(b.dataset.a === 'tr'){ document.querySelector('[data-t="tr"]').click(); $('tr-from').value = u.username; $('tr-to').focus() }
+  if(b.dataset.a === 'dm'){ document.querySelector('[data-t="dm"]').click(); $('dm-user').value = u.username; $('dm-text').focus() }
+  if(b.dataset.a === 'blue'){
+    if(!confirm((u.blue ? 'Remove the blue check from ' : 'Give the blue check to ') + u.username + '?')) return;
+    const r = await api('POST', '/api/admin/blue', { user: u.id, on: !u.blue }); toast(r.ok ? 'Done' : (r.j.error || 'Error'), r.ok); loadUsers(); loadLog(); return;
+  }
+  if(b.dataset.a === 'ver'){
+    if(!confirm((u.verified ? 'Remove verified from ' : 'Verify ') + u.username + '?')) return;
+    const r = await api('POST', '/api/admin/verify', { user: u.id, on: !u.verified }); toast(r.ok ? 'Done' : (r.j.error || 'Error'), r.ok); loadUsers(); loadLog();
+  }
+  if(b.dataset.a === 'pts'){
+    const v = prompt('Points for ' + u.username + ' (use - to remove, e.g. 500 or -200):'); if(v === null) return;
+    const n = parseInt(v, 10); if(!n) return toast('Invalid number', false);
+    const r = await api('POST', '/api/admin/points', { user: u.id, amount: n }); toast(r.ok ? u.username + ' now has ' + r.j.pts + ' pts' : (r.j.error || 'Error'), r.ok); loadLog();
+  }
+};
+$('u-csv').onclick = () => {
+  const rows = [['username', 'trades', 'cards', 'verified', 'admin', 'created', 'last_login']].concat(filtered().map(u => [u.username, u.trades, u.cards, u.verified, u.admin, u.created ? new Date(u.created).toISOString() : '', u.lastLogin ? new Date(u.lastLogin).toISOString() : '']));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv' })); a.download = 'users-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+};
+function drawLogBase(){
+  const t = $('l-t').value, q = $('l-q').value.trim().toLowerCase();
+  const L = LOG.filter(e => (!t || e.type === t) && (!q || ((e.u || '') + ' ' + (e.text || '')).toLowerCase().includes(q)));
+  $('ev').innerHTML = L.map(e => `<div><time>${fmt(e.t)}</time><span class="tag">${esc(e.type)}</span><b>${esc(e.u || '—')}</b><span>${esc(e.text)}</span></div>`).join('') || '<div class="muted">No activity.</div>';
+}
+async function loadLog(){
+  const r = await api('GET', '/api/admin/log'); $('live').classList.toggle('off', !r.ok); if(!r.ok) return;
+  LOG = r.j.events; const cur = $('l-t').value;
+  $('l-t').innerHTML = '<option value="">All types</option>' + [...new Set(LOG.map(e => e.type))].sort().map(x => `<option ${x === cur ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  drawLog();
+}
+$('l-t').onchange = $('l-q').oninput = drawLog;
+$('l-p').onclick = () => { PAUSED = !PAUSED; $('l-p').textContent = PAUSED ? 'Resume' : 'Pause' };
+loadUsers(); loadLog(); setInterval(() => { if(!PAUSED){ loadUsers(); loadLog() } }, 10000);
+
+// ---- pro extras ----
+const ICO = Object.fromEntries(['ov','nt','pk','st','pb','bp','dm','au','rp','sf','tr'].map(k => [k, SV(IC[k])]));
+document.querySelectorAll('#tabs button').forEach(b => { b.dataset.l = b.textContent; b.innerHTML = (ICO[b.dataset.t] || SV('<circle cx="12" cy="12" r="3"/>')) + '&nbsp; ' + b.dataset.l });
+$('tabs').insertAdjacentHTML('afterbegin', '<div class="brand"><img src="/favicon.png" alt=""><div>WAYANIME<small>Admin panel</small></div></div>');
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(b) $('ttl').textContent = b.dataset.l });
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString() }, 1000);
+const ago = t => { if(!t) return '—'; const d = Date.now() - t, m = d / 6e4; return m < 1 ? 'just now' : m < 60 ? Math.floor(m) + 'm ago' : m < 1440 ? Math.floor(m / 60) + 'h ago' : Math.floor(m / 1440) + 'd ago' };
+let PG = 0, SELU = new Set(); const PER = 20;
+function drawDash(){
+  const now = Date.now(), bins = Array(24).fill(0);
+  LOG.forEach(e => { const h = Math.floor((now - e.t) / 36e5); if(h >= 0 && h < 24) bins[23 - h]++ });
+  const mx = Math.max(1, ...bins);
+  const bars = bins.map((v, i) => `<rect x="${i * 20 + 2}" y="${100 - v / mx * 92}" width="16" height="${v / mx * 92}" rx="3" fill="url(#g)"><title>${v} events</title></rect>`).join('');
+  const top = USERS.slice().sort((a, b) => b.cards - a.cards).slice(0, 5).map((u, i) => `<div class="it"><span>${i + 1}. ${esc(u.username)}</span><b>${u.cards}</b></div>`).join('');
+  const nw = USERS.slice().sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 5).map(u => `<div class="it"><span>${esc(u.username)}</span><span class="muted">${ago(u.created)}</span></div>`).join('');
+  $('dash').innerHTML = `<div class="grid2"><div class="card"><h3>Activity — last 24h</h3><svg viewBox="0 0 480 104" width="100%"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7ad9"/><stop offset="1" stop-color="#b04bff"/></linearGradient></defs>${bars}</svg></div><div class="card"><h3>Top collectors</h3>${top || '<span class="muted">—</span>'}</div></div><div class="card" style="margin-bottom:18px"><h3>Newest members</h3>${nw || '<span class="muted">—</span>'}</div>`;
+}
+function drawStats(){
+  const now = Date.now(), A = (f) => USERS.filter(f).length;
+  const st = [[USERS.length, 'Accounts'], [A(u => u.created && now - u.created < DAY), 'New today'], [A(u => u.lastLogin && now - u.lastLogin < DAY), 'Active 24h'], [A(u => u.verified), 'Verified'], [USERS.reduce((a, u) => a + u.cards, 0), 'Total cards'], [USERS.reduce((a, u) => a + u.trades, 0), 'Total trades']];
+  $('stats').innerHTML = st.map(x => `<div class="stat"><b>${x[0]}</b><span>${x[1]}</span></div>`).join(''); drawDash();
+}
+function drawUsers(){
+  const L = filtered(), now = Date.now(), pages = Math.max(1, Math.ceil(L.length / PER)); if(PG >= pages) PG = pages - 1;
+  $('u-cnt').textContent = L.length + ' / ' + USERS.length + ' accounts';
+  $('rows').innerHTML = L.slice(PG * PER, PG * PER + PER).map(u => `<tr class="${u.created && now - u.created < DAY ? 'new' : ''}"><td><input type="checkbox" data-sel="${esc(u.id)}" ${SELU.has(u.id) ? 'checked' : ''}></td><td><a href="#" class="ulnk" data-open="${esc(u.id)}">${esc(u.username)}</a>${u.admin ? '<span class="badge">admin</span>' : ''}${u.verified ? ' ' + SVC : ''}${u.blue ? ' ' + SVB : ''}</td><td>${u.trades}</td><td>${u.cards}</td><td class="muted">${ago(u.lastLogin)}</td><td><button class="mini" data-a="pts" data-u="${esc(u.id)}">± Points</button><button class="mini" data-a="ver" data-u="${esc(u.id)}">${u.verified ? 'Unverify' : 'Verify'}</button>${ME_OWNER ? `<button class="mini" data-a="blue" data-u="${esc(u.id)}">${u.blue ? 'Remove blue' : 'Blue check'}</button>` : ''}<button class="mini" data-a="dm" data-u="${esc(u.id)}">Message</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No match.</td></tr>';
+  $('pg').innerHTML = pages > 1 ? `<button class="mini" data-pg="-1">‹ Prev</button>${PG + 1} / ${pages}<button class="mini" data-pg="1">Next ›</button>` : '';
+  $('bulk').style.display = SELU.size ? 'flex' : 'none'; $('bulk-n').textContent = SELU.size + ' selected';
+}
+function openUser(id){
+  const u = USERS.find(x => x.id === id); if(!u) return;
+  const r = (k, v) => `<div class="it"><span class="muted">${k}</span><b>${v}</b></div>`;
+  $('dr').innerHTML = `<button class="mini" id="dr-x" style="float:right">${SVX}</button><h2>${esc(u.username)}${u.verified ? ' ' + SVC : ''}${u.blue ? ' ' + SVB : ''}</h2>${r('Role', u.admin ? 'Admin' : 'Player')}${r('Cards', u.cards)}${r('Trades', u.trades)}${r('Joined', fmt(u.created))}${r('Last login', fmt(u.lastLogin) + ' (' + ago(u.lastLogin) + ')')}${r('ID', esc(u.id))}<div style="margin-top:14px"><button class="mini" data-a="pts" data-u="${esc(u.id)}">± Points</button><button class="mini" data-a="ver" data-u="${esc(u.id)}">${u.verified ? 'Unverify' : 'Verify'}</button>${ME_OWNER ? `<button class="mini" data-a="blue" data-u="${esc(u.id)}">${u.blue ? 'Remove blue' : 'Blue check'}</button>` : ''}<button class="mini" data-a="dm" data-u="${esc(u.id)}">Message</button><button class="mini" data-a="cp" data-u="${esc(u.id)}">Copy name</button>${ME_OWNER && !u.movedTo ? `<button class="mini" data-a="tr" data-u="${esc(u.id)}">Transfer from here</button>` : ''}</div><h3>Recent activity</h3>${LOG.filter(e => e.id === u.id).slice(0, 12).map(e => `<div class="it"><span>${esc(e.text)}</span><span class="muted">${ago(e.t)}</span></div>`).join('') || '<span class="muted">Nothing yet.</span>'}`;
+  $('dr').classList.add('on');
+}
+$('dr').onclick = e => { if(e.target.id === 'dr-x') $('dr').classList.remove('on'); else if(e.target.closest('button[data-a]')){ $('rows').onclick(e); if(e.target.dataset.a === 'dm') $('dr').classList.remove('on') } };
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]'); if(o){ e.preventDefault(); openUser(o.dataset.open) }
+  const g = e.target.closest('[data-pg]'); if(g){ PG = Math.max(0, PG + Number(g.dataset.pg)); drawUsers() }
+  if(!e.target.closest('#dr,[data-open]')) $('dr').classList.remove('on');
+});
+$('rows').addEventListener('change', e => { const i = e.target.dataset.sel; if(!i) return; e.target.checked ? SELU.add(i) : SELU.delete(i); drawUsers() });
+$('u-all').onchange = e => { filtered().slice(PG * PER, PG * PER + PER).forEach(u => e.target.checked ? SELU.add(u.id) : SELU.delete(u.id)); drawUsers() };
+$('b-clr').onclick = () => { SELU.clear(); $('u-all').checked = false; drawUsers() };
+$('b-nt').onclick = () => { SELU.forEach(i => SEL.add(i)); openTab('nt'); $('nt-to').value = 'sel'; $('nt-to').onchange(); drawPick() };
+$('b-pts').onclick = async () => {
+  const v = prompt('Points for ' + SELU.size + ' users (e.g. 100 or -50):'); const n = parseInt(v, 10); if(!n) return;
+  if(!confirm('Apply ' + n + ' points to ' + SELU.size + ' users?')) return;
+  let ok = 0; for(const id of SELU){ const r = await api('POST', '/api/admin/points', { user: id, amount: n }); if(r.ok) ok++ }
+  toast(ok + ' / ' + SELU.size + ' done', ok === SELU.size); loadLog();
+};
+function drawLog(){ drawLogBase(); drawDash() }
+// command palette
+const PAL = () => [...document.querySelectorAll('#tabs button')].filter(b => b.style.display !== 'none').map(b => ({ n: b.textContent.trim(), f: () => b.click() })).concat(USERS.map(u => ({ n: u.username, f: () => { openTab('ov'); openUser(u.id) } })));
+function palDraw(){ const q = $('pal-q').value.toLowerCase(); $('pal-l').innerHTML = ''; PAL().filter(x => x.n.toLowerCase().includes(q)).slice(0, 8).forEach((x, i) => { const b = document.createElement('button'); b.textContent = x.n; if(!i) b.className = 'f'; b.onclick = () => { $('pal').classList.remove('on'); x.f() }; $('pal-l').appendChild(b) }) }
+const palOpen = () => { $('pal').classList.add('on'); $('pal-q').value = ''; palDraw(); $('pal-q').focus() };
+$('kbd').onclick = palOpen; $('pal-q').oninput = palDraw;
+$('pal').onclick = e => { if(e.target.id === 'pal') $('pal').classList.remove('on') };
+$('pal-q').onkeydown = e => { if(e.key === 'Enter'){ const f = $('pal-l').firstChild; if(f) f.click() } };
+document.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); palOpen() } if(e.key === 'Escape'){ $('pal').classList.remove('on'); $('dr').classList.remove('on') } });
+
+
+// ---- transfer account (owner) ----
+function trSum(t, o){ return `<div class="card"><h3>${esc(t)}</h3>${[['Cards', o.cards], ['Points', o.pts], ['Trades', o.trades], ['Store items', o.items], ['Friends', o.friends], ['Discord', o.discord ? 'linked' : '—']].map(x => `<div class="it"><span class="muted">${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`; }
+$('tr-pv').onclick = async () => {
+  $('tr-res').textContent = ''; $('tr-box').innerHTML = '';
+  const r = await api('POST', '/api/admin/transfer', { from: $('tr-from').value, to: $('tr-to').value, dry: true });
+  if(!r.ok) return say('tr-res', false, r.j.error || 'Error');
+  $('tr-box').innerHTML = `<div class="grid2" style="margin-top:14px;grid-template-columns:1fr 1fr">${trSum('From: ' + r.j.from, r.j.source)}${trSum('To: ' + r.j.to, r.j.target)}</div><p class="note">After the move, ${esc(r.j.to)} will have ${r.j.source.cards + r.j.target.cards} cards and ${r.j.source.pts + r.j.target.pts} points. ${esc(r.j.from)} will be emptied and locked.</p><button class="btn" id="tr-go" style="background:var(--bad)">Move everything to ${esc(r.j.to)}</button>`;
+  $('tr-go').onclick = async () => {
+    if(!confirm('Move ALL data from ' + r.j.from + ' to ' + r.j.to + '?\nThis cannot be undone.')) return;
+    $('tr-go').disabled = true;
+    const x = await api('POST', '/api/admin/transfer', { from: $('tr-from').value, to: $('tr-to').value, dry: false });
+    if(!x.ok){ $('tr-go').disabled = false; return say('tr-res', false, x.j.error || 'Error') }
+    $('tr-box').innerHTML = ''; say('tr-res', true, 'Done: ' + x.j.moved.cards + ' cards and ' + x.j.moved.pts + ' points moved to ' + x.j.to + '.');
+    loadUsers(); loadLog();
+  };
+};
+
+// remember the open tab + shortcuts
+const openTab = t => { const b = document.querySelector('[data-t="' + t + '"]'); if(b && b.style.display !== 'none') b.click() };
+if(location.hash.length > 1) openTab(location.hash.slice(1));
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(b) history.replaceState(null, '', '#' + b.dataset.t) });
+document.addEventListener('keydown', e => { if(e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); openTab('ov'); $('u-q').focus() } });
+
+// ---- notify ----
+const SEL = new Set();
+function drawPick(){
+  const q = $('nt-q').value.trim().toLowerCase();
+  $('nt-list').innerHTML = USERS.filter(u => !q || u.username.toLowerCase().includes(q)).map(u => `<label><input type="checkbox" data-id="${esc(u.id)}" ${SEL.has(u.id) ? 'checked' : ''}>${esc(u.username)}</label>`).join('') || '<div class="note">No match.</div>';
+  $('nt-cnt').textContent = SEL.size + ' selected';
+}
+$('nt-to').onchange = () => { $('nt-pick').style.display = $('nt-to').value === 'sel' ? 'block' : 'none' };
+$('nt-q').oninput = drawPick;
+$('nt-list').onchange = e => { const i = e.target.dataset.id; if(!i) return; e.target.checked ? SEL.add(i) : SEL.delete(i); $('nt-cnt').textContent = SEL.size + ' selected' };
+$('nt-go').onclick = async () => {
+  const to = $('nt-to').value, b = { to, title: $('nt-title').value, text: $('nt-text').value };
+  if(to === 'sel'){ if(!SEL.size) return say('nt-res', false, 'Pick at least one user.'); b.ids = [...SEL] }
+  if(to === 'all' && !confirm('Send this to ALL users?')) return;
+  $('nt-go').disabled = true;
+  const r = await api('POST', '/api/admin/notify', b); $('nt-go').disabled = false;
+  if(r.ok){ say('nt-res', true, 'Sent to ' + r.j.sent + ' user(s).'); $('nt-title').value = ''; $('nt-text').value = '' } else say('nt-res', false, r.j.error || 'Failed.');
+};
+
+// ---- packs & cards ----
+const BUILTIN = { naruto:'Naruto', dbz:'Dragon Ball', ds:'Demon Slayer', bb:'Blue Box', bc:'Black Clover', hxh:'Hunter x Hunter', mha:'My Hero Academia', jjk:'Jujutsu Kaisen', op:'One Piece', aot:'Attack on Titan', cute:'Cute pack', leg:'Legendary pack' };
+const BASE = { naruto:8, dbz:8, ds:8, bb:6, bc:8, hxh:8, mha:8, jjk:7, op:8, aot:7, cute:15, leg:10 };
+let CUS = { packs: [], cards: {} };
+const logo = {}, cimg = {}, aimg = {};
+bindImg('pk-logo', 'pk-prev', 420, 'image/png', logo);
+bindImg('cd-img', 'cd-prev', 400, 'image/jpeg', cimg);
+bindImg('pb-img', 'pb-prev', 360, 'image/jpeg', aimg);
+async function loadCustom(){
+  const r = await api('GET', '/api/custom'); if(!r.ok) return;
+  CUS = r.j;
+  const keep = $('cd-pack').value;
+  const opts = Object.keys(BUILTIN).map(k => [k, BUILTIN[k]]).concat(CUS.packs.map(p => [p.id, p.en + ' / ' + p.ar + ' (new)']));
+  $('cd-pack').innerHTML = opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join('');
+  if(keep) $('cd-pack').value = keep;
+  $('pk-list').innerHTML = CUS.packs.length ? CUS.packs.map(p => `<div class="li"><img src="${esc(p.logo)}" alt=""><div class="t"><b>${esc(p.en)}</b> / ${esc(p.ar)}<div class="muted">${(CUS.cards[p.id] || []).length} cards</div></div></div>`).join('') : 'None yet.';
+  drawCards();
+}
+function drawCards(){
+  const k = $('cd-pack').value, L = CUS.cards[k] || [], base = BASE[k] || 0;
+  $('cd-note').textContent = 'Now ' + (base + L.length) + ' cards (' + base + ' built in, ' + L.length + ' added). Max 100. Cards can’t be deleted, because players may already own them.';
+  $('cd-grid').innerHTML = L.map((c, j) => `<div class="cd"><img src="${esc(c.img)}" alt=""><div><b>${esc(c.en)}</b>${esc(c.ar)}<br><span class="muted">#${base + j + 1}</span></div></div>`).join('');
+}
+$('cd-pack').onchange = drawCards;
+$('pk-go').onclick = async () => {
+  if(!logo.v) return say('pk-res', false, 'Choose a logo image first.');
+  $('pk-go').disabled = true;
+  const r = await api('POST', '/api/admin/pack', { ar: $('pk-ar').value, en: $('pk-en').value, logo: logo.v, g: [$('pk-c1').value, $('pk-c2').value, $('pk-c3').value] });
+  $('pk-go').disabled = false;
+  if(r.ok){ say('pk-res', true, 'Pack created. Now add cards to it below.'); $('pk-ar').value = $('pk-en').value = ''; $('pk-logo').value = ''; $('pk-prev').style.display = 'none'; logo.v = null; await loadCustom(); $('cd-pack').value = r.j.pack.id; drawCards() }
+  else say('pk-res', false, r.j.error || 'Failed.');
+};
+$('cd-go').onclick = async () => {
+  if(!cimg.v) return say('cd-res', false, 'Choose an image first.');
+  $('cd-go').disabled = true;
+  const r = await api('POST', '/api/admin/card', { pack: $('cd-pack').value, img: cimg.v, ar: $('cd-ar').value, en: $('cd-en').value });
+  $('cd-go').disabled = false;
+  if(r.ok){ say('cd-res', true, 'Card added (#' + (r.j.idx + 1) + ').'); $('cd-ar').value = $('cd-en').value = ''; $('cd-img').value = ''; $('cd-prev').style.display = 'none'; cimg.v = null; loadCustom() }
+  else say('cd-res', false, r.j.error || 'Failed.');
+};
+
+
+// ---- Discord bot posts ----
+const BP = [['store', 'Store: new profile picture / banner'], ['daily', 'Daily Pack'], ['legendary', 'Legendary Pack'], ['cute', 'Cute Pack'], ['aura', 'Aura Pack']];
+const BPI = { store: 'bag', daily: 'pk', legendary: 'crown', cute: 'heart', aura: 'au' };
+const bpimg = {};
+$('bp-box').innerHTML = BP.map(([k, t]) => `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px"><h3>${SV(IC[BPI[k]])} ${t}</h3>` +
+  (k === 'store' ? `<label><input type="checkbox" id="bp-on-store" style="width:auto"> Announce every new store item on Discord</label>` : '') +
+  `<label>Extra text (optional)</label><input type="text" id="bp-tx-${k}" maxlength="300" dir="auto">` +
+  `<label>${k === 'store' ? 'Extra image (small logo next to the item)' : 'Pack box image'}</label>` +
+  `<input type="file" id="bp-im-${k}" accept="image/*"><img class="prev" id="bp-pv-${k}" alt="">` +
+  `<div style="margin-top:10px"><button class="btn" data-save="${k}">Save</button> <button class="btn" data-clr="${k}">Remove image</button>` + (k === 'store' ? ` <button class="btn" data-test="1">Send test post</button>` : '') + `</div><div class="res" id="bp-rs-${k}"></div></div>`).join('');
+BP.forEach(([k]) => bindImg('bp-im-' + k, 'bp-pv-' + k, k === 'store' ? 240 : 560, 'image/webp', (bpimg[k] = {})));
+async function loadBp(){
+  const r = await api('GET', '/api/admin/botann'); if(!r.ok) return;
+  BP.forEach(([k]) => { const c = r.j[k] || {}, p = $('bp-pv-' + k); if(k === 'store') $('bp-on-store').checked = !!c.on; $('bp-tx-' + k).value = c.text || ''; bpimg[k].v = null; $('bp-im-' + k).value = ''; if(c.img){ p.src = c.img; p.style.display = 'block' } else p.style.display = 'none' });
+}
+$('bp-box').onclick = async e => {
+  const t = e.target;
+  if(t.dataset.test){ const r = await api('POST', '/api/admin/botann/test', {}); say('bp-rs-store', r.ok, r.ok ? 'Test sent: it will appear on Discord in a few seconds.' : (r.j.error || 'Failed.')); return }
+  const k = t.dataset.save || t.dataset.clr; if(!k) return;
+  const b = { kind: k, text: $('bp-tx-' + k).value };
+  if(k === 'store') b.on = $('bp-on-store').checked;
+  if(t.dataset.clr) b.img = null; else if(bpimg[k].v) b.img = bpimg[k].v;
+  const r = await api('POST', '/api/admin/botann', b);
+  say('bp-rs-' + k, r.ok, r.ok ? 'Saved.' : (r.j.error || 'Failed.')); if(r.ok) loadBp();
+};
+
+// ---- announcements ----
+async function loadAnn(){
+  const r = await api('GET', '/api/admin/announce'); if(!r.ok) return;
+  $('pb-list').innerHTML = r.j.items.length ? r.j.items.map(a => `<div class="li">${a.img ? `<img src="${esc(a.img)}" alt="">` : ''}<div class="t"><b>${esc(a.title)}</b><div class="muted">${esc(a.text)}</div><div class="muted">${a.until ? 'until ' + fmt(a.until) : 'no end date'}</div></div><button class="btn g s" data-del="${esc(a.id)}">Delete</button></div>`).join('') : 'None.';
+}
+$('pb-list').onclick = async e => { const id = e.target.dataset.del; if(!id) return; await api('DELETE', '/api/admin/announce/' + id); loadAnn() };
+$('pb-go').onclick = async () => {
+  $('pb-go').disabled = true;
+  const r = await api('POST', '/api/admin/announce', { title: $('pb-title').value, text: $('pb-text').value, img: aimg.v || null, days: Number($('pb-days').value) || 0 });
+  $('pb-go').disabled = false;
+  if(r.ok){ say('pb-res', true, 'Published.'); $('pb-title').value = $('pb-text').value = ''; $('pb-img').value = ''; $('pb-prev').style.display = 'none'; aimg.v = null; loadAnn() }
+  else say('pb-res', false, r.j.error || 'Failed.');
+};
+
+// ---- direct message ----
+async function rpMake(copy){
+  const user = $('rp-user').value.trim(); if(!user) return;
+  $('rp-go').disabled = $('rp-copy').disabled = true; $('rp-link').style.display = 'none';
+  const r = await api('POST', '/api/admin/reset-request', { user });
+  $('rp-go').disabled = $('rp-copy').disabled = false;
+  if(!r.ok){ say('rp-res', false, r.j.error || 'failed'); return; }
+  const full = location.origin + r.j.link;
+  const inp = $('rp-link'); inp.value = full; inp.style.display = 'block';
+  let copied = false;
+  if(copy){
+    try { await navigator.clipboard.writeText(full); copied = true; }
+    catch(e) { inp.select(); inp.setSelectionRange(0, 99999); try { copied = document.execCommand('copy'); } catch(e2) {} }
+  }
+  say('rp-res', true, 'Link for ' + r.j.to + ' (valid 30 min)' + (copied ? ' \u2014 copied \u2713, paste it on Discord/WhatsApp.' : '. Sent to the user as a notification.'));
+  $('rp-user').value = '';
+}
+$('rp-go').onclick = () => rpMake(false);
+$('rp-copy').onclick = () => rpMake(true);
+// ---- Aura card ----
+$('au-pick').onchange = () => document.querySelectorAll('#au-pick label').forEach(l => l.classList.toggle('on', l.querySelector('input').checked));
+$('au-go').onclick = async () => {
+  const c = document.querySelector('input[name="au-c"]:checked');
+  if(!$('au-user').value.trim()) return say('au-res', false, 'Enter a username.');
+  if(!c) return say('au-res', false, 'Pick a character.');
+  $('au-go').disabled = true;
+  const r = await api('POST', '/api/admin/aura-card', { user: $('au-user').value, i: Number(c.value), text: $('au-text').value });
+  $('au-go').disabled = false;
+  if(r.ok){ say('au-res', true, 'Aura card ' + r.j.card + ' sent to ' + r.j.to + '.'); $('au-text').value = ''; loadLog() } else say('au-res', false, r.j.error || 'Failed.');
+};
+$('dm-go').onclick = async () => {
+  $('dm-go').disabled = true;
+  const r = await api('POST', '/api/admin/dm', { user: $('dm-user').value, title: $('dm-title').value, text: $('dm-text').value });
+  $('dm-go').disabled = false;
+  if(r.ok){ say('dm-res', true, 'Sent to ' + r.j.to + '.'); $('dm-text').value = '' } else say('dm-res', false, r.j.error || 'Failed.');
+};
+
+// ---- staff (owner only) ----
+async function loadStaff(){
+  const r = await api('GET', '/api/admin/staff'); if(!r.ok) return;
+  $('sf-list').innerHTML = r.j.staff.map(s => `<div class="li"><span class="t"><b>@${esc(s.name)}</b> <span class="muted">${s.active ? 'active' : 'removed'}</span></span><button class="btn ${s.active ? 'g' : ''}" data-n="${esc(s.name)}" data-a="${s.active ? 'remove' : 'restore'}">${s.active ? 'Remove' : 'Restore'}</button></div>`).join('');
+}
+$('sf-list').onclick = async e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.a === 'remove' && !confirm('Remove @' + b.dataset.n + ' from staff?')) return;
+  const r = await api('POST', '/api/admin/staff/' + b.dataset.a, { name: b.dataset.n });
+  say('sf-res', r.ok, r.ok ? 'Done.' : (r.j.error || 'Failed.')); loadStaff();
+};
+
+// ---- store ----
+const simg = {};
+bindImg('st-img', 'st-prev', 900, 'image/jpeg', simg);
+async function loadShop(){
+  const r = await api('GET', '/api/admin/shop'); if(!r.ok) return;
+  const kind = x => x.type === 'pic' ? 'Profile photo' : 'Banner';
+  $('st-list').innerHTML = r.j.items.length ? r.j.items.map(x => `<div class="li"><img src="/shop/img/${esc(x.id)}" alt="" style="${x.type==='pic'?'border-radius:50%;':''}width:56px;height:56px;object-fit:cover"><div class="t"><b>${esc(x.name || kind(x))}</b>${x.off?' <span class="muted">(hidden)</span>':''}${x.builtin?' <span class="muted">(built-in)</span>':''}<div class="muted">${kind(x)} · ${x.price} points</div></div><input type="text" maxlength="40" value="${esc(x.name || '')}" placeholder="Name" style="width:140px" data-sn="${esc(x.id)}">${x.builtin ? '' : `<input type="number" min="0" value="${x.price}" style="width:90px" data-sp="${esc(x.id)}">`}<button class="btn" data-sv="${esc(x.id)}"${x.builtin ? ' data-bi="1"' : ''}>Save</button>${x.builtin ? '' : `<button class="btn" data-sh="${esc(x.id)}" data-off="${x.off?0:1}">${x.off?'Show':'Hide'}</button>`}</div>`).join('') : 'None yet.';
+}
+$('st-list').onclick = async e => {
+  const sv = e.target.closest('[data-sv]'), sh = e.target.closest('[data-sh]');
+  if(sv){ const id = sv.dataset.sv, nm = document.querySelector('[data-sn="'+id+'"]').value, pe = document.querySelector('[data-sp="'+id+'"]');
+    const body = { name: nm }; if(pe) body.price = Number(pe.value);
+    await api('POST', '/api/admin/shop/' + id, body); loadShop() }
+  if(sh){ await api('POST', '/api/admin/shop/' + sh.dataset.sh, { off: sh.dataset.off === '1' }); loadShop() }
+};
+$('st-go').onclick = async () => {
+  if(!simg.v) return say('st-res', false, 'Choose an image first.');
+  const r = await api('POST', '/api/admin/shop', { type: $('st-type').value, img: simg.v, price: Number($('st-price').value), name: $('st-name').value });
+  if(r.ok){ say('st-res', true, 'Added to the Store.'); $('st-img').value = ''; $('st-prev').style.display = 'none'; simg.v = null; $('st-name').value = ''; loadShop() }
+  else say('st-res', false, r.j.error || 'Error');
+};
+
+$('pt-go').onclick = async () => {
+  $('pt-go').disabled = true;
+  const r = await api('POST', '/api/admin/points', { user: $('pt-user').value, amount: Number($('pt-n').value) });
+  $('pt-go').disabled = false;
+  if(r.ok) say('pt-res', true, r.j.to + ' now has ' + r.j.pts + ' points.'); else say('pt-res', false, r.j.error || 'Failed.');
+};
+async function loadHook(){
+  const r = await api('GET', '/api/admin/webhook'); if(!r.ok) return;
+  $('wh-st').textContent = r.j.set ? 'Active: every notification, DM, points, Aura card and announcement is also posted to Discord (' + r.j.hint + ')' + (r.j.env ? ' — set by DISCORD_WEBHOOK_URL' : '') + '.' : 'Not set. Paste a Discord webhook URL to also post notifications in a channel.';
+  $('wh-url').disabled = $('wh-save').disabled = $('wh-del').disabled = !r.j.owner; $('wh-test').disabled = !r.j.set;
+}
+$('wh-save').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: $('wh-url').value }); if(r.ok){ say('wh-res', true, 'Saved.'); $('wh-url').value = ''; loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
+$('wh-del').onclick = async () => { const r = await api('POST', '/api/admin/webhook', { url: '' }); if(r.ok){ say('wh-res', true, 'Removed.'); loadHook() } else say('wh-res', false, r.j.error || 'Failed.') };
+$('wh-test').onclick = async () => { const r = await api('POST', '/api/admin/webhook/test', {}); say('wh-res', r.ok, r.ok ? 'Test message sent — check your Discord channel.' : (r.j.error || 'Failed.')) };
+$('vf-go').onclick = async () => {
+  $('vf-go').disabled = true;
+  const r = await api('POST', '/api/admin/verify', { user: $('vf-user').value, on: $('vf-on').value === '1' });
+  $('vf-go').disabled = false;
+  if(r.ok) say('vf-res', true, r.j.to + (r.j.verified ? ' is now verified' + (r.j.girl ? ' (girl badge).' : '.') : ' is no longer verified.')); else say('vf-res', false, r.j.error || 'Failed.');
+};
+$('bl-go').onclick = async () => {
+  $('bl-go').disabled = true;
+  const r = await api('POST', '/api/admin/blue', { user: $('bl-user').value, on: $('bl-on').value === '1' });
+  $('bl-go').disabled = false;
+  if(r.ok) say('bl-res', true, r.j.to + (r.j.blue ? ' now has the blue check.' : ' no longer has the blue check.')); else say('bl-res', false, r.j.error || 'Failed.');
+};
+$('gd-go').onclick = async () => {
+  $('gd-go').disabled = true;
+  const r = await api('POST', '/api/admin/gender', { user: $('gd-user').value, gender: $('gd-g').value });
+  $('gd-go').disabled = false;
+  if(r.ok) say('gd-res', true, r.j.to + ' is now ' + (r.j.gender === 'f' ? 'girl' : 'boy') + '.'); else say('gd-res', false, r.j.error || 'Failed.');
+};
+</script>
+</body>
+</html>

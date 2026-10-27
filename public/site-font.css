@@ -1,0 +1,2 @@
+@font-face{font-family:'Space Grotesk';src:url(/fonts/SpaceGrotesk-SemiBold.ttf) format('truetype');font-weight:300 800;font-style:normal;font-display:swap}
+html:root body,html:root body *{font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif!important}

@@ -1419,8 +1419,8 @@ const txt = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
 // Set DISCORD_WEBHOOK_URL in the environment, or let the owner paste the URL in the admin panel (Notifications tab).
 const HOOK_RX = /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 const hookUrl = () => { const u = process.env.DISCORD_WEBHOOK_URL || (shop.cfg && shop.cfg.webhook) || ''; return HOOK_RX.test(u) ? u : ''; };
-async function hookPost(url, embed) {
-  const body = JSON.stringify({ username: 'WAYANIME', allowed_mentions: { parse: [] }, embeds: [Object.assign({ timestamp: new Date().toISOString(), footer: { text: 'WAYANIME' } }, embed)] });
+async function hookPost(url, embed, who) {
+  const body = JSON.stringify({ username: (who && who.username) || 'WAYANIME', ...(who && who.avatar_url ? { avatar_url: who.avatar_url } : {}), allowed_mentions: { parse: [] }, embeds: [Object.assign({ timestamp: new Date().toISOString(), footer: { text: 'WAYANIME' } }, embed)] });
   for (let i = 0; i < 2; i++) {
     const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
     if (r.status === 429) { const j = await r.json().catch(() => ({})); await new Promise((ok) => setTimeout(ok, Math.min(5000, (Number(j.retry_after) || 1) * 1000))); continue; }
@@ -1429,13 +1429,43 @@ async function hookPost(url, embed) {
   return { ok: false, status: 429 };
 }
 let hookQ = Promise.resolve();
-function hookSend(embed) { // fire-and-forget, one message at a time so Discord's rate limit is respected
-  const url = hookUrl(); if (!url || typeof fetch !== 'function') return;
-  hookQ = hookQ.then(() => hookPost(url, embed)).then((r) => { if (!r.ok) console.error('discord webhook failed', r.status); }, (e) => console.error('discord webhook error', e.message))
+function hookSend(embed, who, urlOverride) { // fire-and-forget, one message at a time so Discord's rate limit is respected
+  const url = urlOverride || hookUrl(); if (!url || typeof fetch !== 'function') return false;
+  hookQ = hookQ.then(() => hookPost(url, embed, who)).then((r) => { if (!r.ok) console.error('discord webhook failed', r.status); }, (e) => console.error('discord webhook error', e.message))
     .then(() => new Promise((ok) => setTimeout(ok, 400)));
+  return true;
 }
 const hcut = (x, n) => String(x == null ? '' : x).slice(0, n);
 const hby = (me) => ({ name: 'By', value: hcut((roleOf(me) || 'admin') + ' · ' + db[me].user.username, 100), inline: true });
+// ---- Tips: a player writes a tip in Settings and the bot posts it to Discord "from Tips" with the player's profile photo ----
+const tipsUrl = () => { const u = process.env.TIPS_WEBHOOK_URL || (shop.cfg && shop.cfg.tipsWebhook) || ''; return HOOK_RX.test(u) ? u : hookUrl(); };
+const tipLast = new Map();
+function avatarAbs(req, id) {
+  const base = (BASE_URL || (req.protocol + '://' + req.get('host'))).replace(/\/+$/, '');
+  const pic = db[id].pic, av = db[id].user && db[id].user.avatar;
+  let path = '';
+  if (pic && typeof pic === 'object') {
+    if (pic.s) path = '/shop/img/' + encodeURIComponent(pic.s);
+    else if (pic.p) { const f = { sky: 'sky.jpg', night: 'night.jpg', eyes: 'eyes.gif', meadow: 'meadow.jpg', ban09: 'ban09.webp', ban10: 'ban10.gif', ban11: 'ban11.gif', ban12: 'ban12.webp', ban13: 'ban13.webp' }[pic.p]; if (f) path = '/banners/' + f; }
+    else if (pic.a && Number.isInteger(pic.i) && /^[\w-]{1,20}$/.test(pic.a)) path = '/cardimg/' + encodeURIComponent(pic.a) + '-' + pic.i + '.jpg';
+  }
+  if (path && /^https:\/\//.test(base)) return base + path;
+  if (typeof av === 'string' && /^https:\/\//.test(av)) return av;
+  return /^https:\/\//.test(base) ? base + '/favicon.png' : '';
+}
+app.post('/api/tips', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const text = String((req.body || {}).text || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim();
+  if (text.length < 3) return res.status(400).json({ error: 'write your tip first' });
+  if (text.length > 500) return res.status(400).json({ error: 'max 500 characters' });
+  const now = Date.now(); if (now - (tipLast.get(id) || 0) < 30000) return res.status(429).json({ error: 'wait a few seconds' });
+  const url = tipsUrl(); if (!url) return res.status(503).json({ error: 'tips are not set up yet' });
+  tipLast.set(id, now);
+  const name = hcut(db[id].user.username || db[id].user.name || 'player', 80), icon = avatarAbs(req, id);
+  hookSend({ title: 'Tips', description: hcut(text, 500), color: 0xff8a3d, author: Object.assign({ name: '@' + name }, icon ? { icon_url: icon } : {}), thumbnail: icon ? { url: icon } : undefined, footer: { text: 'from Tips · WAYANIME' } }, Object.assign({ username: 'Tips' }, icon ? { avatar_url: icon } : {}), url);
+  logEvent(id, 'tips', 'Tip sent');
+  res.json({ ok: true });
+});
 app.get('/api/admin/webhook', (req, res) => {
   const me = adminId(req, res); if (!me) return;
   const u = hookUrl();

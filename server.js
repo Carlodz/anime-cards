@@ -879,7 +879,7 @@ async function steamRefresh(sids, games) {
     try {
       const o = await steamJson('https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=' + key + '&steamid=' + sid + '&include_appinfo=1&include_played_free_games=1');
       c.top = ((o.response || {}).games || []).filter((g) => g.name).sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0)).slice(0, 40)
-        .map((g) => ({ id: 's' + g.appid, name: String(g.name).slice(0, 80), img: steamImg(g.appid), hrs: Math.round((g.playtime_forever || 0) / 60) }));
+        .map((g) => ({ id: 's' + g.appid, name: String(g.name).slice(0, 80), img: steamImg(g.appid), hrs: Math.round((g.playtime_forever || 0) / 60), mins: g.playtime_forever || 0, h2: g.playtime_2weeks || 0, last: g.rtime_last_played || 0 }));
       c.tt = Date.now();
     } catch (e) { c.tt = Date.now() - 5 * 3600 * 1000; }
   }

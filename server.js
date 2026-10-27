@@ -454,8 +454,21 @@ function befriend(a, b) {
   if (!B.f.includes(a)) B.f.push(a);
 }
 
-// Real Discord status of a site user: only users who linked Discord (or logged in with Discord) can be online. Everyone else = offline.
+// Steam presence: a player who is online on Steam shows as online on the site automatically (Steam busy = dnd, away/snooze = idle, in a game = online).
+function steamStatus(uid) {
+  const u = db[uid]; if (!u || !u.steam) return 'offline';
+  const c = steamCache[u.steam.id]; if (!c) return 'offline';
+  if (c.playing) return 'online';
+  const st = c.pstate || 0;
+  return st === 2 ? 'dnd' : (st === 3 || st === 4) ? 'idle' : st > 0 ? 'online' : 'offline';
+}
+// Site status = Discord status, or Steam status when Discord says offline (or is not linked).
 async function liveStatus(uid) {
+  const d = await discordStatus(uid);
+  return d !== 'offline' ? d : steamStatus(uid);
+}
+// Real Discord status of a site user: only users who linked Discord (or logged in with Discord) can be online. Everyone else = offline.
+async function discordStatus(uid) {
   try {
     const u = db[uid]; if (!u) return 'offline';
     const did = u.local ? u.discord : (/^\d{17,20}$/.test(uid) ? uid : null);
@@ -568,7 +581,8 @@ app.get('/api/follow/:id', (req, res) => {
   const k = String(req.query.list || '');
   if (k) {
     const src = k === 'followers' ? followers : k === 'following' ? following : k === 'friends' ? T.f : [];
-    return res.json({ users: src.slice(0, 200).map((x) => { const p = pub(x); return p && { ...p, rel: relOf(x), self: x === id }; }).filter(Boolean) });
+    const users = src.slice(0, 200).map((x) => { const p = pub(x); return p && { ...p, rel: relOf(x), self: x === id }; }).filter(Boolean);
+    return Promise.all(users.map(async (x) => { x.st = await liveStatus(x.id); })).then(() => res.json({ users }));
   }
   res.json({ followers: followers.length, following: following.length, friends: T.f.length, rel: t === id ? '' : relOf(t), self: t === id });
 });
@@ -851,12 +865,15 @@ const byOpenSteam = (sid) => Object.keys(db).find((i) => db[i] && db[i].steam &&
 function steamView(id) {
   const u = db[id]; if (!u || !u.steam) return null;
   const c = steamCache[u.steam.id] || {};
-  return { name: c.name || '', playing: c.playing || null, auto: u.steam.auto !== false };
+  return { name: c.name || '', avatar: c.avatar || '', playing: c.playing || null, auto: u.steam.auto !== false };
 }
 function gamesOf(id) {
   const u = db[id]; if (!u) return [];
-  if (u.steam && u.steam.auto !== false) { const c = steamCache[u.steam.id]; if (c && c.top && c.top.length) return c.top.slice(0, 6); }
-  return u.games || [];
+  // Games in Rotation (picked by hand) first, then the Steam most played games, no duplicates.
+  const out = [], seen = {}, add = (g) => { if (g && g.id && !seen[g.id]) { seen[g.id] = 1; out.push(g); } };
+  (u.games || []).forEach(add);
+  if (u.steam && u.steam.auto !== false) { const c = steamCache[u.steam.id]; if (c && c.top) c.top.slice(0, 6).forEach(add); }
+  return out.slice(0, 12);
 }
 async function steamRefresh(sids, games) {
   const key = steamKey(); if (!key || !sids.length) return;
@@ -867,7 +884,11 @@ async function steamRefresh(sids, games) {
       for (const p of ((j.response || {}).players || [])) {
         const c = steamCache[p.steamid] || (steamCache[p.steamid] = {});
         c.name = String(p.personaname || '').slice(0, 40); c.t = Date.now();
-        c.playing = p.gameid && /^\d{1,10}$/.test(String(p.gameid)) ? { id: 's' + p.gameid, name: String(p.gameextrainfo || '').slice(0, 80), img: steamImg(p.gameid) } : null;
+        c.pstate = Number(p.personastate) || 0;
+        c.avatar = /^https:\/\/[a-z0-9.-]*steamstatic\.com\/[\w\-./%?=&]{1,300}$/i.test(String(p.avatarfull || '')) ? String(p.avatarfull) : '';
+        const np = p.gameid && /^\d{1,10}$/.test(String(p.gameid)) ? { id: 's' + p.gameid, name: String(p.gameextrainfo || '').slice(0, 80), img: steamImg(p.gameid) } : null;
+        if (np) np.since = (c.playing && c.playing.id === np.id && c.playing.since) || Date.now();
+        c.playing = np;
       }
     } catch (e) { /* keep the old cache */ }
   }
@@ -1095,7 +1116,7 @@ app.get('/shop/img/:id', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400').type(m[1]).send(Buffer.from(m[2], 'base64'));
 });
 // Site color themes sold in the Store (built in, not uploaded). The owned id is 'theme-<key>'; the equipped key is db[id].theme.
-const THEMES = { blue: 300, red: 300, pink: 300, green: 300, orange: 300, teal: 300, gold: 300, zero: 500, violet: 500, naruto: 300, zoro: 200 };
+const THEMES = { blue: 300, red: 300, pink: 300, green: 300, orange: 300, teal: 300, gold: 300, zero: 500, violet: 500, itachi: 500, ada: 500 };
 app.get('/api/store', (req, res) => {
   const id = need(req, res); if (!id) return;
   const own = db[id].owned || [];
@@ -1104,6 +1125,7 @@ app.get('/api/store', (req, res) => {
   ANIM_IDS.forEach((aid) => items.push({ id: aid, type: 'pic', name: nameOf(aid), price: ANIM_PRICE, owned: own.includes(aid), off: false, anim: true }));
   BNR_IDS.forEach((bid) => items.push({ id: bid, type: 'banner', name: nameOf(bid), price: BNR_PRICE, owned: own.includes(bid), off: false, anim: true }));
   const pic = db[id].pic && db[id].pic.s, ban = db[id].banner && db[id].banner.s;
+  if (db[id].theme && THEMES[db[id].theme] === undefined) { delete db[id].theme; persist(); } // theme was removed from the store
   const themes = Object.keys(THEMES).map((k) => ({ id: 'theme-' + k, key: k, price: THEMES[k], owned: own.includes('theme-' + k) }));
   res.json({ pts: db[id].pts || 0, items, themes, theme: db[id].theme || null, pic: pic || null, banner: ban || null, rates: PTS });
 });
@@ -1932,7 +1954,7 @@ function siteFacts() {
   return ' Facts about WAYANIME Cards Pack: ' +
     'each player gets one free pack per day (the number of cards is random-looking, never state an exact count); the anime, the character and the rarity are random and the same card can drop twice. ' +
     'Rarities are iron, silver, gold, diamond, legendary (about a 5% chance per card) and epic (a rare black card that gives an extra pack). Opening a pack 7 days in a row makes the day-7 pack a guaranteed Gold or Diamond. ' +
-    'There is an Aura Vault with 6 special Aura cards that staff can gift. Players earn and spend coins (points) in the store: animated profile photos cost 150, animated banners 200, themes cost 200 to 500 (Zoro 200, Blue/Red/Pink/Green/Orange/Teal/Gold/Naruto 300, Zero Two and Violet 500), and staff add more items. ' +
+    'There is an Aura Vault with 6 special Aura cards that staff can gift. Players earn and spend coins (points) in the store: animated profile photos cost 150, animated banners 200, themes cost 300 to 500 (Blue/Red/Pink/Green/Orange/Teal/Gold 300, Zero Two, Violet, Itachi and Ada Wong 500; video themes also replace the Anime Pack video on the home page), and staff add more items. ' +
     'Special rolls: a weekly Legendary card for boys only (10% chance to win one of 10 legendary cards), a monthly Aura roll for everyone (one try per calendar month, 1% chance to win one of the 6 Aura cards), and a weekly Cute pack for girls only (25% chance to win a cute card). Epic cards are rare black cards worth more and each one unlocks one extra pack the same day. ' +
     'Coins (points) come from opening packs and from staff gifts, and are spent in the store. Staff can create gift codes that a player redeems for a card or coins. ' +
     'Trading: trade offers are only possible between friends; a player can also send a card directly to any player. A verified badge is given automatically to girls and to boys after 100 completed trades, and there is a top traders list. ' +

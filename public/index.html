@@ -608,7 +608,7 @@ VIEWS.aura=async()=>{let st={a:{}};try{st=(await J('/api/state')).state||{a:{}}}
  V.innerHTML=`<h2 style="margin-top:8px">Aura cards</h2><p class="empty" style="text-align:left">${have}/${AURA.length} collected${have?'':' \u00b7 open the monthly Aura pack to win one'}</p><div class="grid">${AURA.map((a,i)=>{const c=Object.values(got[i]||{}).reduce((x,y)=>x+y,0);return`<div class="cd ${c?'':'no'}"><img loading="lazy" src="/aura/${a}.jpg" alt="${nm(a)}">${c?`<i>\u00d7${c}</i>`:''}</div>`}).join('')}</div>`};
 const pr0=VIEWS.profile;
 VIEWS.profile=async()=>{await pr0();const m=ME||{};{const pm=V.querySelector('.pme');if(pm){const d=document.createElement('div');d.className='pact';pm.after(d);PACT(m.id,d);const fs=document.createElement('div');fs.className='fstat';d.after(fs);FSV(m.id,fs)}}
- V.insertAdjacentHTML('beforeend',`<h2>Status</h2><div style="display:flex;gap:10px"><input class="inp" id="st" maxlength="60" value="${E(m.status||'')}" placeholder="Your status"><button class="btn p" id="ss">Save</button></div><h2>Banner</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">${['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08'].map(k=>`<div class="cd"><img loading="lazy" decoding="async" src="/banners/${BN[k]}" data-bn="${k}" style="aspect-ratio:3/1;cursor:pointer" alt=""></div>`).join('')}</div>`);
+ V.insertAdjacentHTML('beforeend',`<h2>Status</h2><div style="display:flex;gap:10px"><input class="inp" id="st" maxlength="60" value="${E(m.status||'')}" placeholder="Your status"><button class="btn p" id="ss">Save</button></div><h2>Banner</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">${['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08','eyes','ban09','ban10','ban11','ban12','ban13'].map(k=>`<div class="cd"><img loading="lazy" decoding="async" src="/banners/${BN[k]}" data-bn="${k}" style="aspect-ratio:3/1;cursor:pointer" alt=""></div>`).join('')}</div>`);
  let pp=null,pb=null;const mk=(sel,fn)=>V.querySelectorAll(sel).forEach(i=>i.onclick=()=>{fn(i);V.querySelectorAll(sel).forEach(x=>x.style.outline=x===i?'2px solid #8a4dff':'')});
  mk('[data-p]',i=>{pp=i.dataset.p;const a=V.querySelector('.pme>img');if(a)a.src=i.src});
  mk('[data-bn]',i=>{pb=i.dataset.bn;const b=V.querySelector('.pban');if(b)b.style.backgroundImage=`url(${i.src})`});
@@ -662,7 +662,7 @@ async function openProfile(u,mode){const m=$('#pm');m.style.display='grid';
   $('#ps').innerHTML=`<div><b>${n}</b><small>cards</small></div><div><b>${(u.pts||0).toLocaleString()}</b><small>points</small></div><div><b>${u.trades||0}</b><small>trades</small></div>`}
  else{const d=await J('/api/friend/'+encodeURIComponent(u.id)+'/cards');$('#ps').innerHTML=`<div><b>${(d.cards||[]).length}</b><small>cards</small></div><div><b>${(d.auras||[]).length}</b><small>aura</small></div>`}}catch(e){$('#ps').innerHTML=''}}
 
-const PFS=Array.from({length:14},(_,i)=>'pf'+String(i+1).padStart(2,'0')),BNS=['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08'];
+const PFS=Array.from({length:14},(_,i)=>'pf'+String(i+1).padStart(2,'0')),BNS=['sky','night','meadow','ban01','ban02','ban03','ban04','ban05','ban06','ban07','ban08','eyes','ban09','ban10','ban11','ban12','ban13'];
 async function openEdit(){let m;try{m=(await J('/api/me')).user}catch(e){return}
  const E_=$('#em');let pp=null,pb=null;const st0=m.status||'';
  const cur=img(m.pic,m.avatar),bcur=bnr(m.banner);

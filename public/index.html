@@ -11,7 +11,7 @@ body{background:radial-gradient(900px 600px at 30% 0,#2a1440 0,transparent 70%),
 a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--a1);outline-offset:2px}
 .app{display:grid;grid-template-columns:200px 1fr 250px;grid-template-rows:auto 1fr;height:100vh;gap:0 20px;padding:18px 20px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.3px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.3px}.logo span{display:flex;align-items:center}.logo .lgt{display:block;height:15px;width:auto;border-radius:0}
 .logo{position:relative;cursor:pointer;width:fit-content}.logo .lgw{position:relative;display:block;width:52px;height:28px;flex:none;text-decoration:none;animation:lg-bob .6s ease-in-out infinite}.logo .lgw::before{content:'';position:absolute;inset:-8px -4px;border-radius:50%;background:conic-gradient(from 0deg,#8a4dff,#ff4f8b,#ff8a3d,#8a4dff);filter:blur(10px);opacity:.6;animation:lg-spin 4s linear infinite,lg-pulse 2.4s ease-in-out infinite}.logo .lgw img{position:absolute;z-index:1;height:auto;border-radius:0;object-fit:contain}.lgw .ld{left:-.6%;top:7%;width:32.3%;animation:lg-head .6s ease-in-out infinite}.lgw .lb1,.lgw .lb2{top:-1%;transform-origin:80% 12%;animation:lg-swing .6s ease-in-out infinite alternate}.lgw .lb1{left:23.8%;width:47.2%}.lgw .lb2{left:53.9%;width:46.7%;animation-direction:alternate-reverse}@keyframes lg-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}@keyframes lg-head{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}@keyframes lg-swing{from{transform:translate(-1.5px,1.8px) rotate(-1.5deg)}to{transform:translate(1.5px,-1.8px) rotate(1.5deg)}}@keyframes lg-spin{to{transform:rotate(360deg)}}@keyframes lg-pulse{0%,100%{opacity:.35}50%{opacity:.8}}@media(prefers-reduced-motion:reduce){.logo .lgw,.logo .lgw::before,.lgw img{animation:none}}
 .logo img{width:28px;height:28px;border-radius:8px;object-fit:cover}
 .top{display:flex;gap:12px;align-items:center}
@@ -39,7 +39,7 @@ main{grid-row:2;min-width:0;overflow-y:auto;padding:18px 2px 20px;scrollbar-widt
 .hero>.dots{z-index:2}
 .hero small{color:var(--mu);font-weight:700;font-size:11px}
 .hero h1{margin:6px 0 8px;font-size:clamp(30px,4.4vw,54px);line-height:.95;font-weight:800;letter-spacing:-1px}
-.hero .htw{position:absolute;z-index:2;top:30px;left:34px}.hero .ht{margin:0}.hero .hcd{display:inline-block;margin-top:12px;padding:8px 16px;border-radius:14px;background:rgba(10,9,18,.7);border:1px solid var(--line);backdrop-filter:blur(6px)}.hero .hcd small{display:block;font-size:10px;letter-spacing:1px}.hero .hcd b{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.hero .htw{position:absolute;z-index:2;top:30px;left:34px}.hero .ht{margin:0;line-height:0}.hero .ht .apw{display:block;width:min(420px,72vw);height:auto;overflow:visible;color:#fff;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))}.hero .hcd{display:inline-block;margin-top:12px;padding:8px 16px;border-radius:14px;background:rgba(10,9,18,.7);border:1px solid var(--line);backdrop-filter:blur(6px)}.hero .hcd small{display:block;font-size:10px;letter-spacing:1px}.hero .hcd b{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
 .hero p{margin:0 0 18px;color:#c9c5de;font-size:13px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
 .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border-radius:10px;border:0;font-weight:700}
 .btn.p{background:linear-gradient(90deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 24px -8px var(--a2)}
@@ -82,6 +82,19 @@ h2{font-size:16px;font-weight:700;margin:26px 0 14px}
 .cd .t{padding:8px 10px}.cd b{display:block;font-size:12px}.cd small{color:var(--mu);font-size:11px}.cd .btn{height:30px;padding:0 12px;font-size:12px;margin-top:6px}
 .li{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:8px}.li img{width:38px;height:38px;border-radius:50%;object-fit:cover}.li div{flex:1;min-width:0}.li .btn{height:32px;padding:0 14px;font-size:12px}
 .pban{height:180px;border-radius:20px;background:#1a1030 center/cover}.pme{display:flex;align-items:center;gap:16px;margin:-40px 0 16px 22px}.pme img{width:84px;height:84px;border-radius:50%;object-fit:cover;border:4px solid var(--bg)}
+.fck{display:inline-flex;gap:8px;padding:8px;border-radius:12px;background:linear-gradient(180deg,#f4f4f4,#d9d9d9);box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.7);--fs:34px;margin-top:6px}
+.fck.pf{--fs:56px;margin:4px 0}
+.fcc{position:relative;perspective:600px;width:calc(var(--fs)*1.9);height:calc(var(--fs)*1.45);font-weight:800;font-family:"Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+.fcc small{position:absolute;left:7px;top:4px;z-index:6;font:600 calc(var(--fs)*.25)/1 "Helvetica Neue",Arial,sans-serif;letter-spacing:0;text-transform:none;color:#666;display:block}
+.fcc>div{position:absolute;left:0;right:0;height:50%;overflow:hidden;background:linear-gradient(180deg,#fff,#ececec);color:#4a4a4a;backface-visibility:hidden}
+.fcc>div span{position:absolute;left:0;right:0;height:200%;line-height:calc(var(--fs)*1.45);font-size:var(--fs);text-align:center;letter-spacing:-1px}
+.fcc .a,.fcc .c{top:0;border-radius:6px 6px 0 0;transform-origin:bottom}.fcc .a span,.fcc .c span{top:0}
+.fcc .b,.fcc .d{bottom:0;border-radius:0 0 6px 6px;transform-origin:top;background:linear-gradient(180deg,#e4e4e4,#f7f7f7)}.fcc .b span,.fcc .d span{top:-100%}
+.fcc .a{z-index:1}.fcc .b{z-index:1}.fcc .c{z-index:3}.fcc .d{z-index:2;transform:rotateX(90deg)}
+.fcc::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(0,0,0,.28);z-index:5}
+.fcc.flip .c{animation:fcT .3s ease-in forwards}.fcc.flip .d{animation:fcB .3s .3s ease-out both}
+@keyframes fcT{to{transform:rotateX(-90deg)}}@keyframes fcB{from{transform:rotateX(90deg)}to{transform:rotateX(0)}}
+@media(max-width:520px){.fck.pf{--fs:44px}.fck{gap:6px;padding:6px}}
 .pkv{display:grid;place-items:center;gap:16px;padding:10px 0;text-align:center}.pkv .big{width:min(240px,60vw);aspect-ratio:2/3;border-radius:18px;background:center/cover;box-shadow:0 24px 60px -20px var(--c,#8a4dff)}
 .rv{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;perspective:900px}.fl{width:150px;aspect-ratio:2/3;position:relative;transform-style:preserve-3d;transition:transform .7s;cursor:pointer}.fl.on{transform:rotateY(180deg)}.fl>div{position:absolute;inset:0;border-radius:14px;background:center/cover;backface-visibility:hidden;border:1px solid var(--line)}.fl .f{transform:rotateY(180deg)}.fl em{position:absolute;bottom:6px;left:6px;right:6px;font:800 10px/1 inherit;background:rgba(10,9,18,.75);border-radius:6px;padding:4px;text-align:center;font-style:normal;text-transform:uppercase}
 .inp{height:40px;border-radius:10px;border:1px solid var(--line);background:#0d0c17;color:var(--tx);padding:0 12px;font:inherit;min-width:0;flex:1}
@@ -129,6 +142,17 @@ img.rbi{width:14px!important;height:14px!important;min-width:14px;margin-inline-
 .npl .npt{display:flex;align-items:center;gap:6px;margin-top:6px;color:#3ba55d;font:600 15px/1 ui-monospace,Consolas,monospace}.npl .npt svg{width:20px;height:20px;fill:#3ba55d}
 .npl .npb{display:block;width:100%;margin-top:14px;padding:11px 12px;border:0;border-radius:10px;background:rgba(255,255,255,.12);color:#fff;font:700 14px inherit;font-family:inherit;cursor:pointer}.npl .npb:hover{background:rgba(255,255,255,.2)}.npl .npb:disabled{opacity:.6;cursor:default}
 .fr small.pl,.li small.pl{color:#a4d007}
+.sgp{position:relative;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin:10px 0;padding:18px;border-radius:8px;background:linear-gradient(135deg,#a8802c 0%,#c9a24b 55%,#e8c374 100%);color:#fff;overflow:hidden}
+.sgpa{position:relative;width:96px;height:96px}.sgpa .sgpi0{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:3px}.sgpa.hf .sgpi0{inset:11%;width:78%;height:78%}.sgpa .sgfr{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.sgpn{display:flex;align-items:center;gap:8px;font-size:28px;line-height:1.1;font-weight:400;word-break:break-word}.sgpn svg{opacity:.7}
+.sgps{margin-top:6px;font-size:14px;opacity:.8}
+.sgpl{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:15px}.sgpl img{width:20px;height:auto;border-radius:2px}
+.sgpp{margin-top:8px;font-size:13px;font-weight:700;color:#1d3a0e;background:rgba(164,208,7,.85);display:inline-block;padding:2px 8px;border-radius:3px}
+.sgpb{grid-column:1/-1;font-size:14px;color:rgba(255,255,255,.78)}
+.sgpu{grid-column:1/-1;justify-self:start;color:#fff}
+@media(max-width:520px){.sgpa{width:76px;height:76px}.sgpn{font-size:22px}}
+.sgpx{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.sgpf{grid-column:1/-1;display:grid;gap:8px;padding:12px;background:rgba(0,0,0,.35);border-radius:8px}.sgpf[hidden]{display:none}.sgpf label{display:grid;gap:3px;font-size:12px;color:rgba(255,255,255,.8)}.sgpf input{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:8px;color:#fff;font:inherit;font-size:14px;width:100%;box-sizing:border-box}
+.sgh{display:flex;align-items:center;gap:8px}.sgh .stl{flex:none}.sgpg{position:absolute;top:10px;right:10px;opacity:.95;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
 .sgav{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #66c0f4;flex:none}
 html[data-theme="violet"] .hero video{object-position:50% 18%}html[data-theme="itachi"] .hero video{object-position:50% 48%}
 /* Steam-style "Recent games" shelf on profiles */
@@ -149,15 +173,16 @@ html[data-theme="violet"] .hero video{object-position:50% 18%}html[data-theme="i
 .pgc .pgt .pl{flex:none;width:34px;height:34px;background:#4ec23a;border-radius:2px;display:flex;align-items:center;justify-content:center}.pgc .pgt .pl svg{width:16px;height:16px;fill:#fff}
 .pgc .pgt b{font-weight:400;color:#8f98a0;display:block}.pgc .pgt b em{font-style:normal;color:#c6d4df}
 .pgc .pgi{position:absolute;left:0;right:0;top:0;padding:6px 8px;font-size:11px;background:rgba(10,14,20,.8);color:#fff;opacity:0;transition:opacity .15s}.pgc:hover .pgi{opacity:1}
+.pgc.nocv .pgi,.sgm.nocv .nocvn{opacity:1}.pgc.nocv .pgi{top:50%;transform:translateY(-50%);text-align:center;background:none;font-size:12px;font-weight:700}
 .pgc .pgl{position:absolute;right:6px;top:6px;width:9px;height:9px;border-radius:50%;background:#a4d007;box-shadow:0 0 0 3px rgba(164,208,7,.3)}
 .pgc.sm .pgt{padding:5px 6px;font-size:11px;justify-content:flex-start}
 @media(max-width:520px){.pgc{width:92px;height:138px}.pgc.big{width:190px}}
-.sgl{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:10px 0}
-.sgm{position:relative;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid var(--line)}
-.sgm img{display:block;width:100%;aspect-ratio:460/215;object-fit:cover;background:rgba(0,0,0,.3)}
-.sgm span{display:block;padding:6px 8px 2px;font-size:12px;font-weight:700;line-height:1.25}.sgm small{display:block;padding:0 8px 6px;font-size:11px;color:var(--mu)}
+.sgl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0;padding:10px;background:#23262e;border-radius:6px}@media(min-width:760px){.sgl{grid-template-columns:repeat(6,1fr)}}
+.sgm{position:relative;aspect-ratio:2/3;border-radius:3px;overflow:hidden;background:linear-gradient(180deg,#5a6f85 0%,#2b3b4f 60%,#1d2836 100%)}
+.sgm img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}.sgm .sgn{position:absolute;left:0;right:0;top:8px;padding:0 6px;text-align:center;font-size:12px;font-weight:400;color:#dfe6ee;opacity:0;transition:opacity .15s;text-shadow:0 1px 3px #000;pointer-events:none}.sgm:hover .sgn,.sgm.nocv .sgn{opacity:1}.sgm:hover:not(.nocv) .sgn{background:rgba(10,14,20,.8);top:0;padding:6px}
+.sgm small{position:absolute;left:0;right:0;bottom:0;padding:4px 6px;font-size:11px;text-align:center;color:#c6d4df;background:rgba(10,14,20,.78)}
 .sgm .sgx{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;line-height:1}
-.sgm.add{cursor:pointer}.sgm.add:hover{border-color:var(--a1)}
+.sgm.add{cursor:pointer}.sgm.add:hover{outline:2px solid #66c0f4;outline-offset:-2px}
 .sg input[type=search]{width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:rgba(13,12,23,.7);color:var(--tx);padding:0 12px;font:inherit}
 .sg .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}.sg .ok{color:var(--ok)}.sg .bad{color:var(--a2)}
 .sg label.tg{display:flex;gap:8px;align-items:center;font-size:13px}
@@ -316,7 +341,7 @@ html[data-theme="zero"] .libbg,html[data-theme="violet"] .libbg,html[data-theme=
 @media(prefers-reduced-motion:reduce){.dshop .shero *,.dshop .shero::after,.dshop .shero video{animation:none!important}}
 </style><link rel="stylesheet" href="/mira/mira-profile.css?v=5"><link rel="stylesheet" href="/site-font.css"></head><body>
 <div class="app">
-<a class="logo" href="#aura" title="Aura cards"><u class="lgw"><img class="ld" src="/logo-dot.png" alt=""><img class="lb1" src="/logo-bar1.png" alt=""><img class="lb2" src="/logo-bar2.png" alt=""></u><span>WAYANIME</span></a>
+<a class="logo" href="#aura" title="Aura cards"><u class="lgw"><img class="ld" src="/logo-dot.png" alt=""><img class="lb1" src="/logo-bar1.png" alt=""><img class="lb2" src="/logo-bar2.png" alt=""></u><span aria-label="Wayanime"><svg class="lgt" viewBox="0 0 1521 200" role="img" aria-label="Wayanime" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="46" stroke-linejoin="round"><path d="M23.0 23.0V137.0A40 40 0 0 0 63.0 177.0H83.0A40 40 0 0 0 123.0 137.0V23.0M123.0 137.0A40 40 0 0 0 163.0 177.0H183.0A40 40 0 0 0 223.0 137.0V23.0"/><path d="M283.0 177.0V63.0A40 40 0 0 1 323.0 23.0H373.0A40 40 0 0 1 413.0 63.0V177.0M283.0 104H413.0"/><path d="M473.0 23.0L538.0 110L603.0 23.0M538.0 110V177.0"/><path d="M663.0 177.0V63.0A40 40 0 0 1 703.0 23.0H753.0A40 40 0 0 1 793.0 63.0V177.0M663.0 104H793.0"/><path d="M853.0 177.0V63.0A40 40 0 0 1 893.0 23.0H943.0A40 40 0 0 1 983.0 63.0V177.0"/><path d="M1043.0 23.0V177.0"/><path d="M1103.0 177.0V63.0A40 40 0 0 1 1143.0 23.0H1163.0A40 40 0 0 1 1203.0 63.0V177.0M1203.0 63.0A40 40 0 0 1 1243.0 23.0H1263.0A40 40 0 0 1 1303.0 63.0V177.0"/><path d="M1475.0 23.0H1363.0V177.0H1475.0M1363.0 104H1457.0"/></g></svg></span></a>
 <header class="top">
 <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8d89a6" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" placeholder="Search cards, packs, themes…" aria-label="Search"></label>
 <a class="ibtn" href="#inbox" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20a2 2 0 0 0 4 0"/></svg></a>
@@ -337,7 +362,7 @@ html[data-theme="zero"] .libbg,html[data-theme="violet"] .libbg,html[data-theme=
 <main id="home">
 <section class="hero" id="hero"><video poster="/packs-poster.jpg" src="/packs-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video><div>
 <small>FEATURED</small><p>Pull anime cards, trade with friends and spend points in the store.</p>
-<a class="btn p" id="hopen" href="#pack-daily" style="display:none">Open pack</a></div><div class="htw"><h1 class="ht">Anime Pack</h1><div class="hcd" id="hcd" style="display:none"><small>NEXT PACK IN</small><b id="hct">--:--:--</b></div></div></section>
+<a class="btn p" id="hopen" href="#pack-daily" style="display:none">Open pack</a></div><div class="htw"><h1 class="ht"><svg class="apw" viewBox="0 0 1695 200" role="img" aria-label="Anime Pack" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="46" stroke-linejoin="round"><path d="M23.0 177.0V63.0A40 40 0 0 1 63.0 23.0H113.0A40 40 0 0 1 153.0 63.0V177.0M23.0 104H153.0"/><path d="M213.0 177.0V63.0A40 40 0 0 1 253.0 23.0H303.0A40 40 0 0 1 343.0 63.0V177.0"/><path d="M403.0 23.0V177.0"/><path d="M463.0 177.0V63.0A40 40 0 0 1 503.0 23.0H523.0A40 40 0 0 1 563.0 63.0V177.0M563.0 63.0A40 40 0 0 1 603.0 23.0H623.0A40 40 0 0 1 663.0 63.0V177.0"/><path d="M835.0 23.0H723.0V177.0H835.0M723.0 104H817.0"/><path d="M959.0 177.0V23.0H1044.0A40 40 0 0 1 1084.0 63.0V64A40 40 0 0 1 1044.0 104H959.0"/><path d="M1144.0 177.0V63.0A40 40 0 0 1 1184.0 23.0H1234.0A40 40 0 0 1 1274.0 63.0V177.0M1144.0 104H1274.0"/><path d="M1459.0 23.0H1374.0A40 40 0 0 0 1334.0 63.0V137.0A40 40 0 0 0 1374.0 177.0H1459.0"/><path d="M1519.0 23.0V177.0M1649.0 23.0L1527.0 112M1553.0 92L1649.0 177.0"/></g></svg></h1><div class="hcd" id="hcd" style="display:none"><small>NEXT PACK IN</small><div class="fck" id="hfc"></div></div></div></section>
 <h2>Recommended for you</h2><div class="row" id="rec">
 <a class="pk" style="--c:#ff8a3d" href="#pack-daily"><span class="tag">DAILY</span><div class="im" style="background-image:url(/cardback.webp)"></div><div class="t"><b>Daily Pack</b><small>5 cards every day</small></div></a>
 <a class="pk" style="--c:#ffc22e" href="#pack-leg"><span class="tag">WEEKLY</span><div class="im" style="background-image:url(/cardback-leg.webp)"></div><div class="t"><b>Legendary Pack</b><small>1 legendary roll per week</small></div></a>
@@ -394,14 +419,20 @@ function PACT(id,el){if(!el||!/^\d{17,20}$/.test(String(id)))return;let t;
 const IM=(src)=>`<img src="${E(src)}" alt="" decoding="async" onerror="this.onerror=null;this.src='/favicon.png'">`;
 const ago=t=>{const m=(Date.now()-t)/6e4;return m<60?Math.max(1,m|0)+'m ago':m<1440?(m/60|0)+'h ago':(m/1440|0)+'d ago'};
 
+/* Flip clock (Hours / Minutes / Seconds) for the pack timer */
+function FCINIT(h){if(h.dataset.fc)return;h.dataset.fc=1;h.innerHTML=['Hours','Minutes','Seconds'].map(n=>`<div class="fcc" data-v=""><small>${n}</small><div class="a"><span>--</span></div><div class="b"><span>--</span></div><div class="c"><span>--</span></div><div class="d"><span>--</span></div></div>`).join('')}
+function FCSET(h,ms){FCINIT(h);const t=Math.max(0,Math.floor(ms/1000)),p=n=>String(n).padStart(2,'0'),v=[p(Math.floor(t/3600)),p(Math.floor(t%3600/60)),p(t%60)];
+ h.querySelectorAll('.fcc').forEach((c,i)=>{const o=c.dataset.v,n=v[i];if(o===n)return;const q=k=>c.querySelector('.'+k+' span');
+  if(!o){['a','b','c','d'].forEach(k=>q(k).textContent=n);c.dataset.v=n;return}
+  q('a').textContent=n;q('d').textContent=n;q('b').textContent=o;q('c').textContent=o;c.dataset.v=n;c.classList.remove('flip');void c.offsetWidth;c.classList.add('flip');
+  clearTimeout(c._t);c._t=setTimeout(()=>{q('b').textContent=n;q('c').textContent=n;c.classList.remove('flip')},620)})}
 window.PT=window.PT||{avail:false,end:0,t:0};
 function packUI(){const b=$('#hopen'),c=$('#hcd');if(!b||!c)return;
  if(PT.avail){b.style.display='';c.style.display='none';return}
  const r=Math.max(0,PT.end-Date.now());
  if(!PT.end){b.style.display='none';c.style.display='none';return}
  b.style.display='none';c.style.display='';
- const p=n=>String(n).padStart(2,'0'),s=Math.floor(r/1000);
- $('#hct').textContent=p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60);
+ FCSET($('#hfc'),r);
  if(r<=0&&Date.now()-PT.t>3000)loadPack()}
 function loadPack(){PT.t=Date.now();return J('/api/packtime').then(d=>{PT.avail=!!d.avail;PT.end=d.avail?0:Date.now()+d.ms;packUI()}).catch(()=>{})}
 if(!window.PTI)window.PTI=setInterval(packUI,1000);
@@ -427,10 +458,17 @@ async function loadHero(){clearTimeout(window.STH);const box=document.getElement
   clearInterval(window.STC);{const tot=600000,end=Date.now()+d.next,tick=()=>{const cd=document.getElementById('shcd'),pr=document.getElementById('shpr');if(!cd){clearInterval(window.STC);return}const ms=Math.max(0,end-Date.now()),sc=Math.ceil(ms/1000);cd.textContent=String(Math.floor(sc/60)).padStart(2,'0')+':'+String(sc%60).padStart(2,'0');if(pr)pr.style.strokeDashoffset=String(528*(1-Math.min(1,ms/tot)))};tick();window.STC=setInterval(tick,1000)}
   const b=document.getElementById('shb');if(b)b.onclick=async()=>{try{await P(b.dataset.b?'/api/store/buy':'/api/store/equip',{id:b.dataset.b||b.dataset.e});boot();VIEWS.store()}catch(e){b.textContent=e===409?'Owned':'Not enough pts'}};
   window.STH=setTimeout(loadHero,Math.max(5000,d.next+1500))}catch(e){box.style.display='none'}}
+/* Steam logo (official PNG, public/steam-logo.png) */
+const STL=(n)=>`<img class="stl" src="/steam-logo.png" width="${n||20}" height="${n||20}" alt="Steam">`;
+/* Steam-profile style header for the linked account (avatar + frame, big name, flag, bio) */
+function SGHEAD(s,m){m=m||{};const k=s.card||{},c=String(m.country||'').toUpperCase();let cn='';if(/^[A-Z]{2}$/.test(c)){try{cn=new Intl.DisplayNames(['en'],{type:'region'}).of(c)||c}catch(e){cn=c}}
+ const sc=String(s.country||'').toUpperCase(),base=s.name||m.username||'Steam';if(!cn&&/^[A-Z]{2}$/.test(sc)){try{cn=new Intl.DisplayNames(['en'],{type:'region'}).of(sc)||sc}catch(e){cn=sc}}const cc=/^[A-Z]{2}$/.test(sc)?sc:c,name=k.name||base,sub=k.sub||name,loc=k.loc||cn,bio=k.bio||m.status||'',fr=/^https:\/\/[a-z0-9.-]*steamstatic\.com\//.test(s.frame||'')?s.frame:'',av=(s.avatar?`<img class="sgpi0" src="${E(s.avatar)}" alt="" onerror="this.onerror=null;this.src='/favicon.png'">`:'')+(fr?`<img class="sgfr" src="${E(fr)}" alt="" onerror="this.remove()">`:'');
+ return `<div class="sgp"><span class="sgpg" title="Steam">${STL(26)}</span><div class="sgpa${fr?' hf':''}">${av}</div><div class="sgpi"><div class="sgpn">${E(name)}<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></div><div class="sgps">${E(sub)}</div>${loc?`<div class="sgpl">${!k.loc&&cn?`<img src="/flags/${cc.toLowerCase()}.png" alt="">`:''}${E(loc)}</div>`:''}${s.playing?`<div class="sgpp">Playing ${E(s.playing.name||'')}</div>`:''}</div>${bio?`<div class="sgpb">${E(bio)}</div>`:''}<div class="sgpx"><button class="btn g sgpu" style="border:1px solid rgba(255,255,255,.5)" id="sged">Edit card</button><button class="btn g sgpu" style="border:1px solid rgba(255,255,255,.5)" id="sgun">Unlink Steam</button></div>
+ <form class="sgpf" id="sgf" hidden><label>Name<input name="name" maxlength="32" value="${E(k.name||'')}" placeholder="${E(base)}"></label><label>Sub name<input name="sub" maxlength="32" value="${E(k.sub||'')}" placeholder="${E(name)}"></label><label>Location<input name="loc" maxlength="40" value="${E(k.loc||'')}" placeholder="${E(cn||'City, Country')}"></label><label>Bio<input name="bio" maxlength="120" value="${E(k.bio||'')}" placeholder="${E(m.status||'Something about you')}"></label><div class="sgpx"><button type="submit" class="btn p">Save</button><button type="button" class="btn g" id="sgrs" style="border:1px solid rgba(255,255,255,.5);color:#fff">Reset</button></div></form></div>`}
 const SG={m:[],d:null,own:null};
 async function sgSave(){try{const r=await P('/api/profile/games',{games:SG.m});SG.m=r.games||SG.m}catch(e){}sgMine();try{const d=await J('/api/steam/status');SG.d=d;PGS({games:d.games||[],steam:d.steam},document.getElementById('pgs'))}catch(e){}}
 function sgAdd(g){if(SG.m.length>=6||SG.m.some(x=>x.id===g.id))return;SG.m=SG.m.concat([{id:g.id,name:g.name,img:g.img||'',hrs:g.hrs}]);sgSave()}
-const sgCard=(g,x,a)=>`<div class="sgm${a?' add':''}" ${a?`data-add="${E(g.id)}"`:''}><img loading="lazy" decoding="async" src="${E(g.img||'')}" alt="" onerror="this.style.visibility='hidden'"><span>${E(g.name)}</span>${g.hrs?`<small>${g.hrs} h played</small>`:g.year?`<small>${E(g.year)}</small>`:''}${x?`<button type="button" class="sgx" data-rm="${E(g.id)}" aria-label="Remove">×</button>`:''}</div>`;
+const sgCard=(g,x,a)=>`<div class="sgm${a?' add':''}" title="${E(g.name)}${g.hrs?' · '+g.hrs+' h':''}" ${a?`data-add="${E(g.id)}"`:''}>${GIMT(GLIST(g,false))}<span class="sgn">${E(g.name)}</span>${g.hrs?`<small>${g.hrs} h</small>`:''}${x?`<button type="button" class="sgx" data-rm="${E(g.id)}" aria-label="Remove">×</button>`:''}</div>`;
 function sgMine(){const el=document.getElementById('sgmine');if(!el)return;
  el.innerHTML=SG.m.length?`<div class="sgl">${SG.m.map(g=>sgCard(g,1)).join('')}</div>`:'<p>No games in rotation yet.</p>';
  el.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{SG.m=SG.m.filter(x=>x.id!==b.dataset.rm);sgSave()});
@@ -450,16 +488,19 @@ function initTips(){const t=document.getElementById('tpt'),b=document.getElement
   try{await P('/api/tips',{text:v});t.value='';c.textContent='0/500';m.className='ok';m.textContent='Tip sent ✓'}catch(e){m.className='bad';m.textContent=e===429?'Wait a few seconds':e===503?'Tips are not set up yet':'Could not send'}b.disabled=false}}
 async function loadSG(){const box=document.getElementById('sgames');if(!box)return;
  let d;try{d=await J('/api/steam/status')}catch(e){box.innerHTML='';return}
+ let me0=null;try{me0=(await J('/api/me')).user}catch(e){}
  SG.d=d;SG.m=d.mgames||[];const s=d.steam,q=new URLSearchParams(location.search).get('slink');
  const note={ok:'Steam linked.',cancel:'Steam link cancelled.',bad:'Could not link Steam. Try again.',taken:'That Steam account is linked to another player.'}[q];
  box.className='sc sg';
  box.innerHTML=`<h3>Recent games</h3><p>Your Steam-style shelf: your Games in Rotation plus your Steam games. It is only shown here in Settings, not on your profile.</p><div class="pgs" id="pgs"></div><h3 style="margin-top:18px">Games in Rotation</h3><p>Your favorite games. Add up to 6 here (or from the Playing card on your profile). They show in your shelf next to your Steam games.</p>${note?`<p class="${q==='ok'?'ok':'bad'}">${note}</p>`:''}
- <div class="row">${!d.configured?'<span class="bad">Steam is not set up on this server (needs STEAM_API_KEY).</span>':s?`${s.avatar?`<img class="sgav" src="${E(s.avatar)}" alt="">`:''}<span class="ok">Steam: ${E(s.name||'linked')}${s.playing?` · Playing ${E(s.playing.name||'')}`:''}</span><button class="btn g" style="border:1px solid var(--line)" id="sgun">Unlink Steam</button>`:'<a class="btn p" href="/auth/steam/link">Link Steam</a>'}</div>
+ <h3 class="sgh" style="margin-top:18px">${STL(22)}<span>Steam</span></h3>
+ <div class="row">${!d.configured?'<span class="bad">Steam is not set up on this server (needs STEAM_API_KEY).</span>':s?SGHEAD(s,me0):'<a class="btn p" href="/auth/steam/link">Link Steam</a>'}</div>
  ${s?`<label class="tg"><input type="checkbox" id="sgau" ${s.auto?'checked':''}> Show my most played Steam games automatically</label><div class="row"><button class="btn g" style="border:1px solid var(--line)" id="sgow">Pick from my Steam games</button></div><div id="sgown"></div>`:''}
  <h3 style="margin-top:14px;font-size:14px">Games in Rotation <span id="sgcount" style="color:var(--mu);font-weight:600"></span></h3><div id="sgmine"></div>
  <input type="search" id="sgq" placeholder="Search a game to add…" aria-label="Search a game"><div id="sgres"></div>`;
  sgMine();PGS({games:d.games||[],steam:s},document.getElementById('pgs'));
  const un=document.getElementById('sgun');if(un)un.onclick=async()=>{await P('/api/steam/unlink',{});loadSG()};
+ const ed=document.getElementById('sged'),sf=document.getElementById('sgf');if(ed&&sf){ed.onclick=()=>{sf.hidden=!sf.hidden};sf.onsubmit=async e=>{e.preventDefault();const f=new FormData(sf);try{await P('/api/steam/card',{name:f.get('name'),sub:f.get('sub'),loc:f.get('loc'),bio:f.get('bio')})}catch(x){}loadSG()};document.getElementById('sgrs').onclick=async()=>{try{await P('/api/steam/card',{reset:true})}catch(x){}loadSG()}}
  const au=document.getElementById('sgau');if(au)au.onchange=async()=>{await P('/api/steam/auto',{auto:au.checked});loadSG()};
  const ow=document.getElementById('sgow');if(ow)ow.onclick=async()=>{const t=document.getElementById('sgown');t.innerHTML='<p>Loading…</p>';try{const r=await J('/api/steam/owned');sgPick(t,r.games||[]);if(r.hidden)t.innerHTML='<p class="bad">No games visible. Set your Steam game details to Public.</p>'}catch(e){t.innerHTML=`<p class="bad">${e===429?'Too many requests. Wait a minute.':'Could not load your Steam games.'}</p>`}};
  let tm;document.getElementById('sgq').oninput=e=>{clearTimeout(tm);const v=e.target.value.trim(),r=document.getElementById('sgres');if(v.length<2){r.innerHTML='';return}
@@ -606,10 +647,10 @@ async inbox(){const d=await J('/api/inbox');const it=d.items||[],fl=it.filter(n=
 const PKS={daily:['/api/open','/cardback.webp','Daily Pack','#ff8a3d'],leg:['/api/legendary','/cardback-leg.webp','Legendary Pack','#ffc22e'],cute:['/api/cute','/cardback-cute.webp','Cute Pack','#ff4f8b'],aura:['/api/aura','/cardback-aura.webp','Aura Pack','#8a4dff']};
 const cimg=c=>c.a==='aura'||(!c.a&&PKS.aura&&c.aura)?'':c.a?'/cardimg/'+c.a+'-'+c.i+'.jpg':'';
 Object.keys(PKS).forEach(k=>{VIEWS['pack-'+k]=async()=>{const [u,bk,nm,col]=PKS[k];
- V.innerHTML=`<div class="pkv" style="--c:${col}"><h2 style="margin:8px 0 0">${nm}</h2><div class="big" style="background-image:url(${bk})"></div><button class="btn p" id="go">Open pack</button><p class="empty" id="pm"></p><div class="rv" id="rv"></div></div>`;
+ V.innerHTML=`<div class="pkv" style="--c:${col}"><h2 style="margin:8px 0 0">${nm}</h2><div class="big" style="background-image:url(${bk})"></div><div class="fck pf" id="pfc" style="display:none"></div><button class="btn p" id="go">Open pack</button><p class="empty" id="pm"></p><div class="rv" id="rv"></div></div>`;
  const lockGo=t=>{const g=$('#go');if(!g)return;g.disabled=true;g.classList.add('off');g.textContent=t},unlockGo=()=>{const g=$('#go');if(!g)return;g.disabled=false;g.classList.remove('off');g.textContent='Open pack'};
  if(k==='daily'){const hms=ms=>{const s=Math.max(0,Math.floor(ms/1000)),p=n=>String(n).padStart(2,'0');return p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60)};
-  const tick=()=>{const g=$('#go');if(!g||!document.body.contains(g)){clearInterval(ti);return}if(PT.avail)unlockGo();else if(PT.end>Date.now())lockGo('Next pack in '+hms(PT.end-Date.now()));else if(Date.now()-PT.t>3000)loadPack()};
+  const tick=()=>{const g=$('#go');if(!g||!document.body.contains(g)){clearInterval(ti);return}const pf=$('#pfc');if(PT.avail){unlockGo();if(pf)pf.style.display='none'}else if(PT.end>Date.now()){lockGo('Come back later');if(pf){pf.style.display='';FCSET(pf,PT.end-Date.now())}}else if(Date.now()-PT.t>3000)loadPack()};
   const ti=setInterval(tick,1000);lockGo('...');loadPack().then(tick)}
  $('#go').onclick=async()=>{$('#go').disabled=true;try{const r=await P(u);const cs=r.cards||(r.card?[r.card.a?r.card:{...r.card,a:k==='aura'?'aura':k==='leg'?'leg':'cute'}]:[]);boot();if(k==='daily')loadPack();else lockGo('Opened');
   if(!cs.length){$('#pm').textContent='No card this time. Try again next time!';return}
@@ -651,10 +692,10 @@ async function FLIST(id,k){let d;try{d=await J('/api/follow/'+encodeURIComponent
  o.querySelectorAll('[data-f]').forEach(b=>b.onclick=async e=>{e.stopPropagation();try{await FTOG(b.dataset.f,b.dataset.r);FLIST(id,k)}catch(x){b.textContent='Error'}})}
 
 function NOWP(u,host,own){const p=u.steam&&u.steam.playing;if(!host)return;if(!p||!p.name){host.className='npl';host.innerHTML='';return}
- const m=/^s(\d+)$/.exec(p.id||''),CDN='https://cdn.cloudflare.steamstatic.com/steam/apps/',src=m?CDN+m[1]+'/library_600x900.jpg':(p.img||''),fb=p.img||'';
+ const m=/^s(\d+)$/.exec(p.id||''),CDN='https://cdn.cloudflare.steamstatic.com/steam/apps/',L=GLIST(p,false);
  const pad=n=>String(n).padStart(2,'0'),fmt=ms=>{const t=Math.max(0,Math.floor(ms/1000));return Math.floor(t/3600)+':'+pad(Math.floor(t/60)%60)+':'+pad(t%60)};
  const pad2='<svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-1 4.2A2.6 2.6 0 0 1 15.6 18l-1-1.5H9.4L8.4 18a2.6 2.6 0 0 1-5.3-.9l-1-4.2A4 4 0 0 1 6 8zm1.500 2.500v1.200H6.300v1.600h1.200v1.200h1.600v-1.200h1.200v-1.600H9.100v-1.200zm8 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>';
- host.className='npl on';host.innerHTML=`<div class="npk">Playing</div><div class="npr">${src?`<img src="${E(src)}" alt="" onerror="${fb&&fb!==src?`this.onerror=null;this.src='${E(fb)}'`:`this.style.display='none'`}">`:''}<div><div class="npn">${E(p.name)}</div>${p.since?`<div class="npt">${pad2}<span class="npc">${fmt(Date.now()-p.since)}</span></div>`:''}</div></div>${own?`<button type="button" class="npb">Add to your 'Games in Rotation'</button>`:''}`;
+ host.className='npl on';host.innerHTML=`<div class="npk">Playing</div><div class="npr">${GIMT(L)}<div><div class="npn">${E(p.name)}</div>${p.since?`<div class="npt">${pad2}<span class="npc">${fmt(Date.now()-p.since)}</span></div>`:''}</div></div>${own?`<button type="button" class="npb">Add to your 'Games in Rotation'</button>`:''}`;
  if(p.since){const c=host.querySelector('.npc'),iv=setInterval(()=>{if(!host.isConnected||!c.isConnected){clearInterval(iv);return}c.textContent=fmt(Date.now()-p.since)},1000)}
  const b=host.querySelector('.npb');if(!b)return;
  J('/api/steam/status').then(d=>{if((d.mgames||[]).some(g=>g.id===p.id)){b.textContent='In your Games in Rotation \u2713';b.disabled=true}}).catch(()=>{});
@@ -662,6 +703,14 @@ function NOWP(u,host,own){const p=u.steam&&u.steam.playing;if(!host)return;if(!p
   if(L.length>=6){b.textContent='Games in Rotation is full (6/6)';return}
   await P('/api/profile/games',{games:L.concat([{id:p.id,name:p.name,img:p.img||'',hrs:0}])});
   const mm=document.getElementById('pm');if(mm)mm.style.display='none';location.hash='#settings'}catch(e){b.textContent='Could not add. Try again.';b.disabled=false}}}
+/* Steam covers: try several URLs in order (resolved real URL, poster, header, capsule, other CDN); if all fail show the game name, never a broken image */
+const GCDN=['https://cdn.cloudflare.steamstatic.com/steam/apps/','https://cdn.akamai.steamstatic.com/steam/apps/'];
+function GLIST(g,big){const m=/^s(\d+)$/.exec(g.id||''),a=m?m[1]:'',po=g.poster||'',hd=g.img||'';
+ const alt=a?[GCDN[0]+a+'/library_600x900.jpg',GCDN[0]+a+'/header.jpg',GCDN[1]+a+'/library_600x900.jpg',GCDN[1]+a+'/header.jpg',GCDN[0]+a+'/capsule_616x353.jpg',GCDN[0]+a+'/capsule_467x181.jpg']:[];
+ const L=big?[hd,po].concat(alt.filter((_,i)=>i%2===1||i>3),alt.filter((_,i)=>i%2===0&&i<4)):[po].concat(alt.filter((_,i)=>i%2===0&&i<4),[hd],alt.filter((_,i)=>i%2===1||i>3));
+ return L.filter((u,i)=>u&&L.indexOf(u)===i)}
+window.GIMG=function(im){const l=(im.dataset.s||'').split('|'),i=+(im.dataset.i||0)+1;if(i<l.length){im.dataset.i=i;im.src=l[i]}else{im.onerror=null;im.style.display='none';const c=im.closest('.pgc,.sgm,.npr');if(c)c.classList.add('nocv')}};
+const GIMT=(L,x)=>L.length?`<img loading="lazy" decoding="async" src="${E(L[0])}" data-s="${E(L.join('|'))}" alt="" ${x||''} onerror="GIMG(this)">`:'';
 /* Steam-style shelf: big first card + posters, grouped by last played, with arrows */
 function PGS(u,host){const L=(u.games||[]).filter(g=>g&&g.name);if(!L.length){host.className='pgs';host.innerHTML='';return}
  const sid=g=>/^s\d+$/.test(g.id||'')?g.id.slice(1):'',CDN='https://cdn.cloudflare.steamstatic.com/steam/apps/',
@@ -671,10 +720,10 @@ function PGS(u,host){const L=(u.games||[]).filter(g=>g&&g.name);if(!L.length){ho
  const S=L.slice().sort((a,b)=>(b.last||0)-(a.last||0)),groups=[];
  S.forEach(g=>{const k=gl(g),c=groups[groups.length-1];if(c&&c.k===k)c.g.push(g);else groups.push({k,g:[g]})});
  let first=true;
- const card=g=>{const big=first;first=false;const tot=g.mins||(g.hrs?g.hrs*60:0),pl=u.steam&&u.steam.playing&&u.steam.playing.id===g.id,src=big?wide(g)||poster(g):poster(g)||wide(g),fb=big?poster(g):wide(g);
+ const card=g=>{const big=first;first=false;const tot=g.mins||(g.hrs?g.hrs*60:0),pl=u.steam&&u.steam.playing&&u.steam.playing.id===g.id,L=GLIST(g,big);
   const play='<span class="pl"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span>';
   const info=big&&tot?`<div class="pgt">${play}<div>${g.h2?`<b>Last two weeks: <em>${fh(g.h2)}</em></b>`:''}<b>Total: <em>${fh(tot)}</em></b></div></div>`:(tot?`<div class="pgt" style="padding:5px 8px"><b><em>${fh(tot)}</em></b></div>`:'');
-  return `<div class="pgc${big?' big':''}" title="${E(g.name)}${tot?' · '+fh(tot):''}">${src?`<img loading="lazy" decoding="async" src="${E(src)}" alt="" onerror="${fb?`this.onerror=null;this.src='${E(fb)}'`:`this.style.display='none'`}">`:''}<div class="pgi">${E(g.name)}</div>${pl?'<i class="pgl"></i>':''}${info}</div>`};
+  return `<div class="pgc${big?' big':''}" title="${E(g.name)}${tot?' · '+fh(tot):''}">${GIMT(L)}<div class="pgi">${E(g.name)}</div>${pl?'<i class="pgl"></i>':''}${info}</div>`};
  const pn=u.steam&&u.steam.playing?`<span class="pgn">Playing ${E(u.steam.playing.name||'')}</span>`:'';
  const ch='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
  host.className='pgs on';host.innerHTML=`<div class="pgh"><span class="pgt1">Recent games ${ch}</span><span class="pgln"></span>${pn}<span class="pga"><button type="button" data-d="-1" aria-label="Scroll left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button><button type="button" data-d="1" aria-label="Scroll right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></span></div><div class="pgr">${groups.map(x=>`<div class="pgg"><small>${E(x.k||'\u00a0')}</small><div class="pgp">${x.g.map(card).join('')}</div></div>`).join('')}</div>`;

@@ -849,9 +849,38 @@ app.post('/api/profile/games', (req, res) => {
     if (!name) continue;
     seen[g.id] = 1; const o = { id: g.id, name, img: typeof g.img === 'string' && GAME_IMG.test(g.img) ? g.img : '' }; const h = Math.floor(Number(g.hrs)); if (h > 0 && h < 100000 && /^s\d+$/.test(g.id)) o.hrs = h; out.push(o);
   }
-  db[id].games = out; persist(); res.json({ ok: true, games: out });
+  db[id].games = out; persist();
+  steamArtResolve(out.filter((g) => /^s\d+$/.test(g.id)).map((g) => g.id.slice(1))).catch(() => {}).then(() => res.json({ ok: true, games: out.map(withArt) }));
 });
 
+// ---- Steam art: the real cover URLs (newer / older games use hashed or missing paths, so header.jpg guessing fails for some) ----
+const steamArt = new Map(); // appid -> { h: header url, p: poster url, t }
+const STEAM_ART = /^https:\/\/[a-z0-9.-]*steamstatic\.com\/[\w\-./%?=&${}]{1,300}$/i;
+async function steamArtResolve(appids) {
+  const now = Date.now();
+  const need = [...new Set(appids.map(String).filter((a) => /^\d{1,10}$/.test(a)))].filter((a) => { const c = steamArt.get(a); return !c || now - c.t > (c.h || c.p ? 12 * 3600e3 : 30 * 60e3); });
+  for (let i = 0; i < need.length; i += 40) {
+    const chunk = need.slice(i, i + 40);
+    try {
+      const input = { ids: chunk.map((a) => ({ appid: Number(a) })), context: { language: 'english', country_code: 'US' }, data_request: { include_assets: true } };
+      const k = steamKey();
+      const j = await steamJson('https://api.steampowered.com/IStoreBrowseService/GetItems/v1/?' + (k ? 'key=' + k + '&' : '') + 'input_json=' + encodeURIComponent(JSON.stringify(input)));
+      const got = {};
+      for (const it of ((j.response || {}).store_items || [])) {
+        const a = it.assets; if (!a || !a.asset_url_format) continue;
+        const mk = (f) => { if (!f) return ''; const u = 'https://shared.fastly.steamstatic.com/store_item_assets/' + String(a.asset_url_format).replace('${FILENAME}', f); return STEAM_ART.test(u) ? u : ''; };
+        got[String(it.appid || it.id)] = { h: mk(a.header) || mk(a.main_capsule) || mk(a.small_capsule), p: mk(a.library_capsule) || mk(a.library_capsule_2x), t: Date.now() };
+      }
+      chunk.forEach((a) => steamArt.set(a, got[a] || { h: '', p: '', t: Date.now() }));
+    } catch (e) { chunk.forEach((a) => { if (!steamArt.has(a)) steamArt.set(a, { h: '', p: '', t: Date.now() - 25 * 60e3 }); }); }
+  }
+  if (steamArt.size > 3000) steamArt.clear();
+}
+function withArt(g) {
+  if (!g || !/^s\d+$/.test(g.id || '')) return g;
+  const c = steamArt.get(g.id.slice(1)); if (!c) return g;
+  return { ...g, img: c.h || g.img, poster: c.p || '' };
+}
 async function steamJson(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error('steam ' + r.status);
@@ -865,7 +894,7 @@ const byOpenSteam = (sid) => Object.keys(db).find((i) => db[i] && db[i].steam &&
 function steamView(id) {
   const u = db[id]; if (!u || !u.steam) return null;
   const c = steamCache[u.steam.id] || {};
-  return { name: c.name || '', avatar: c.avatar || '', playing: c.playing || null, auto: u.steam.auto !== false };
+  return { name: c.name || '', avatar: c.avatar || '', playing: c.playing || null, auto: u.steam.auto !== false, card: u.steam.card || null, frame: c.frame || '', country: c.country || '' };
 }
 function gamesOf(id) {
   const u = db[id]; if (!u) return [];
@@ -873,7 +902,9 @@ function gamesOf(id) {
   const out = [], seen = {}, add = (g) => { if (g && g.id && !seen[g.id]) { seen[g.id] = 1; out.push(g); } };
   (u.games || []).forEach(add);
   if (u.steam && u.steam.auto !== false) { const c = steamCache[u.steam.id]; if (c && c.top) c.top.slice(0, 6).forEach(add); }
-  return out.slice(0, 12);
+  const res = out.slice(0, 12).map(withArt);
+  steamArtResolve(res.filter((g) => /^s\d+$/.test(g.id)).map((g) => g.id.slice(1))).catch(() => {});
+  return res;
 }
 async function steamRefresh(sids, games) {
   const key = steamKey(); if (!key || !sids.length) return;
@@ -885,11 +916,13 @@ async function steamRefresh(sids, games) {
         const c = steamCache[p.steamid] || (steamCache[p.steamid] = {});
         c.name = String(p.personaname || '').slice(0, 40); c.t = Date.now();
         c.pstate = Number(p.personastate) || 0;
+        c.country = /^[A-Za-z]{2}$/.test(String(p.loccountrycode || '')) ? String(p.loccountrycode).toUpperCase() : '';
         c.avatar = /^https:\/\/[a-z0-9.-]*steamstatic\.com\/[\w\-./%?=&]{1,300}$/i.test(String(p.avatarfull || '')) ? String(p.avatarfull) : '';
         const np = p.gameid && /^\d{1,10}$/.test(String(p.gameid)) ? { id: 's' + p.gameid, name: String(p.gameextrainfo || '').slice(0, 80), img: steamImg(p.gameid) } : null;
         if (np) np.since = (c.playing && c.playing.id === np.id && c.playing.since) || Date.now();
         c.playing = np;
       }
+      steamArtResolve(Object.values(steamCache).map((c) => c.playing && c.playing.id.slice(1)).filter(Boolean)).then(() => { for (const c of Object.values(steamCache)) if (c.playing) c.playing = { ...c.playing, ...withArt(c.playing) }; }).catch(() => {});
     } catch (e) { /* keep the old cache */ }
   }
   let n = 0;
@@ -901,6 +934,14 @@ async function steamRefresh(sids, games) {
       const o = await steamJson('https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=' + key + '&steamid=' + sid + '&include_appinfo=1&include_played_free_games=1');
       c.top = ((o.response || {}).games || []).filter((g) => g.name).sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0)).slice(0, 40)
         .map((g) => ({ id: 's' + g.appid, name: String(g.name).slice(0, 80), img: steamImg(g.appid), hrs: Math.round((g.playtime_forever || 0) / 60), mins: g.playtime_forever || 0, h2: g.playtime_2weeks || 0, last: g.rtime_last_played || 0 }));
+      try { // Steam avatar frame (the decorative border around the profile picture)
+        const fj = await steamJson('https://api.steampowered.com/IPlayerService/GetAvatarFrame/v1/?key=' + key + '&steamid=' + sid);
+        const f = ((fj.response || {}).avatar_frame) || {}, im = String(f.image_large || f.image_small || '');
+        const fu = /^[\w\-./%]{3,200}$/.test(im) ? 'https://shared.fastly.steamstatic.com/community_assets/images/' + im : '';
+        c.frame = fu;
+      } catch (e) { /* keep the old frame */ }
+      await steamArtResolve(c.top.map((g) => g.id.slice(1)));
+      c.top = c.top.map(withArt);
       c.tt = Date.now();
     } catch (e) { c.tt = Date.now() - 5 * 3600 * 1000; }
   }
@@ -950,6 +991,14 @@ app.get('/api/steam/owned', async (req, res) => { // most played games of the LI
   if (!c || !c.tt || now - c.tt > 600000) await steamRefresh([u.steam.id], true);
   const list = ((steamCache[u.steam.id] || {}).top) || [];
   res.json({ name: (steamCache[u.steam.id] || {}).name || '', games: list, hidden: !list.length });
+});
+app.post('/api/steam/card', (req, res) => { // editable text on the Steam card in Settings (name, sub name, location, bio)
+  const id = need(req, res); if (!id) return;
+  if (!db[id].steam) return res.status(404).json({ error: 'steam not linked' });
+  const b = req.body || {}, clean = (v, n) => typeof v === 'string' ? v.replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, n) : '';
+  if (b.reset) delete db[id].steam.card;
+  else db[id].steam.card = { name: clean(b.name, 32), sub: clean(b.sub, 32), loc: clean(b.loc, 40), bio: clean(b.bio, 120) };
+  persist(); res.json({ ok: true, steam: steamView(id) });
 });
 app.post('/api/steam/auto', (req, res) => {
   const id = need(req, res); if (!id) return;

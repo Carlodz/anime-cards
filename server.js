@@ -1383,14 +1383,17 @@ async function spToken(uid) {
     return j.access_token;
   } catch (e) { return null; }
 }
-async function spGet(uid, path) {
-  const t = await spToken(uid); if (!t) return null;
+async function spReq(uid, path) {
+  const t = await spToken(uid); if (!t) return { s: 0, j: null, m: 'no token (refresh failed or not linked)' };
   try {
     const r = await fetch('https://api.spotify.com/v1' + path, { headers: { Authorization: 'Bearer ' + t }, signal: AbortSignal.timeout(8000) });
-    if (r.status === 204) return {};
-    return r.ok ? await r.json().catch(() => null) : null;
-  } catch (e) { return null; }
+    if (r.status === 204) return { s: 204, j: {}, m: '' };
+    const txt = await r.text();
+    let j = null; try { j = JSON.parse(txt); } catch (e) { /* not json */ }
+    return { s: r.status, j: r.ok ? j : null, m: r.ok ? '' : txt.slice(0, 200) };
+  } catch (e) { return { s: -1, j: null, m: String(e.message || e).slice(0, 120) }; }
 }
+async function spGet(uid, path) { const r = await spReq(uid, path); return r.s >= 200 && r.s < 300 ? (r.j || {}) : null; }
 app.get('/auth/spotify/link', (req, res) => {
   const id = sessionId(req); if (!id) return res.redirect('/');
   if (!spOn()) return res.redirect('/?splink=bad#settings');
@@ -1429,25 +1432,26 @@ app.post('/api/spotify/show', (req, res) => {
 });
 // What a player listens to + top artists, shown on their profile (only if they linked Spotify and kept "show on profile" on).
 app.get('/api/spotify/profile/:id', async (req, res) => {
-  if (!sessionId(req)) return res.status(401).json({ ok: false });
+  const me = sessionId(req); if (!me) return res.status(401).json({ ok: false });
   const uid = String(req.params.id), u = db[uid];
   if (!u || !u.spotify || !u.spotify.rt || u.spotify.show === false) return res.json({ ok: false });
   const hit = spCache.get(uid);
-  if (hit && Date.now() - hit.t < 8000) return res.json(hit.v);
-  let top = (spCache.get('top.' + uid) || {}).v;
-  if (!top || Date.now() - (spCache.get('top.' + uid) || {}).t > 30 * 60 * 1000) {
-    const tj = await spGet(uid, '/me/top/artists?limit=5&time_range=medium_term');
-    top = tj && Array.isArray(tj.items) ? tj.items.slice(0, 5).map((a) => ({ name: String(a.name || '').slice(0, 60), img: a.images && a.images[1] ? a.images[1].url : (a.images && a.images[0] ? a.images[0].url : null), url: a.external_urls ? a.external_urls.spotify : null })) : [];
-    spCache.set('top.' + uid, { t: Date.now(), v: top });
+  if (hit && Date.now() - hit.t < 8000) return res.json(me === uid ? hit.v : { ...hit.v, err: undefined });
+  const err = {};
+  const tc = spCache.get('top.' + uid);
+  let top = tc && Date.now() - tc.t < 30 * 60 * 1000 ? tc.v : null;
+  if (!top) {
+    const tr = await spReq(uid, '/me/top/artists?limit=5&time_range=medium_term'); err.top = tr.s + (tr.m ? ' ' + tr.m : '');
+    top = tr.j && Array.isArray(tr.j.items) ? tr.j.items.slice(0, 5).map((a) => ({ name: String(a.name || '').slice(0, 60), img: a.images && a.images[1] ? a.images[1].url : (a.images && a.images[0] ? a.images[0].url : null), url: a.external_urls ? a.external_urls.spotify : null })) : [];
+    if (tr.s === 200) spCache.set('top.' + uid, { t: Date.now(), v: top });
   }
-  const nj = await spGet(uid, '/me/player/currently-playing');
-  const it = nj && nj.item && nj.currently_playing_type === 'track' ? nj.item : null;
-  const v = { ok: true, top, now: it ? { song: String(it.name || '').slice(0, 100), artist: (it.artists || []).map((a) => a.name).join(', ').slice(0, 100), art: it.album && it.album.images && it.album.images[1] ? it.album.images[1].url : null, url: it.external_urls ? it.external_urls.spotify : null, playing: !!nj.is_playing, pos: Number(nj.progress_ms) || 0, dur: Number(it.duration_ms) || 0 } : null };
+  const nr = await spReq(uid, '/me/player/currently-playing?additional_types=episode'); err.now = nr.s + (nr.m ? ' ' + nr.m : '');
+  const nj = nr.j, it = nj && nj.item && nj.currently_playing_type === 'track' ? nj.item : null;
+  const v = { ok: true, top, now: it ? { song: String(it.name || '').slice(0, 100), artist: (it.artists || []).map((a) => a.name).join(', ').slice(0, 100), art: it.album && it.album.images && it.album.images[1] ? it.album.images[1].url : null, url: it.external_urls ? it.external_urls.spotify : null, playing: !!nj.is_playing, pos: Number(nj.progress_ms) || 0, dur: Number(it.duration_ms) || 0 } : null, err };
   spCache.set(uid, { t: Date.now(), v });
   if (spCache.size > 4000) spCache.delete(spCache.keys().next().value);
-  res.json(v);
+  res.json(me === uid ? v : { ...v, err: undefined });
 });
-
 app.get('/api/presence/:id', async (req, res) => {
   if (!sessionId(req)) return res.status(401).json({ ok: false });
   const id = String(req.params.id);

@@ -48,7 +48,7 @@
   function close(){stopAudio();if(panel)panel.classList.remove('on')}
 
   var curAudio=null;
-  function stopAudio(){if(curAudio){try{curAudio.pause()}catch(e){}curAudio=null}var f=msgs&&msgs.querySelectorAll?msgs.querySelectorAll('iframe.mp-yt'):[];for(var i=0;i<f.length;i++)f[i].src='about:blank'}
+  function stopAudio(){if(curAudio){try{curAudio.pause()}catch(e){}curAudio=null}var f=msgs&&msgs.querySelectorAll?msgs.querySelectorAll('iframe.mp-yt'):[];for(var i=0;i<f.length;i++)f[i].src='about:blank';var pl=msgs&&msgs.querySelectorAll?msgs.querySelectorAll('.mp-pill'):[];for(var k=0;k<pl.length;k++)pl[k].classList.remove('on')}
   var SING=/^(?:please\s+|من فضلك\s+)?(?:sing(?:\s+me|\s+for me)?|غني\s*لي|غنيلي|غنيلنا|غني|غنّي|ghanili|ghani)\s+(.+)$/i;
   var PLAY=/^(?:please\s+|من فضلك\s+)?(?:play|شغل|شغلي|بلاي|حطلي|حط لي|حط|7atli|hatli)\s+(.+)$/i;
   function isOwner(){return !!(window.MY&&window.MY.role==='owner')}
@@ -59,26 +59,53 @@
     var q=m[1].replace(/^(?:me\s+)?(?:the\s+)?(?:song|اغنية|أغنية|غنية)\s+/i,'').replace(/\s+(?:please|من فضلك)\s*$/i,'').replace(/[<>]/g,'').trim().slice(0,80);
     return q.length>1?q:null;
   }
-  function ytCard(j){
-    var c=el('div','mp-m ai mp-song mp-ytc');
-    var top=el('div','mp-st');
-    if(j.pic){var im=el('img');im.src=j.pic;im.alt='';im.referrerPolicy='no-referrer';top.appendChild(im)}
-    var x=el('div','mp-sg');x.appendChild(el('b','',j.title||''));x.appendChild(el('small','',j.artist||'YouTube'));
-    top.appendChild(x);c.appendChild(top);
-    var fr=el('iframe','mp-yt');
-    fr.src='https://www.youtube-nocookie.com/embed/'+j.yt+'?autoplay=1&playsinline=1&rel=0&modestbranding=1';
-    fr.title=j.title||'YouTube';fr.allow='autoplay; encrypted-media; picture-in-picture';fr.setAttribute('allowfullscreen','');fr.referrerPolicy='strict-origin-when-cross-origin';
-    c.appendChild(fr);
-    return {card:c};
-  }
-  function songCard(j){
-    var c=el('div','mp-m ai mp-song');
-    if(j.pic){var im=el('img');im.src=j.pic;im.alt='';im.referrerPolicy='no-referrer';c.appendChild(im)}
-    var x=el('div','mp-sg');x.appendChild(el('b','',j.title||''));x.appendChild(el('small','',j.artist||''));
-    var a=el('audio');a.controls=true;a.preload='auto';a.src=j.preview;a.setAttribute('aria-label',(j.title||'')+' preview');
-    a.addEventListener('play',function(){if(curAudio&&curAudio!==a)try{curAudio.pause()}catch(e){}curAudio=a});
-    x.appendChild(a);c.appendChild(x);
-    return {card:c,audio:a};
+  /* Spotify-style pill: cover, title, artist, round play button, progress bar. YouTube plays in a hidden official embed (controlled through the IFrame API messages); the 30s preview uses a normal audio element. */
+  var PLAY_I='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.5-6.5a1 1 0 0 0 0-1.8L9.500 4.600A1 1 0 0 0 8 5.500z"/></svg>';
+  var PAUSE_I='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  function fmt(t){t=isFinite(t)?Math.max(0,Math.floor(t||0)):0;return Math.floor(t/60)+':'+('0'+t%60).slice(-2)}
+  function pill(j){
+    var yt=/^[\w-]{11}$/.test(String(j.yt||''));
+    var c=el('div','mp-m ai mp-pill'),top=el('div','sp-top');
+    var cov=el('div','sp-cov');if(j.pic){var im=el('img');im.src=j.pic;im.alt='';im.referrerPolicy='no-referrer';cov.appendChild(im)}
+    var meta=el('div','sp-meta'),tt=el('div','sp-t');tt.appendChild(el('b','',j.title||''));
+    var eq=el('span','sp-eq');eq.appendChild(el('i'));eq.appendChild(el('i'));eq.appendChild(el('i'));tt.appendChild(eq);
+    meta.appendChild(tt);meta.appendChild(el('small','',j.artist||(yt?'YouTube':'')));
+    var btn=el('button','sp-play');btn.type='button';btn.setAttribute('aria-label','Play / pause');btn.innerHTML=PLAY_I;
+    top.appendChild(cov);top.appendChild(meta);top.appendChild(btn);c.appendChild(top);
+    var bar=el('div','sp-bar'),fill=el('i');bar.appendChild(fill);c.appendChild(bar);
+    var row=el('div','sp-time'),cur=el('span','','0:00'),tot=el('span','',fmt(j.dur||30));row.appendChild(cur);
+    if(yt){var yl=el('a','sp-yt','YouTube');yl.href='https://www.youtube.com/watch?v='+j.yt;yl.target='_blank';yl.rel='noopener noreferrer';row.appendChild(yl)}
+    row.appendChild(tot);c.appendChild(row);
+    var st={playing:false,t:0,dur:j.dur||30},ctl,audio=null;
+    function ui(){c.classList.toggle('on',st.playing);btn.innerHTML=st.playing?PAUSE_I:PLAY_I;
+      fill.style.width=(st.dur>0?Math.min(100,st.t/st.dur*100):0)+'%';cur.textContent=fmt(st.t);tot.textContent=fmt(st.dur)}
+    if(yt){
+      var fr=el('iframe','mp-yt sp-fr');
+      fr.src='https://www.youtube-nocookie.com/embed/'+j.yt+'?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+      fr.title=j.title||'YouTube';fr.allow='autoplay; encrypted-media; picture-in-picture';fr.referrerPolicy='strict-origin-when-cross-origin';
+      var post=function(o){try{fr.contentWindow.postMessage(JSON.stringify(o),'*')}catch(e){}};
+      fr.addEventListener('load',function(){post({event:'listening',id:1,channel:'widget'})});
+      window.addEventListener('message',function(e){
+        if(e.source!==fr.contentWindow)return;var d;try{d=typeof e.data==='string'?JSON.parse(e.data):e.data}catch(x){return}
+        if(!d||!d.event)return;var i=d.info;
+        if(d.event==='onStateChange'&&typeof i==='number')st.playing=(i===1);
+        if(d.event==='infoDelivery'&&i&&typeof i==='object'){
+          if(typeof i.playerState==='number')st.playing=(i.playerState===1);
+          if(typeof i.currentTime==='number')st.t=i.currentTime;
+          if(i.duration>0)st.dur=i.duration}
+        ui()});
+      ctl={play:function(){post({event:'command',func:'playVideo',args:[]})},pause:function(){post({event:'command',func:'pauseVideo',args:[]})}};
+      c.appendChild(fr);
+    }else{
+      audio=new Audio();audio.preload='auto';audio.src=j.preview;
+      audio.addEventListener('play',function(){if(curAudio&&curAudio!==audio)try{curAudio.pause()}catch(e){}curAudio=audio;st.playing=true;ui()});
+      audio.addEventListener('pause',function(){st.playing=false;ui()});audio.addEventListener('ended',function(){st.playing=false;st.t=0;ui()});
+      audio.addEventListener('timeupdate',function(){st.t=audio.currentTime;ui()});
+      audio.addEventListener('loadedmetadata',function(){if(isFinite(audio.duration)&&audio.duration>0){st.dur=audio.duration;ui()}});
+      ctl={play:function(){var p=audio.play();if(p&&p.catch)p.catch(function(){})},pause:function(){audio.pause()}};
+    }
+    btn.onclick=function(){st.playing?ctl.pause():ctl.play()};
+    ui();return {card:c,audio:audio};
   }
   function sing(text,q){
     if(busy)return;
@@ -100,7 +127,7 @@
         if(!yt&&!j.preview)throw new Error(ar?'ما لقيتش هذه الأغنية 🤔':"I couldn't find that song 🤔");
         var intro=yt?(ar?'🎵 هاك الأغنية من YouTube:':'🎵 Here it is, playing from YouTube:'):(ar?'🎵 هاك، تسمع 30 ثانية من الأغنية:':'🎵 Here you go, a 30-second preview:');
         w.textContent=intro;
-        var sc=yt?ytCard(j):songCard(j);msgs.appendChild(sc.card);scroll();
+        var sc=pill(j);msgs.appendChild(sc.card);scroll();
         hist.push({role:'assistant',content:intro+' '+(j.title||'')+' - '+(j.artist||'')});
         if(sc.audio){var pr=sc.audio.play();if(pr&&pr.catch)pr.catch(function(){})}
       })
@@ -128,13 +155,13 @@
     busy=true;send.disabled=true;inp.value='';hello.style.display='none';
     bubble('me',text);hist.push({role:'user',content:text});hist=hist.slice(-8);
     var w=el('div','mp-m ai');var d=el('span','mp-dots');d.appendChild(el('i'));d.appendChild(el('i'));d.appendChild(el('i'));w.appendChild(d);msgs.appendChild(w);scroll();
-    fetch('/api/mira-chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist})})
+    fetch('/api/mira-chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,tz:-new Date().getTimezoneOffset()})})
       .then(function(r){
         if(r.status===401)throw new Error('Log in first so I can talk to you.');
         if(r.status===429)throw new Error('Slow down a little, try again in a minute.');
         if(!r.ok)throw new Error('I could not answer right now. Try again.');
         return r.json()})
-      .then(function(j){var rep=String((j&&j.reply)||'').trim()||'...';w.textContent=rep;hist.push({role:'assistant',content:rep});if(j&&j.anime){msgs.appendChild(animeCard(j.anime));scroll()}})
+      .then(function(j){var rep=String((j&&j.reply)||'').trim()||'...';w.textContent=rep;hist.push({role:'assistant',content:rep});if(j&&j.anime){msgs.appendChild(animeCard(j.anime));scroll()}if(j&&j.reminder&&window.MiraRemind)window.MiraRemind.ask();})
       .catch(function(e){w.textContent=e&&e.message?e.message:'Connection problem.';w.classList.add('err');hist.pop()})
       .then(function(){busy=false;send.disabled=false;scroll();inp.focus()});
   }

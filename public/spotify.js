@@ -15,6 +15,7 @@
     function draw() {
       if (!st || !st.ok) { el.innerHTML = ''; return; }
       var h = '', n = st.now;
+      if (!n && !(st.top && st.top.length) && st.err) { el.innerHTML = '<div class="spn pz"><div><small>Spotify</small><b>Nothing to show yet</b><em>now: ' + esc(st.err.now || '-') + ' \u00b7 top: ' + esc(st.err.top || 'cached') + '</em></div></div>'; return; }
       if (n) {
         var inner = (n.art && okImg(n.art) ? '<img loading="lazy" decoding="async" src="' + esc(n.art) + '" alt="">' : '<span class="spc"></span>') +
           '<div><small>' + LOGO.replace('width="18" height="18"', 'width="12" height="12"') + (n.playing ? 'Listening now <span class="spe"><i></i><i></i><i></i></span>' : 'Paused on Spotify') + '</small><b>' + esc(n.song) + '</b><em>' + esc(n.artist) + '</em>' +

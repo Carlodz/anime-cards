@@ -15,7 +15,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop, ob: j.ob, rem: j.rem } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop, ob: j.ob } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -30,7 +30,6 @@ store.smsg = store.smsg || {};
 store.removed = store.removed || {}; // lowercase staff name -> true: staff the owner removed (they lose admin + staff card)
 store.shop = store.shop || { items: {} }; store.shop.items = store.shop.items || {}; store.shop.names = store.shop.names || {}; store.shop.cfg = store.shop.cfg || {};
 store.ob = Array.isArray(store.ob) ? store.ob : []; const ob = store.ob; // things the Discord bot must post / DM (it polls /api/bot/outbox)
-store.rem = Array.isArray(store.rem) ? store.rem : []; const rem = store.rem; // Mira reminders: { id, uid, text, at, fired, shown }
 const shop = store.shop; // admin store: items { id -> {id,type:'banner'|'pic',img,price,t,off} }
 const PTS = { iron: 5, silver: 10, gold: 15, diamond: 20, legendary: 70, epic: 50, cute: 25, aura: 100 }; // points won per card
 function addPts(id, n) { if (db[id] && n > 0) db[id].pts = (db[id].pts || 0) + n; }
@@ -74,7 +73,6 @@ async function initStore() {
     Object.assign(smsg, j.smsg || {});
     if (Array.isArray(j.ann)) ann.push(...j.ann);
     if (Array.isArray(j.ob)) ob.push(...j.ob);
-    if (Array.isArray(j.rem)) rem.push(...j.rem);
     if (j.shop) { Object.assign(shop.items, j.shop.items || {}); Object.assign(shop.names, j.shop.names || {}); Object.assign(shop.cfg, j.shop.cfg || {}); } // store items + settings also survive redeploys with Postgres
     Object.assign(store.removed, j.removed || {});
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
@@ -1049,6 +1047,39 @@ app.post('/api/steam/unlink', (req, res) => {
   delete db[id].steam; persist();
   res.json({ ok: true, games: db[id].games || [] });
 });
+// ---- WayAnime desktop app sync: favorites + watch history saved on the player's account ----
+// GET  /api/wa/sync  -> { ok, fav, hist, t }
+// POST /api/wa/sync  { fav, hist, base } -> saves. If someone else saved after `base` (409), the app merges and retries.
+const waStr = (v, n) => (typeof v === 'string' || typeof v === 'number') ? String(v).slice(0, n) : '';
+const waUrl = (v) => { const u = waStr(v, 600); return /^(https?:\/\/|\/)[^\s"'<>]*$/i.test(u) ? u : ''; };
+function waClean(list, max) {
+  const seen = new Set(), out = [];
+  for (const x of Array.isArray(list) ? list : []) {
+    if (!x || typeof x !== 'object') continue;
+    const id = waStr(x.id, 120); if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, type: waStr(x.type, 12) || 'ar', name: waStr(x.name, 200), poster: waUrl(x.poster) });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+const waRate = {};
+app.get('/api/wa/sync', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const w = db[id].wa || {};
+  res.json({ ok: true, fav: w.fav || [], hist: w.hist || [], t: w.t || 0 });
+});
+app.post('/api/wa/sync', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const now = Date.now(), r = (waRate[id] = (waRate[id] || []).filter((t) => t > now - 60000));
+  if (r.length >= 40) return res.status(429).json({ error: 'too many' });
+  r.push(now);
+  const b = req.body || {}, w = db[id].wa || { fav: [], hist: [], t: 0 };
+  if ((w.t || 0) > (Number(b.base) || 0) && !b.force) return res.status(409).json({ ok: false, conflict: true, fav: w.fav || [], hist: w.hist || [], t: w.t || 0 });
+  db[id].wa = { fav: waClean(b.fav, 300), hist: waClean(b.hist, 100), t: Math.max(now, (w.t || 0) + 1) };
+  persist();
+  res.json({ ok: true, t: db[id].wa.t });
+});
 app.post('/api/profile/status', (req, res) => {
   // Short profile status (text + emoji), max 60 characters. Empty string clears it.
   const id = need(req, res); if (!id) return;
@@ -1364,9 +1395,6 @@ if (BOT_TOKEN && GUILD_ID) {
     client.login(BOT_TOKEN).catch((e) => console.error('discord bot login failed:', e && e.message));
   } catch (e) { console.error('discord bot disabled:', e && e.message); }
 }
-
-// ---- Spotify: shown ONLY from Discord presence (see /api/presence/:id). No Spotify API / OAuth needed (that API requires a Premium app owner). ----
-app.get('/api/spotify/status', (req, res) => { if (!sessionId(req)) return res.status(401).json({ error: 'login' }); res.json({ mode: 'discord' }); });
 app.get('/api/presence/:id', async (req, res) => {
   if (!sessionId(req)) return res.status(401).json({ ok: false });
   const id = String(req.params.id);
@@ -2349,115 +2377,6 @@ function linkFlow(id, lastText) {
   if (pend) delete linkAsk[id]; // he said something else: the question is cancelled
   return null;
 }
-// ---- Mira reminders: "remind me of X tomorrow at 8" -> a desktop notification when the time comes ----
-const REM_TRIG = /(?:^|[^\p{L}\p{N}])(?:ذكرني|ذكريني|دكرني|دكريني|فكرني|فكريني|نبهني|remind me|rappelle[- ]?moi|d[ae]?k+[ae]?r+i?ni|dkar?ni|f[ae]k+[ae]?r+i?ni|nabbehni)(?![\p{L}\p{N}])/iu;
-const REM_TZ_DEFAULT = 60; // Algeria = UTC+1, used when the browser does not send its time zone
-const normDigits = (t) => String(t).replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x660)).replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x6F0));
-function remParseWhen(raw, tz, now) {
-  const t = normDigits(raw).replace(/[\u064B-\u065F\u0670]/g, '').toLowerCase();
-  const L = '(?<![\\p{L}\\p{N}])', R = '(?![\\p{L}\\p{N}])', cut = [];
-  const take = (re) => { const m = re.exec(t); if (m) cut.push([m.index, m.index + m[0].length]); return m; };
-  let at = null;
-  // relative: in 10 minutes / بعد ساعتين / dans 2 jours
-  const rel = take(new RegExp(L + '(?:بعد|dans|in|after|b3d|ba3d)\\s*(\\d{1,4}|نصف|نص|half)?\\s*(دقيقه|دقيقة|دقائق|دقايق|minutes?|mins?|mn|ساعتين|ساعه|ساعة|ساعات|hours?|heures?|heure|sa3a|saa3a|h|يومين|يوم|ايام|أيام|jours?|jour|days?|day|youm|ayam)' + R, 'iu'));
-  if (rel) {
-    const w = rel[1], u = rel[2];
-    let n = !w ? 1 : /^\d+$/.test(w) ? Number(w) : 0.5;
-    let ms;
-    if (/^(?:دق|min|mn)/i.test(u)) ms = 60e3;
-    else if (/^(?:ساعتين)$/.test(u)) { ms = 3600e3; n = 2; }
-    else if (/^(?:ساع|hour|heure|sa3a|saa3a|h$)/i.test(u)) ms = 3600e3;
-    else if (u === 'يومين') { ms = 86400e3; n = 2; }
-    else ms = 86400e3;
-    at = now + n * ms;
-    return { at, cut };
-  }
-  const loc = new Date(now + tz * 60000); // "local" clock read through the UTC getters
-  let y = loc.getUTCFullYear(), mo = loc.getUTCMonth(), d = loc.getUTCDate(), dayGiven = false, yearGiven = false, dayOff = null;
-  const dm = take(/(?<![\d:])(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?(?![\d:])/);
-  const aft = take(new RegExp(L + '(?:بعد\\s*غدوه|بعد\\s*غدوة|بعد\\s*غد|بعد\\s*بكرة|apres[- ]demain|après[- ]demain|ba3d\\s*(?:ghodwa|ghedwa|ghadwa|ghoudwa))' + R, 'iu'));
-  const tom = !aft && take(new RegExp(L + '(?:غدوه|غدوة|غدا|بكرة|demain|tomorrow|ghodwa|ghedwa|ghadwa|ghoudwa|ghdwa)' + R, 'iu'));
-  const tod = !aft && !tom && take(new RegExp(L + '(?:اليوم|اليوم|lyoum|elyoum|aujourd\'?hui|today)' + R, 'iu'));
-  if (dm) {
-    const dd = Number(dm[1]), mm = Number(dm[2]);
-    if (dd < 1 || dd > 31 || mm < 1 || mm > 12) return null;
-    d = dd; mo = mm - 1; dayGiven = true;
-    if (dm[3]) { y = Number(dm[3]); if (y < 100) y += 2000; yearGiven = true; }
-  } else if (aft) { dayOff = 2; } else if (tom) { dayOff = 1; } else if (tod) { dayOff = 0; }
-  // time of day: 8:30 / 20h / على 8 / at 8pm / الساعة 9 مساء
-  let h = null, mi = 0;
-  const PRE = '(?:على|عند|الساعه|الساعة|à|a|at|sa3a|l)';
-  const tm = take(new RegExp(L + PRE + '\\s*(\\d{1,2})(?:\\s*[:h]\\s*(\\d{2})?)?(?![\\d\\/.])\\s*(am|pm|صباحا|صباح|مساء|عشية|العشية|ليلا)?|(?<![\\d\\/.:\\-])(\\d{1,2})\\s*[:h]\\s*(\\d{2})?(?![\\d\\/.])\\s*(am|pm|صباحا|صباح|مساء|عشية|العشية|ليلا)?', 'iu'));
-  if (tm) {
-    const hh0 = tm[1] !== undefined ? tm[1] : tm[4], mm0 = tm[1] !== undefined ? tm[2] : tm[5], mk = (tm[1] !== undefined ? tm[3] : tm[6]) || '';
-    h = Number(hh0); mi = mm0 ? Number(mm0) : 0;
-    if (/pm|مساء|عشية|العشية|ليلا/i.test(mk) && h < 12) h += 12;
-    if (/am|صباح/i.test(mk) && h === 12) h = 0;
-    if (h > 23 || mi > 59) return null;
-  }
-  if (!dm && dayOff === null && h === null) return { at: null, cut };
-  const todayMs = Date.UTC(loc.getUTCFullYear(), loc.getUTCMonth(), loc.getUTCDate());
-  let dayMs;
-  if (dm) { dayMs = Date.UTC(y, mo, d); if (!yearGiven && dayMs + 86399e3 < todayMs) dayMs = Date.UTC(y + 1, mo, d); }
-  else if (dayOff !== null) dayMs = todayMs + dayOff * 86400e3;
-  else dayMs = todayMs;
-  const hh = h === null ? (dm || dayOff ? (dayOff === 0 ? null : 9) : 9) : h; // no hour given: 09:00 (for today there must be an hour)
-  if (hh === null) return { at: null, cut };
-  at = dayMs + hh * 3600e3 + mi * 60e3 - tz * 60e3;
-  if (!dm && dayOff === null && at <= now) at += 86400e3; // only an hour was given and it already passed today: tomorrow
-  return { at, cut };
-}
-function remExtractWhat(raw) { // the thing to remember = the sentence without the trigger word and without the time words
-  let t = normDigits(raw);
-  const w = remParseWhen(raw, 0, Date.now());
-  const rng = (w && w.cut ? w.cut : []).slice().sort((a, b) => b[0] - a[0]);
-  const low = t.replace(/[\u064B-\u065F\u0670]/g, '');
-  if (low.length === t.length) rng.forEach(([a, b]) => { t = t.slice(0, a) + ' ' + t.slice(b); });
-  t = t.replace(REM_TRIG, ' ').replace(/\s+/g, ' ').trim();
-  t = t.replace(/^(?:ب\s*ال|ب|بـ|ل|لي|b|of|to|about|de|d'|du|que|that)\s+/iu, '').replace(/^ب(?=\p{L})/u, '').replace(/[\s,.;:!?\u061f\u060c-]+$/u, '').trim();
-  return t.slice(0, 120);
-}
-const remFmt = (at, tz) => { const x = new Date(at + tz * 60000), p = (n) => String(n).padStart(2, '0'); return p(x.getUTCDate()) + '/' + p(x.getUTCMonth() + 1) + ' ' + p(x.getUTCHours()) + ':' + p(x.getUTCMinutes()); };
-const remAsk = {}; // userId -> { what, at } Mira asked "when?" and waits for the time (valid 3 minutes)
-function remindFlow(id, text, tzIn) {
-  const tz = Number.isFinite(Number(tzIn)) && Math.abs(Number(tzIn)) <= 14 * 60 ? Number(tzIn) : REM_TZ_DEFAULT;
-  const ar = /[\u0600-\u06FF]/.test(text), now = Date.now();
-  const pend = remAsk[id] && now - remAsk[id].t < 3 * 60 * 1000 ? remAsk[id] : null;
-  const trig = REM_TRIG.test(text);
-  if (!trig && !pend) return null;
-  let what, w;
-  if (trig) { what = remExtractWhat(text); w = remParseWhen(text, tz, now); delete remAsk[id]; }
-  else { what = pend.what; w = remParseWhen(text, tz, now); delete remAsk[id]; if (!w || !w.at) return { reply: ar ? 'ما فهمتش الوقت، نلغي التذكير. عاود قولي «ذكرني بـ... غدوة على 8:00» ' : "I didn't get the time, so I cancelled it. Try again: \"remind me of ... tomorrow at 8:00\"" }; }
-  if (!what) what = ar ? 'تذكيرك' : 'your reminder';
-  if (!w || !w.at) {
-    remAsk[id] = { what, t: now };
-    return { reply: ar ? 'ماشي مشكل ' + '\u2728' + ' وقتاش نذكرك بـ «' + what + '»؟ مثلا: غدوة 8:00، بعد ساعتين، أو 15/06 على 9:00' : 'Sure! When should I remind you of "' + what + '"? For example: tomorrow 8:00, in 2 hours, or 15/06 at 9:00' };
-  }
-  if (w.at <= now + 20e3) return { reply: ar ? 'هاذ الوقت فات، عطيني وقت جاي ' : 'That time has already passed, give me a time in the future.' };
-  if (w.at > now + 400 * 86400e3) return { reply: ar ? 'نقدر نذكرك حتى 400 يوم فقط ' : 'I can remind you up to 400 days ahead.' };
-  if (rem.filter((r) => r.uid === id && !r.fired).length >= 20) return { reply: ar ? 'عندك بزاف تذكيرات (20)، استنى حتى يوصلو.' : 'You already have 20 pending reminders.' };
-  rem.push({ id: rid(), uid: id, text: what, at: w.at, fired: false, shown: false, tz }); persist();
-  const when = remFmt(w.at, tz);
-  return { reply: ar ? 'تمام \u2705 نذكرك بـ «' + what + '» ' + when + '. نبعتلك إشعار للسطح مكتب (خلي الموقع أو التطبيق مفتوح).' : 'Done \u2705 I\'ll remind you of "' + what + '" on ' + when + ' with a desktop notification (keep the site or app open).', reminder: { text: what, at: w.at } };
-}
-function remTick() {
-  const now = Date.now(); let ch = false;
-  for (const r of rem) if (!r.fired && r.at <= now && db[r.uid]) { r.fired = true; r.shown = false; pushNote(r.uid, 'dm', 'Mira \u23F0 Reminder', r.text, 'bot'); ch = true; }
-  const keep = rem.filter((r) => !(r.fired && r.shown && now - r.at > 24 * 3600e3) && !(r.fired && now - r.at > 7 * 86400e3));
-  if (keep.length !== rem.length) { rem.splice(0, rem.length, ...keep); ch = true; }
-  if (ch) persist();
-}
-setInterval(remTick, 15000); setTimeout(remTick, 3000);
-app.get('/api/reminders/pending', (req, res) => { // the page polls this; each due reminder becomes a desktop notification
-  const id = need(req, res); if (!id) return;
-  res.set('Cache-Control', 'no-store');
-  res.json({ items: rem.filter((r) => r.uid === id && r.fired && !r.shown).slice(0, 10).map((r) => ({ id: r.id, text: r.text, at: r.at })) });
-});
-app.post('/api/reminders/ack', (req, res) => {
-  const id = need(req, res); if (!id) return;
-  const ids = Array.isArray((req.body || {}).ids) ? req.body.ids.map(String) : [];
-  rem.forEach((r) => { if (r.uid === id && ids.includes(r.id)) r.shown = true; }); persist(); res.json({ ok: true });
-});
 function chatRoute(system, hits, tag, okReply) {
   return async (req, res) => {
   const id = need(req, res); if (!id) return;
@@ -2471,7 +2390,6 @@ function chatRoute(system, hits, tag, okReply) {
   const lastText = msgs[msgs.length - 1].parts[0].text;
   // "Who are you / what's your name": Mira always answers the same, with no AI call.
   if (tag === 'mira-chat' && lastText.length < 60 && RE_WHOAMI.test(lastText)) return res.json({ reply: /[\u0600-\u06FF]/.test(lastText) ? 'أنا ميرا، مساعدتك الذكية من WAYANIME' : "I'm Mira, your smart assistant from WAYANIME" });
-  if (tag === 'mira-chat') { const rf = remindFlow(id, lastText, (req.body || {}).tz); if (rf) return res.json(rf); }
   if ((tag === 'mira-chat' || tag === 'zero-chat') && roleOf(id) === 'owner') {
     const mc = miraCmdOf(lastText);
     if (mc) {

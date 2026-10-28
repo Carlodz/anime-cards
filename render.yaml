@@ -18,3 +18,7 @@ services:
         sync: false
       - key: STEAM_API_KEY
         sync: false
+      - key: SPOTIFY_CLIENT_ID
+        sync: false
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false

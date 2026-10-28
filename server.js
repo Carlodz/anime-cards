@@ -1364,6 +1364,90 @@ if (BOT_TOKEN && GUILD_ID) {
     client.login(BOT_TOKEN).catch((e) => console.error('discord bot login failed:', e && e.message));
   } catch (e) { console.error('discord bot disabled:', e && e.message); }
 }
+
+// ---- Spotify link (per-player OAuth). Needs SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET + BASE_URL. Redirect URI to register: BASE_URL + /auth/spotify/return ----
+const SP_ID = process.env.SPOTIFY_CLIENT_ID, SP_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+const spOn = () => !!(SP_ID && SP_SECRET && BASE_URL);
+const spBase = () => String(BASE_URL || '').replace(/\/+$/, '');
+const spTok = new Map(), spCache = new Map();
+const spBasic = () => 'Basic ' + Buffer.from(SP_ID + ':' + SP_SECRET).toString('base64');
+async function spToken(uid) {
+  const s = db[uid] && db[uid].spotify; if (!s || !s.rt || !spOn()) return null;
+  const h = spTok.get(uid); if (h && h.exp > Date.now() + 30000) return h.t;
+  try {
+    const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { Authorization: spBasic(), 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: s.rt }), signal: AbortSignal.timeout(8000) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.access_token) { if (j && j.error === 'invalid_grant') { delete db[uid].spotify; persist(); } return null; }
+    if (j.refresh_token && j.refresh_token !== s.rt) { s.rt = j.refresh_token; persist(); }
+    spTok.set(uid, { t: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3600) * 1000 });
+    return j.access_token;
+  } catch (e) { return null; }
+}
+async function spGet(uid, path) {
+  const t = await spToken(uid); if (!t) return null;
+  try {
+    const r = await fetch('https://api.spotify.com/v1' + path, { headers: { Authorization: 'Bearer ' + t }, signal: AbortSignal.timeout(8000) });
+    if (r.status === 204) return {};
+    return r.ok ? await r.json().catch(() => null) : null;
+  } catch (e) { return null; }
+}
+app.get('/auth/spotify/link', (req, res) => {
+  const id = sessionId(req); if (!id) return res.redirect('/');
+  if (!spOn()) return res.redirect('/?splink=bad#settings');
+  const exp = Date.now() + 10 * 60 * 1000, state = id + '.' + exp + '.' + sign('sp.' + id + '.' + exp);
+  const q = new URLSearchParams({ response_type: 'code', client_id: SP_ID, scope: 'user-read-currently-playing user-top-read', redirect_uri: spBase() + '/auth/spotify/return', state, show_dialog: 'true' });
+  res.redirect('https://accounts.spotify.com/authorize?' + q.toString());
+});
+app.get('/auth/spotify/return', async (req, res) => {
+  try {
+    const [id, exp, sig] = String(req.query.state || '').split('.');
+    if (!db[id] || Number(exp) < Date.now() || !safeEq(sign('sp.' + id + '.' + exp), String(sig || ''))) return res.redirect('/?splink=bad#settings');
+    if (req.query.error || !req.query.code) return res.redirect('/?splink=cancel#settings');
+    const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { Authorization: spBasic(), 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', code: String(req.query.code), redirect_uri: spBase() + '/auth/spotify/return' }), signal: AbortSignal.timeout(10000) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.refresh_token || !j.access_token) return res.redirect('/?splink=bad#settings');
+    spTok.set(id, { t: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3600) * 1000 });
+    let name = '';
+    try { const m = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: 'Bearer ' + j.access_token }, signal: AbortSignal.timeout(8000) }); const mj = m.ok ? await m.json() : null; name = mj ? String(mj.display_name || mj.id || '').slice(0, 60) : ''; } catch (e) { /* name is optional */ }
+    db[id].spotify = { rt: j.refresh_token, name, show: true, t: Date.now() }; persist();
+    res.redirect('/?splink=ok#settings');
+  } catch (e) { console.error('spotify link failed:', e.message); res.redirect('/?splink=bad#settings'); }
+});
+app.get('/api/spotify/status', (req, res) => {
+  const id = sessionId(req); if (!id) return res.status(401).json({ error: 'login' });
+  const s = db[id].spotify;
+  res.json({ configured: spOn(), linked: !!(s && s.rt), name: s ? s.name || '' : '', show: !!(s && s.show !== false) });
+});
+app.post('/api/spotify/unlink', (req, res) => {
+  const id = sessionId(req); if (!id) return res.status(401).json({ error: 'login' });
+  delete db[id].spotify; spTok.delete(id); persist(); res.json({ ok: true });
+});
+app.post('/api/spotify/show', (req, res) => {
+  const id = sessionId(req); if (!id) return res.status(401).json({ error: 'login' });
+  if (!db[id].spotify) return res.status(400).json({ error: 'not linked' });
+  db[id].spotify.show = !!(req.body && req.body.show); persist(); res.json({ ok: true, show: db[id].spotify.show });
+});
+// What a player listens to + top artists, shown on their profile (only if they linked Spotify and kept "show on profile" on).
+app.get('/api/spotify/profile/:id', async (req, res) => {
+  if (!sessionId(req)) return res.status(401).json({ ok: false });
+  const uid = String(req.params.id), u = db[uid];
+  if (!u || !u.spotify || !u.spotify.rt || u.spotify.show === false) return res.json({ ok: false });
+  const hit = spCache.get(uid);
+  if (hit && Date.now() - hit.t < 8000) return res.json(hit.v);
+  let top = (spCache.get('top.' + uid) || {}).v;
+  if (!top || Date.now() - (spCache.get('top.' + uid) || {}).t > 30 * 60 * 1000) {
+    const tj = await spGet(uid, '/me/top/artists?limit=5&time_range=medium_term');
+    top = tj && Array.isArray(tj.items) ? tj.items.slice(0, 5).map((a) => ({ name: String(a.name || '').slice(0, 60), img: a.images && a.images[1] ? a.images[1].url : (a.images && a.images[0] ? a.images[0].url : null), url: a.external_urls ? a.external_urls.spotify : null })) : [];
+    spCache.set('top.' + uid, { t: Date.now(), v: top });
+  }
+  const nj = await spGet(uid, '/me/player/currently-playing');
+  const it = nj && nj.item && nj.currently_playing_type === 'track' ? nj.item : null;
+  const v = { ok: true, top, now: it ? { song: String(it.name || '').slice(0, 100), artist: (it.artists || []).map((a) => a.name).join(', ').slice(0, 100), art: it.album && it.album.images && it.album.images[1] ? it.album.images[1].url : null, url: it.external_urls ? it.external_urls.spotify : null, playing: !!nj.is_playing, pos: Number(nj.progress_ms) || 0, dur: Number(it.duration_ms) || 0 } : null };
+  spCache.set(uid, { t: Date.now(), v });
+  if (spCache.size > 4000) spCache.delete(spCache.keys().next().value);
+  res.json(v);
+});
+
 app.get('/api/presence/:id', async (req, res) => {
   if (!sessionId(req)) return res.status(401).json({ ok: false });
   const id = String(req.params.id);

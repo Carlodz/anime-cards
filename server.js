@@ -1069,6 +1069,32 @@ app.get('/api/wa/sync', (req, res) => {
   const w = db[id].wa || {};
   res.json({ ok: true, fav: w.fav || [], hist: w.hist || [], t: w.t || 0 });
 });
+
+// GET /api/wa/profile -> { ok, username, pts, pic, banner }  (used by the WayAnime desktop app)
+// pic / banner are returned as full image URLs: db[id].pic / .banner are objects ({p:preset} | {s:shop item} | {a,i: card}), so they are resolved here.
+function waImgUrl(req, v) {
+  if (!v || typeof v !== 'object') return '';
+  const base = (BASE_URL || (req.protocol + '://' + req.get('host'))).replace(/\/+$/, '');
+  let p = '';
+  if (v.s) p = '/shop/img/' + encodeURIComponent(v.s);
+  else if (v.p && /^[\w-]{1,20}$/.test(v.p)) {
+    const ext = ['webp', 'gif', 'jpg', 'jpeg', 'png'].find((e) => fs.existsSync(path.join(__dirname, 'public', 'banners', v.p + '.' + e)));
+    if (ext) p = '/banners/' + v.p + '.' + ext;
+  } else if (v.a && Number.isInteger(v.i) && /^[\w-]{1,20}$/.test(v.a)) p = '/cardimg/' + encodeURIComponent(v.a) + '-' + v.i + '.jpg';
+  return p ? base + p : '';
+}
+app.get('/api/wa/profile', (req, res) => {
+  const id = need(req, res); if (!id) return;
+  const u = db[id], av = u.user && u.user.avatar;
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    ok: true,
+    username: (u.user && (u.user.username || u.user.name)) || '',
+    pts: u.pts || 0,
+    pic: waImgUrl(req, u.pic) || (typeof av === 'string' && /^https:\/\//.test(av) ? av : ''),
+    banner: waImgUrl(req, u.banner)
+  });
+});
 app.post('/api/wa/sync', (req, res) => {
   const id = need(req, res); if (!id) return;
   const now = Date.now(), r = (waRate[id] = (waRate[id] || []).filter((t) => t > now - 60000));

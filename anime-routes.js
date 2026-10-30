@@ -87,6 +87,14 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     res.json({ items: d.Page.airingSchedules.filter((x) => x.media && !x.media.isAdult).map((x) => ({ ep: x.episode, at: x.airingAt, ...mapCard(x.media) })) });
   }));
 
+  // public (login page background): trending posters only
+  app.get('/api/anime/covers', async (req, res) => {
+    try {
+      const d = await gql(`query{Page(perPage:40){media(type:ANIME,isAdult:false,sort:TRENDING_DESC){coverImage{large}}}}`, {}, 60 * 60e3);
+      res.json({ items: d.Page.media.map((m) => m.coverImage.large).filter(Boolean) });
+    } catch (e) { res.json({ items: [] }); }
+  });
+
   app.get('/api/anime/favs', (req, res) => {
     const id = need(req, res); if (!id) return;
     res.json({ items: db[id].favs || [] });

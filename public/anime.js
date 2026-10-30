@@ -91,8 +91,9 @@ async function playerView(id,ep){
   V.innerHTML='<p class="empty">Loading…</p>';
   const [d,s]=await Promise.all([A('/api/anime/'+id),A(`/api/anime/${id}/ep/${ep}`)]),a=d.anime,nums=uniq(d.eps),i=nums.indexOf(+ep);
   const prev=nums[i-1],next=nums[i+1];
-  V.innerHTML=`<div class="an-pl"><div><div class="an-vid" id="anv"></div>
-    <div class="an-bar" id="ansrc">${s.sources.map((x,k)=>`<button data-k="${k}">${E(x.label)}</button>`).join('')}</div>
+  const hasSrc=s.sources&&s.sources.length;
+  V.innerHTML=`<div class="an-pl"><div><div class="an-vid" id="anv"><div class="none">${hasSrc?'اختر سيرفر للمشاهدة<br><small style="opacity:.7">Select a server</small>':'لا توجد سيرفرات لهذه الحلقة بعد'}</div></div>
+    <div class="an-bar" id="ansrc">${hasSrc?s.sources.map((x,k)=>`<button data-k="${k}">${E(x.label)}</button>`).join(''):'<span style="opacity:.6;font-size:13px">No servers available</span>'}</div>
     <h2 style="margin:6px 0"><a href="#a-${id}" style="color:inherit">${E(a.title)}</a> · Episode ${E(ep)}</h2>
     <div class="an-bar">${prev!=null?`<a href="#p-${id}-${prev}">◀ Prev</a>`:''}<a href="#a-${id}">All episodes</a>${next!=null?`<a href="#p-${id}-${next}">Next ▶</a>`:''}</div></div>
     <aside class="an-side"><h3>Episodes</h3><div class="an-eps">${nums.map(n=>`<a class="${n==ep?'on':''}" href="#p-${id}-${n}">${n}</a>`).join('')}</div></aside></div>`;
@@ -113,7 +114,7 @@ async function playerView(id,ep){
     }else v.src=x.url;
   };
   V.querySelectorAll('#ansrc button').forEach(b=>b.onclick=()=>play(+b.dataset.k));
-  play(0);
+  // ما نبقاش نشغّلو أوتوماتيك – المستخدم يختار السيرفر
 }
 
 /* ---------- Routing hooks ---------- */

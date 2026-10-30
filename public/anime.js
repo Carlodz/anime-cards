@@ -89,7 +89,7 @@ function adminBox(id,eps){
   return`<div class="an-adm"><b>Staff · episode links</b><small class="empty">Add only links you own or are licensed to use (https). .m3u8 / .mp4 play in the built-in player, other links open as an embed.</small>
   <div class="r"><input id="ae" placeholder="Ep #" style="max-width:80px"><input id="au" placeholder="https://… link"><input id="al" placeholder="Label (Server 1)" style="max-width:150px"><button class="btn p" id="aa">Add</button></div>
   <textarea id="ab" rows="3" placeholder="Bulk – one per line:  1|https://…   2|https://…"></textarea><div class="r"><button class="btn g" id="abb" style="background:var(--panel);border:1px solid var(--line);color:var(--tx)">Add bulk</button><span id="am" class="empty"></span></div>
-  ${eps.map(e=>`<div class="r" style="align-items:center"><span>Ep ${e.ep} · ${E(e.label)} · ${e.kind}</span><button class="btn g" data-del="${e.ep}" style="background:var(--panel);border:1px solid var(--line);color:var(--tx);margin:0">Delete</button></div>`).join('')}</div>`;
+  ${eps.filter(e=>!e.auto).map(e=>`<div class="r" style="align-items:center"><span>Ep ${e.ep} · ${E(e.label)} · ${e.kind}</span><button class="btn g" data-del="${e.ep}" style="background:var(--panel);border:1px solid var(--line);color:var(--tx);margin:0">Delete</button></div>`).join('')}</div>`;
 }
 function bindAdmin(id){
   const done=r=>{$('#am').textContent=r.added+' added';setTimeout(()=>detailView(id),500)};

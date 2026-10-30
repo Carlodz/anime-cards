@@ -18,3 +18,7 @@ services:
         sync: false
       - key: STEAM_API_KEY
         sync: false
+      - key: A4U_HOSTS
+        value: "https://anime4up.bond/,https://aniime4up.com/,https://aniime4up.org/,https://anime4up.cam/,https://anime4up.pro/,https://anime4up.rest/"
+      - key: AUTO_EPS
+        value: "on"

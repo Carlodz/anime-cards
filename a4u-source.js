@@ -1,6 +1,6 @@
 // Auto episode source: anime4up (sub + dubbed). Server-side scraper, no extra dependencies.
 // Domains change often: set env A4U_HOSTS="https://x.rest/,https://y.cam/" or edit DEFAULT_HOSTS.
-const DEFAULT_HOSTS = ['https://anime4up.rest/', 'https://w1.anime4up.rest/', 'https://anime4up.cam/', 'https://anime4up.pro/'];
+const DEFAULT_HOSTS = ['https://anime4up.bond/', 'https://aniime4up.com/', 'https://aniime4up.org/', 'https://anime4up.cam/', 'https://anime4up.pro/', 'https://anime4up.rest/', 'https://w1.anime4up.rest/'];
 const HOSTS = (process.env.A4U_HOSTS ? process.env.A4U_HOSTS.split(',').map((s) => s.trim()).filter(Boolean) : DEFAULT_HOSTS).map((h) => (h.endsWith('/') ? h : h + '/'));
 const UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36';
 const DUB_RE = /مدبلج|دبلج|dubbed/i;
@@ -12,15 +12,37 @@ const abs = (u) => { try { return new URL(decode(u), base).href; } catch { retur
 const norm = (s) => String(s || '').toLowerCase().replace(DUB_RE, ' ').replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ').replace(/\b(season|the|tv|الموسم)\b/g, ' ').replace(/\s+/g, ' ').trim();
 const lastNum = (s) => { const m = String(s || '').match(/(\d+(?:\.\d+)?)(?!.*\d)/); return m ? parseFloat(m[1]) : null; };
 
+// tiny pages (~500 bytes) are usually a redirect stub to the site's NEW domain: meta refresh / location.href
+function redirectOf(html, from) {
+  const t = String(html || '');
+  const m = t.match(/http-equiv=["']?refresh["']?[^>]*content=["'][^"']*url=([^"'>\s]+)/i)
+    || t.match(/(?:window\.|document\.|top\.)?location(?:\.href)?\s*(?:=|\.replace\(|\.assign\()\s*["']([^"']+)["']/i)
+    || t.match(/window\.open\(\s*["']([^"']+)["']/i);
+  if (!m) return '';
+  try { const u = new URL(decode(m[1]), from); return /^https?:$/.test(u.protocol) ? u.origin + '/' : ''; } catch { return ''; }
+}
+
+async function fetchOne(h, path) {
+  const r = await fetch(h + path, { headers: { 'User-Agent': UA, 'Accept-Language': 'ar,en;q=0.8' }, redirect: 'follow', signal: AbortSignal.timeout(12000) });
+  const t = await r.text();
+  return { r, t };
+}
+
 async function getHtml(path) {
   path = path.replace(/^\//, '');
   let err;
-  for (const h of [base, ...HOSTS.filter((x) => x !== base)]) {
+  const tried = new Set();
+  const queue = [base, ...HOSTS.filter((x) => x !== base)];
+  while (queue.length) {
+    const h = queue.shift();
+    if (tried.has(h)) continue; tried.add(h);
     try {
-      const r = await fetch(h + path, { headers: { 'User-Agent': UA, 'Accept-Language': 'ar,en;q=0.8' }, redirect: 'follow', signal: AbortSignal.timeout(12000) });
-      if (!r.ok) { err = new Error('http ' + r.status); continue; }
-      const t = await r.text();
-      if (t.length > 500) { base = h; return t; }
+      const { r, t } = await fetchOne(h, path);
+      if (!r.ok) { err = new Error('http ' + r.status + ' @ ' + h); continue; }
+      if (t.length > 2000) { base = h; return t; }
+      const next = redirectOf(t, r.url || h);   // stub page -> follow to the new domain
+      if (next && !tried.has(next)) { queue.unshift(next); err = new Error('redirect ' + h + ' -> ' + next); continue; }
+      err = new Error('stub page (' + t.length + ' bytes) @ ' + h);
     } catch (e) { err = e; }
   }
   throw err || new Error('a4u unreachable');
@@ -143,7 +165,8 @@ async function diagnose(titles) {
       const t = await r.text();
       row.status = r.status; row.length = t.length; row.finalUrl = r.url;
       row.cards = parseCards(t).length;
-      row.blocked = /cloudflare|just a moment|attention required/i.test(t.slice(0, 3000));
+      row.blocked = r.status === 403 || /cloudflare|just a moment|attention required/i.test(t.slice(0, 3000));
+      if (t.length < 2000) { row.snippet = t.replace(/\s+/g, ' ').slice(0, 400); row.redirectTo = redirectOf(t, r.url || h) || null; }
     } catch (e) { row.error = String(e.message || e); }
     out.hosts.push(row);
   }

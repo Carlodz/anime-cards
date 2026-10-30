@@ -1,8 +1,12 @@
 // Anime catalogue (AniList) + episode links added by the site owner/admins + favourites + watch progress.
-// Episode links are NOT scraped from anywhere: only https links that staff add themselves are played.
+// Episode links: staff-added https links + (optional) automatic fetch from anime4up via a4u-source.js (set AUTO_EPS=off to disable).
+const a4u = require('./a4u-source');
+const AUTO = String(process.env.AUTO_EPS || 'on').toLowerCase() !== 'off';
 module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdmin }) {
   store.anime = store.anime || {};
   store.anime.eps = store.anime.eps || {}; // anilistId -> [{ ep, label, url, kind }]
+  store.anime.map = store.anime.map || {}; // anilistId -> { sub, dub, t }  (matched anime4up pages)
+  const miss = new Map(); // negative cache (in memory)
 
   const GQL = 'https://graphql.anilist.co';
   const cache = new Map();
@@ -127,6 +131,40 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
   });
 
   const kindOf = (u) => (/\.m3u8(\?|$)/i.test(u) ? 'hls' : /\.(mp4|webm|m4v)(\?|$)/i.test(u) ? 'video' : 'iframe');
+
+  // ---- automatic source (anime4up) ----
+  async function autoMap(aid, titles) {
+    const hit = store.anime.map[aid];
+    if (hit && Date.now() - hit.t < 7 * 864e5 && (hit.sub || hit.dub)) return hit;
+    if (miss.get(aid) > Date.now()) return { sub: null, dub: null };
+    const r = await a4u.match(titles);
+    if (r.sub || r.dub) { store.anime.map[aid] = { ...r, t: Date.now() }; persist(); return store.anime.map[aid]; }
+    miss.set(aid, Date.now() + 30 * 60e3);
+    return { sub: null, dub: null };
+  }
+  async function autoEps(aid, titles) {
+    if (!AUTO) return [];
+    try {
+      const m = await autoMap(aid, titles), out = [];
+      const lists = await Promise.all([m.sub, m.dub].map((u) => (u ? a4u.episodes(u).catch(() => []) : [])));
+      lists.forEach((l, i) => l.forEach((e) => out.push({ ep: e.ep, label: i ? 'anime4up · مدبلج' : 'anime4up', kind: 'auto', auto: true })));
+      return out;
+    } catch { return []; }
+  }
+  async function autoSources(aid, titles, ep) {
+    if (!AUTO) return [];
+    try {
+      const m = await autoMap(aid, titles), out = [];
+      for (const [u, dub] of [[m.sub, false], [m.dub, true]]) {
+        if (!u) continue;
+        const e = (await a4u.episodes(u).catch(() => [])).find((x) => String(x.ep) === String(ep));
+        if (!e) continue;
+        (await a4u.servers(e.url).catch(() => [])).forEach((x) => out.push({ label: ((dub ? 'مدبلج · ' : '') + (x.label || 'Server')).slice(0, 40), url: x.url, kind: kindOf(x.url) }));
+      }
+      return out;
+    } catch { return []; }
+  }
+  const titlesOf = (m) => [m.title && m.title.english, m.title && m.title.romaji].filter(Boolean);
   const epsOf = (aid) => (store.anime.eps[aid] || []).slice().sort((a, b) => a.ep - b.ep);
 
   app.get('/api/anime/:id(\\d+)', wrap(async (req, res) => {
@@ -139,15 +177,22 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     c.studio = m.studios && m.studios.nodes[0] ? m.studios.nodes[0].name : '';
     c.related = ((m.relations && m.relations.edges) || []).filter((e) => e.node.type === 'ANIME').slice(0, 8).map((e) => ({ id: e.node.id, rel: e.relationType, title: e.node.title.english || e.node.title.romaji, cover: e.node.coverImage.large }));
     const w = (db[uid].watch || []).find((x) => x.id === aid);
-    res.json({ anime: c, eps: epsOf(aid).map((e) => ({ ep: e.ep, label: e.label, kind: e.kind })), fav: !!(db[uid].favs || []).find((x) => x.id === aid), last: w ? w.ep : null, admin: isAdmin(uid) });
+    const auto = await autoEps(aid, titlesOf(m));
+    res.json({ anime: c, eps: [...epsOf(aid).map((e) => ({ ep: e.ep, label: e.label, kind: e.kind })), ...auto], fav: !!(db[uid].favs || []).find((x) => x.id === aid), last: w ? w.ep : null, admin: isAdmin(uid) });
   }));
 
   // Resolve one playable link (only for logged-in users).
-  app.get('/api/anime/:id(\\d+)/ep/:ep', (req, res) => {
+  app.get('/api/anime/:id(\\d+)/ep/:ep', wrap(async (req, res) => {
     if (!need(req, res)) return;
-    const e = epsOf(parseInt(req.params.id)).filter((x) => String(x.ep) === String(req.params.ep));
-    res.json({ sources: e.map((x) => ({ label: x.label, url: x.url, kind: x.kind })) });
-  });
+    const aid = parseInt(req.params.id);
+    const e = epsOf(aid).filter((x) => String(x.ep) === String(req.params.ep));
+    const sources = e.map((x) => ({ label: x.label, url: x.url, kind: x.kind }));
+    if (AUTO) {
+      const d = await gql(`query($id:Int){Media(id:$id,type:ANIME){title{romaji english}}}`, { id: aid }, 24 * 3600e3).catch(() => null);
+      if (d && d.Media) sources.push(...(await autoSources(aid, titlesOf(d.Media), req.params.ep)));
+    }
+    res.json({ sources });
+  }));
 
   // ---- staff only: add / remove episode links ----
   app.post('/api/anime/eps', (req, res) => {

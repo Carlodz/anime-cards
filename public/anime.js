@@ -80,24 +80,9 @@ async function detailView(id){
     <div class="an-act">${first!=null?`<a class="btn p" href="#p-${id}-${first}">▶ ${d.last!=null?'Continue ep '+first:'Watch ep '+first}</a>`:'<span class="btn g" style="opacity:.6">No episodes yet</span>'}<button class="btn g" id="anfav">${d.fav?'✓ In my list':'+ Add to list'}</button>${a.trailer?`<a class="btn g" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/watch?v=${E(a.trailer)}">Trailer</a>`:''}</div></div></div>
     <p class="an-desc">${E(a.description)}</p></section>
     <h2>Episodes</h2><div class="an-eps">${grid}</div>
-    ${d.admin?adminBox(id,d.eps):''}
     ${a.related.length?row('Related',a.related.map(r=>({id:r.id,title:r.title,cover:r.cover,format:r.rel.replace(/_/g,' ').toLowerCase()}))):''}`;
   $('#anfav').onclick=async e=>{const on=e.target.textContent.indexOf('✓')<0;await P('/api/anime/fav',{id,on,title:a.title,cover:a.cover});e.target.textContent=on?'✓ In my list':'+ Add to list'};
-  if(d.admin)bindAdmin(id);
 }
-function adminBox(id,eps){
-  return`<div class="an-adm"><b>Staff · episode links</b><small class="empty">Add only links you own or are licensed to use (https). .m3u8 / .mp4 play in the built-in player, other links open as an embed.</small>
-  <div class="r"><input id="ae" placeholder="Ep #" style="max-width:80px"><input id="au" placeholder="https://… link"><input id="al" placeholder="Label (Server 1)" style="max-width:150px"><button class="btn p" id="aa">Add</button></div>
-  <textarea id="ab" rows="3" placeholder="Bulk – one per line:  1|https://…   2|https://…"></textarea><div class="r"><button class="btn g" id="abb" style="background:var(--panel);border:1px solid var(--line);color:var(--tx)">Add bulk</button><span id="am" class="empty"></span></div>
-  ${eps.filter(e=>!e.auto).map(e=>`<div class="r" style="align-items:center"><span>Ep ${e.ep} · ${E(e.label)} · ${e.kind}</span><button class="btn g" data-del="${e.ep}" style="background:var(--panel);border:1px solid var(--line);color:var(--tx);margin:0">Delete</button></div>`).join('')}</div>`;
-}
-function bindAdmin(id){
-  const done=r=>{$('#am').textContent=r.added+' added';setTimeout(()=>detailView(id),500)};
-  $('#aa').onclick=()=>P('/api/anime/eps',{id,ep:$('#ae').value,url:$('#au').value,label:$('#al').value}).then(done).catch(()=>$('#am').textContent='Invalid link or episode');
-  $('#abb').onclick=()=>P('/api/anime/eps',{id,bulk:$('#ab').value,label:$('#al').value}).then(done).catch(()=>$('#am').textContent='Nothing added');
-  V.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>del('/api/anime/eps',{id,ep:b.dataset.del}).then(()=>detailView(id)));
-}
-
 /* ---------- Player ---------- */
 let hlsP=null;
 const loadHls=()=>window.Hls?Promise.resolve():hlsP||(hlsP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)}));

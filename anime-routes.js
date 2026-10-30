@@ -1,5 +1,5 @@
 // Anime catalogue (AniList) + episode links added by the site owner/admins + favourites + watch progress.
-// Episode links: staff-added https links + (optional) automatic fetch from anime4up via a4u-source.js (set AUTO_EPS=off to disable).
+// Episode links: fetched automatically from anime4up via a4u-source.js (set AUTO_EPS=off to disable). No manual/admin links.
 const a4u = require('./a4u-source');
 const AUTO = String(process.env.AUTO_EPS || 'on').toLowerCase() !== 'off';
 module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdmin }) {
@@ -126,6 +126,10 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     let w = (db[id].watch || []).filter((x) => x.id !== aid);
     w.unshift({ id: aid, ep, title: String(b.title || '').slice(0, 120), cover: String(b.cover || '').slice(0, 300), t: Date.now() });
     db[id].watch = w.slice(0, 40);
+    // total distinct episodes watched (for the Top viewers ranking)
+    const u = db[id], key = aid + ':' + ep;
+    u.wseen = Array.isArray(u.wseen) ? u.wseen : [];
+    if (!u.wseen.includes(key)) { u.wseen.push(key); if (u.wseen.length > 5000) u.wseen.shift(); u.watched = (u.watched || 0) + 1; }
     persist();
     res.json({ ok: true });
   });
@@ -165,7 +169,6 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     } catch { return []; }
   }
   const titlesOf = (m) => [m.title && m.title.english, m.title && m.title.romaji].filter(Boolean);
-  const epsOf = (aid) => (store.anime.eps[aid] || []).slice().sort((a, b) => a.ep - b.ep);
 
   app.get('/api/anime/:id(\\d+)', wrap(async (req, res) => {
     const uid = need(req, res); if (!uid) return;
@@ -178,49 +181,18 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     c.related = ((m.relations && m.relations.edges) || []).filter((e) => e.node.type === 'ANIME').slice(0, 8).map((e) => ({ id: e.node.id, rel: e.relationType, title: e.node.title.english || e.node.title.romaji, cover: e.node.coverImage.large }));
     const w = (db[uid].watch || []).find((x) => x.id === aid);
     const auto = await autoEps(aid, titlesOf(m));
-    res.json({ anime: c, eps: [...epsOf(aid).map((e) => ({ ep: e.ep, label: e.label, kind: e.kind })), ...auto], fav: !!(db[uid].favs || []).find((x) => x.id === aid), last: w ? w.ep : null, admin: isAdmin(uid) });
+    res.json({ anime: c, eps: auto, fav: !!(db[uid].favs || []).find((x) => x.id === aid), last: w ? w.ep : null });
   }));
 
   // Resolve one playable link (only for logged-in users).
   app.get('/api/anime/:id(\\d+)/ep/:ep', wrap(async (req, res) => {
     if (!need(req, res)) return;
     const aid = parseInt(req.params.id);
-    const e = epsOf(aid).filter((x) => String(x.ep) === String(req.params.ep));
-    const sources = e.map((x) => ({ label: x.label, url: x.url, kind: x.kind }));
+    const sources = [];
     if (AUTO) {
       const d = await gql(`query($id:Int){Media(id:$id,type:ANIME){title{romaji english}}}`, { id: aid }, 24 * 3600e3).catch(() => null);
       if (d && d.Media) sources.push(...(await autoSources(aid, titlesOf(d.Media), req.params.ep)));
     }
     res.json({ sources });
   }));
-
-  // ---- staff only: add / remove episode links ----
-  app.post('/api/anime/eps', (req, res) => {
-    const uid = need(req, res); if (!uid) return;
-    if (!isAdmin(uid)) return res.status(403).json({});
-    const b = req.body || {}, aid = parseInt(b.id);
-    if (!aid) return res.status(400).json({ error: 'id' });
-    // single: {id, ep, url, label}   bulk: {id, bulk:"1|https://..\n2|https://.."}
-    const rows = [];
-    if (b.bulk) String(b.bulk).split(/\r?\n/).forEach((l) => { const m = l.trim().match(/^(\d+(?:\.\d+)?)\s*[|,\s]\s*(https:\/\/\S+)$/); if (m) rows.push({ ep: parseFloat(m[1]), url: m[2] }); });
-    else rows.push({ ep: parseFloat(b.ep), url: String(b.url || '').trim() });
-    const list = store.anime.eps[aid] || [];
-    let n = 0;
-    for (const r of rows) {
-      if (!(r.ep >= 0) || !/^https:\/\/[^\s"'<>]{4,1500}$/.test(r.url)) continue;
-      list.push({ ep: r.ep, label: String(b.label || 'Server').slice(0, 30), url: r.url, kind: kindOf(r.url) });
-      n++;
-    }
-    store.anime.eps[aid] = list;
-    persist();
-    res.json({ ok: true, added: n });
-  });
-  app.delete('/api/anime/eps', (req, res) => {
-    const uid = need(req, res); if (!uid) return;
-    if (!isAdmin(uid)) return res.status(403).json({});
-    const aid = parseInt(req.body && req.body.id), ep = String(req.body && req.body.ep);
-    store.anime.eps[aid] = (store.anime.eps[aid] || []).filter((x) => String(x.ep) !== ep);
-    persist();
-    res.json({ ok: true });
-  });
 };

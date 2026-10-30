@@ -497,14 +497,17 @@ app.get('/api/social', async (req, res) => {
   res.json({ friends, inc: list(s.i), out: list(s.o), offers: mine });
 });
 
-app.get('/api/top-traders', (req, res) => { // ranking of the players with the most completed trades
+const BUILD = 'build-2026-10-30-a4u-topviewers';
+app.get('/version', (req, res) => res.type('text/plain').send(BUILD)); // open https://your-site/version to check the new code is live
+
+app.get('/api/top-viewers', (req, res) => { // players who watched the most episodes on the site (top 3)
   const id = need(req, res); if (!id) return;
   const list = Object.entries(db)
-    .filter(([, u]) => u && u.user && (u.trades || 0) > 0)
-    .sort((a, b) => (b[1].trades || 0) - (a[1].trades || 0))
+    .filter(([, u]) => u && u.user && (u.watched || 0) > 0)
+    .sort((a, b) => (b[1].watched || 0) - (a[1].watched || 0))
     .slice(0, 3)
-    .map(([uid, u]) => ({ ...pub(uid), trades: u.trades || 0 }));
-  res.json({ traders: list });
+    .map(([uid, u]) => ({ ...pub(uid), watched: u.watched || 0 }));
+  res.json({ viewers: list });
 });
 
 app.get('/api/users/search', (req, res) => {

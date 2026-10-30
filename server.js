@@ -75,7 +75,12 @@ async function initStore() {
     if (Array.isArray(j.ob)) ob.push(...j.ob);
     if (j.shop) { Object.assign(shop.items, j.shop.items || {}); Object.assign(shop.names, j.shop.names || {}); Object.assign(shop.cfg, j.shop.cfg || {}); } // store items + settings also survive redeploys with Postgres
     Object.assign(store.removed, j.removed || {});
-    if (j.anime) store.anime = j.anime;
+    if (j.anime && typeof j.anime === 'object') {
+      // Merge persisted anime data without dropping the maps initialised by anime-routes.
+      store.anime = store.anime && typeof store.anime === 'object' ? store.anime : {};
+      store.anime.eps = { ...(store.anime.eps || {}), ...(j.anime.eps || {}) };
+      store.anime.map = { ...(store.anime.map || {}), ...(j.anime.map || {}) };
+    }
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
     await saveNow(); // first run: migrate whatever came from data/users.json

@@ -138,6 +138,10 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
 
   // ---- automatic source (anime4up) ----
   async function autoMap(aid, titles) {
+    // PostgreSQL hydration can complete after routes are mounted; always normalise before use.
+    store.anime = store.anime && typeof store.anime === 'object' ? store.anime : {};
+    store.anime.map = store.anime.map && typeof store.anime.map === 'object' ? store.anime.map : {};
+    store.anime.eps = store.anime.eps && typeof store.anime.eps === 'object' ? store.anime.eps : {};
     const hit = store.anime.map[aid];
     if (hit && Date.now() - hit.t < 7 * 864e5 && (hit.sub || hit.dub)) return hit;
     if (miss.get(aid) > Date.now()) return { sub: null, dub: null };
@@ -190,6 +194,8 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     if (!isAdmin(uid)) return res.status(403).json({ error: 'admin only' });
     try {
       const aid = parseInt(req.params.id);
+      store.anime = store.anime && typeof store.anime === 'object' ? store.anime : {};
+      store.anime.map = store.anime.map && typeof store.anime.map === 'object' ? store.anime.map : {};
       const d = await gql(`query($id:Int){Media(id:$id,type:ANIME){title{romaji english}}}`, { id: aid }, 24 * 3600e3);
       res.json({ auto: AUTO, saved: store.anime.map[aid] || null, ...(await a4u.diagnose(titlesOf(d.Media))) });
     } catch (e) { res.status(500).json({ error: String(e.message || e) }); }

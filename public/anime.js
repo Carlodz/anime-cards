@@ -73,7 +73,7 @@ async function detailView(id){
   const d=await A('/api/anime/'+id),a=d.anime,nums=uniq(d.eps);
   const first=d.last!=null&&nums.includes(d.last)?d.last:nums[0];
   const total=a.episodes||nums.length;
-  const grid=(nums.length?nums:Array.from({length:Math.min(total||12,200)},(_,i)=>i+1)).map(n=>`<button type="button" class="${nums.includes(n)?'':'off'}" data-n="${n}" ${nums.includes(n)?'':'disabled'}>${n}</button>`).join('');
+  const grid=(nums.length?nums:Array.from({length:Math.min(total||12,200)},(_,i)=>i+1)).map(n=>`<button type="button" class="${nums.includes(n)?'':'off'}" data-n="${n}">${n}</button>`).join('');
   V.innerHTML=`<section class="an-det" style="background-image:url('${E(a.banner||a.cover)}')"><div class="an-top"><img src="${img(a.cover)}" alt=""><div>
     <h1>${E(a.title)}</h1><div class="an-meta">${a.score?`<span>★ ${(a.score/10).toFixed(1)}</span>`:''}${a.format?`<span>${E(fmt[a.format]||a.format)}</span>`:''}${a.year?`<span>${a.year}</span>`:''}${a.episodes?`<span>${a.episodes} eps</span>`:''}${a.status?`<span>${E(a.status.replace(/_/g,' '))}</span>`:''}${a.studio?`<span>${E(a.studio)}</span>`:''}</div>
     <div class="an-meta">${a.genres.map(g=>`<span>${E(g)}</span>`).join('')}</div>
@@ -92,7 +92,7 @@ async function detailView(id){
     let src=[];
     try{src=(await A(`/api/anime/${id}/ep/${n}`)).sources||[]}catch(e){}
     if(tok!==srvTok)return;
-    panel.innerHTML=`<h3>Episode ${E(n)} · Servers</h3>`+(src.length?`<div class="an-srvl">${src.map((x,k)=>`<a href="#p-${id}-${n}-${k}"><span>▶</span>${E(x.label||'Server '+(k+1))}</a>`).join('')}</div>`:'<p class="empty">No servers available for this episode yet.</p>');
+    panel.innerHTML=`<h3>Episode ${E(n)} · Servers</h3>`+(src.length?`<div class="an-srvl">${src.map((x,k)=>`<a href="#p-${id}-${n}-${k}"><span>▶</span>${E(x.label||'Server '+(k+1))}</a>`).join('')}</div>`:'<p class="empty">No servers found for this episode. The source (anime4up) may be unreachable or has no match for this anime.</p>');
   });
   $('#anfav').onclick=async e=>{const on=e.target.textContent.indexOf('✓')<0;await P('/api/anime/fav',{id,on,title:a.title,cover:a.cover});e.target.textContent=on?'✓ In my list':'+ Add to list'};
 }

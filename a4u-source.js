@@ -122,4 +122,26 @@ async function match(titles) {
 async function episodes(animeUrl) { return memo('e:' + animeUrl, 15 * 60e3, async () => parseEpisodes(await getHtml(new URL(animeUrl).pathname + new URL(animeUrl).search))); }
 async function servers(epUrl) { return memo('v:' + epUrl, 10 * 60e3, async () => parseServers(await getHtml(new URL(epUrl).pathname + new URL(epUrl).search))); }
 
-module.exports = { match, episodes, servers, _t: { parseCards, parseEpisodes, parseServers, score, norm } };
+// admin diagnostics: why are no episodes found?
+async function diagnose(titles) {
+  const out = { hosts: [], titles, matches: [] };
+  for (const h of HOSTS) {
+    const row = { host: h };
+    try {
+      const r = await fetch(h + '?search_param=animes&s=' + encodeURIComponent(titles[0] || 'one piece'), { headers: { 'User-Agent': UA, 'Accept-Language': 'ar,en;q=0.8' }, redirect: 'follow', signal: AbortSignal.timeout(12000) });
+      const t = await r.text();
+      row.status = r.status; row.length = t.length; row.finalUrl = r.url;
+      row.cards = parseCards(t).length;
+      row.blocked = /cloudflare|just a moment|attention required/i.test(t.slice(0, 3000));
+    } catch (e) { row.error = String(e.message || e); }
+    out.hosts.push(row);
+  }
+  try {
+    const m = await match(titles);
+    out.matches = m;
+    out.episodes = { sub: m.sub ? (await episodes(m.sub).catch(() => [])).length : 0, dub: m.dub ? (await episodes(m.dub).catch(() => [])).length : 0 };
+  } catch (e) { out.matchError = String(e.message || e); }
+  return out;
+}
+
+module.exports = { match, episodes, servers, diagnose, _t: { parseCards, parseEpisodes, parseServers, score, norm } };

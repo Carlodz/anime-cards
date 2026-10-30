@@ -34,7 +34,7 @@
 .an-eps{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 .an-eps a,.an-eps button{font:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;height:42px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--tx);font-weight:800;text-decoration:none}
 .an-eps a:hover,.an-eps a.on,.an-eps button:hover,.an-eps button.on{background:linear-gradient(90deg,var(--a1),var(--a2));border-color:transparent}
-.an-eps a.off,.an-eps button.off{opacity:.35;pointer-events:none;cursor:default}
+.an-eps a.off,.an-eps button.off{opacity:.55}
 .an-adm{margin-top:18px;padding:16px;border:1px dashed var(--line);border-radius:14px;display:grid;gap:8px}
 .an-adm input,.an-adm textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:9px 10px;font:inherit;font-size:13px}
 .an-adm .r{display:flex;gap:8px;flex-wrap:wrap}.an-adm .r input{flex:1;min-width:120px}

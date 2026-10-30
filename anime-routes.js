@@ -184,6 +184,17 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     res.json({ anime: c, eps: auto, fav: !!(db[uid].favs || []).find((x) => x.id === aid), last: w ? w.ep : null });
   }));
 
+  // Admin only: open /api/anime/<anilistId>/debug to see why episodes are missing.
+  app.get('/api/anime/:id(\\d+)/debug', async (req, res) => {
+    const uid = need(req, res); if (!uid) return;
+    if (!isAdmin(uid)) return res.status(403).json({ error: 'admin only' });
+    try {
+      const aid = parseInt(req.params.id);
+      const d = await gql(`query($id:Int){Media(id:$id,type:ANIME){title{romaji english}}}`, { id: aid }, 24 * 3600e3);
+      res.json({ auto: AUTO, saved: store.anime.map[aid] || null, ...(await a4u.diagnose(titlesOf(d.Media))) });
+    } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+  });
+
   // Resolve one playable link (only for logged-in users).
   app.get('/api/anime/:id(\\d+)/ep/:ep', wrap(async (req, res) => {
     if (!need(req, res)) return;

@@ -15,7 +15,7 @@ fs.mkdirSync(path.dirname(DB), { recursive: true });
 let store = { users: {}, gifts: {}, offers: {}, box: {} };
 try {
   const j = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop, ob: j.ob } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
+  store = j.users ? { users: j.users, gifts: j.gifts || {}, offers: j.offers || {}, box: j.box || {}, log: j.log || [], custom: j.custom, notes: j.notes, ann: j.ann, resets: j.resets, smsg: j.smsg, removed: j.removed, shop: j.shop, ob: j.ob, anime: j.anime } : { users: j, gifts: {}, offers: {}, box: {}, log: [] };
 } catch (e) {}
 const db = store.users;      // discord id -> { user, state }
 const gifts = store.gifts;   // code -> { from, a, i, r, t }
@@ -75,6 +75,7 @@ async function initStore() {
     if (Array.isArray(j.ob)) ob.push(...j.ob);
     if (j.shop) { Object.assign(shop.items, j.shop.items || {}); Object.assign(shop.names, j.shop.names || {}); Object.assign(shop.cfg, j.shop.cfg || {}); } // store items + settings also survive redeploys with Postgres
     Object.assign(store.removed, j.removed || {});
+    if (j.anime) store.anime = j.anime;
     console.log('Loaded', Object.keys(db).length, 'users from Postgres');
   } else {
     await saveNow(); // first run: migrate whatever came from data/users.json
@@ -2773,6 +2774,7 @@ app.post('/api/mira-rps', (req, res) => {
 app.post('/api/zero-chat', chatRoute(ZERO_SYSTEM, zeroHits, 'zero-chat', 'Here you go, darling.'));
 app.post('/api/mira-chat', chatRoute(MIRA_SYSTEM, miraHits, 'mira-chat', 'Here you go.'));
 
+require('./anime-routes')({ app, sessionId, db, store, persist, isAdmin });
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', setHeaders: (res, f) => { if (/\.(html|js|css)$/.test(f)) res.setHeader('Cache-Control', 'no-cache'); } }));
 initStore()
   .then(() => { addAtToOldNames(); return ensureAdminAccount(); })

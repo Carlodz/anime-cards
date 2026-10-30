@@ -1081,7 +1081,7 @@ function waImgUrl(req, v) {
   else if (v.p && /^[\w-]{1,20}$/.test(v.p)) {
     const ext = ['webp', 'gif', 'jpg', 'jpeg', 'png'].find((e) => fs.existsSync(path.join(__dirname, 'public', 'banners', v.p + '.' + e)));
     if (ext) p = '/banners/' + v.p + '.' + ext;
-  } else if (v.a && Number.isInteger(v.i) && /^[\w-]{1,20}$/.test(v.a)) p = '/cardimg/' + encodeURIComponent(v.a) + '-' + v.i + '.jpg';
+  } else if (v.a && Number.isInteger(v.i) && /^[\w-]{1,20}$/.test(v.a) && fs.existsSync(path.join(__dirname, 'public', 'cardimg', v.a + '-' + v.i + '.jpg'))) p = '/cardimg/' + encodeURIComponent(v.a) + '-' + v.i + '.jpg';
   return p ? base + p : '';
 }
 app.get('/api/wa/profile', (req, res) => {
@@ -1630,7 +1630,7 @@ function avatarAbs(req, id) {
   if (pic && typeof pic === 'object') {
     if (pic.s) path = '/shop/img/' + encodeURIComponent(pic.s);
     else if (pic.p) { const f = { sky: 'sky.jpg', night: 'night.jpg', eyes: 'eyes.gif', meadow: 'meadow.jpg', ban09: 'ban09.webp', ban10: 'ban10.gif', ban11: 'ban11.gif', ban12: 'ban12.webp', ban13: 'ban13.webp' }[pic.p]; if (f) path = '/banners/' + f; }
-    else if (pic.a && Number.isInteger(pic.i) && /^[\w-]{1,20}$/.test(pic.a)) path = '/cardimg/' + encodeURIComponent(pic.a) + '-' + pic.i + '.jpg';
+    else if (pic.a && Number.isInteger(pic.i) && /^[\w-]{1,20}$/.test(pic.a) && fs.existsSync(path.join(__dirname, 'public', 'cardimg', pic.a + '-' + pic.i + '.jpg'))) path = '/cardimg/' + encodeURIComponent(pic.a) + '-' + pic.i + '.jpg';
   }
   if (path && /^https:\/\//.test(base)) return base + path;
   if (typeof av === 'string' && /^https:\/\//.test(av)) return av;

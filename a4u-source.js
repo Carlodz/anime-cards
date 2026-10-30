@@ -34,18 +34,29 @@ function blocks(html, cls) {
 }
 
 function parseCards(html) {
-  return blocks(html, 'anime-card-container').map((b) => {
-    const m = b.match(/<h3[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i) || b.match(/<a[^>]+href="([^"]*\/anime\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
-    if (!m) return null;
-    const url = abs(m[1]), name = strip(m[2]);
-    return url && name ? { url, name, dub: DUB_RE.test(name) } : null;
-  }).filter(Boolean);
+  // Anime4up changes card markup between mirrors/themes; try common card containers,
+  // then fall back to anime links while de-duplicating URLs.
+  const chunks = ['anime-card-container', 'anime-card', 'item', 'bsx'].flatMap((cls) => blocks(html, cls));
+  const source = chunks.length ? chunks : [html];
+  const out = [], seen = new Set();
+  for (const b of source) {
+    const re = /<a\b[^>]*href=[\"']([^\"']*(?:\/anime\/|\/category\/anime\/)[^\"']*)[\"'][^>]*>([\s\S]*?)<\/a>/gi;
+    let m;
+    while ((m = re.exec(b))) {
+      const url = abs(m[1]), name = strip(m[2]);
+      if (!url || !name || seen.has(url) || name.length < 2) continue;
+      seen.add(url); out.push({ url, name, dub: DUB_RE.test(name) });
+    }
+  }
+  return out;
 }
 
 function parseEpisodes(html) {
   const seen = new Set(), out = [];
-  for (const b of blocks(html, 'episodes-card')) {
-    const m = b.match(/episodes-card-title[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i) || b.match(/<h3[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+  const cards = blocks(html, 'episodes-card');
+  const source = cards.length ? cards : blocks(html, 'episode');
+  for (const b of source) {
+    const m = b.match(/episodes-card-title[\s\S]*?<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>([\s\S]*?)<\/a>/i) || b.match(/<a[^>]+href=[\"']([^\"']+)[\"'][^>]*>([\s\S]*?)<\/a>/i);
     if (!m) continue;
     const url = abs(m[1]), ep = lastNum(strip(m[2]));
     if (!url || ep == null || seen.has(url)) continue;

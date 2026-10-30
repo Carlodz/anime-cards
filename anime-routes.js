@@ -59,36 +59,12 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     return { season: ['WINTER', 'SPRING', 'SUMMER', 'FALL'][Math.floor(m / 3)], year: d.getUTCFullYear() };
   };
 
-  // sec: trending | popular | season | airing | top | dub (Arabic dubbed)
+  // sec: trending | popular | season | airing | top
   app.get('/api/anime/browse', wrap(async (req, res) => {
     if (!need(req, res)) return;
     const sec = String(req.query.sec || 'trending');
     const page = Math.max(1, Math.min(50, parseInt(req.query.page) || 1));
     const genre = String(req.query.genre || '').slice(0, 30);
-
-    // Arabic dubbed list from anime4up → match to AniList
-    if (sec === 'dub') {
-      const raw = await a4u.listDubbed(30).catch(() => []);
-      const items = [];
-      const seen = new Set();
-      for (const c of raw) {
-        if (items.length >= 20) break;
-        try {
-          const q = c.name.replace(/\s*مدبلج.*$/i, '').trim().slice(0, 60);
-          if (q.length < 2) continue;
-          const d = await gql(`query($s:String){Page(perPage:3){media(type:ANIME,isAdult:false,search:$s,sort:SEARCH_MATCH){${CARD}}}}`, { s: q }, 6 * 3600e3);
-          const m = (d.Page && d.Page.media && d.Page.media[0]) || null;
-          if (!m || seen.has(m.id)) continue;
-          seen.add(m.id);
-          const card = mapCard(m);
-          // prefer a4u cover if AniList cover missing (rare)
-          if (!card.cover && c.cover) card.cover = c.cover;
-          items.push(card);
-        } catch { /* skip unmatched */ }
-      }
-      return res.json({ items, more: false });
-    }
-
     const sortMap = { trending: 'TRENDING_DESC', popular: 'POPULARITY_DESC', season: 'POPULARITY_DESC', airing: 'POPULARITY_DESC', top: 'SCORE_DESC' };
     const sort = sortMap[sec] || 'TRENDING_DESC';
     const v = { page, sort: [sort], genre: genre || undefined };
@@ -175,19 +151,7 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
     try {
       const m = await autoMap(aid, titles), out = [];
       const lists = await Promise.all([m.sub, m.dub].map((u) => (u ? a4u.episodes(u).catch(() => []) : [])));
-      // also expose a reasonable range when only recent eps are on the first page
-      const nums = new Set();
-      lists.forEach((l) => l.forEach((e) => nums.add(e.ep)));
-      // if we matched a page, mark all known eps + a synthetic dense range up to max so UI is clickable
-      let maxEp = 0;
-      nums.forEach((n) => { if (n > maxEp) maxEp = n; });
-      if (maxEp > 0 && (m.sub || m.dub)) {
-        // keep real ones + fill gaps for UI (player will resolve via findEpisode)
-        for (let i = 1; i <= Math.min(maxEp, 2000); i++) nums.add(i);
-      }
-      [...nums].sort((a, b) => a - b).forEach((ep) => {
-        out.push({ ep, label: m.dub ? 'anime4up · مدبلج' : 'anime4up', kind: 'auto', auto: true });
-      });
+      lists.forEach((l, i) => l.forEach((e) => out.push({ ep: e.ep, label: i ? 'anime4up · مدبلج' : 'anime4up', kind: 'auto', auto: true })));
       return out;
     } catch { return []; }
   }
@@ -197,13 +161,9 @@ module.exports = function mountAnime({ app, sessionId, db, store, persist, isAdm
       const m = await autoMap(aid, titles), out = [];
       for (const [u, dub] of [[m.sub, false], [m.dub, true]]) {
         if (!u) continue;
-        let epUrl = null;
-        const list = await a4u.episodes(u).catch(() => []);
-        const found = list.find((x) => String(x.ep) === String(ep));
-        if (found) epUrl = found.url;
-        else if (a4u.findEpisode) epUrl = await a4u.findEpisode(u, ep).catch(() => null);
-        if (!epUrl) continue;
-        (await a4u.servers(epUrl).catch(() => [])).forEach((x) => out.push({ label: ((dub ? 'مدبلج · ' : '') + (x.label || 'Server')).slice(0, 40), url: x.url, kind: kindOf(x.url) }));
+        const e = (await a4u.episodes(u).catch(() => [])).find((x) => String(x.ep) === String(ep));
+        if (!e) continue;
+        (await a4u.servers(e.url).catch(() => [])).forEach((x) => out.push({ label: ((dub ? 'مدبلج · ' : '') + (x.label || 'Server')).slice(0, 40), url: x.url, kind: kindOf(x.url) }));
       }
       return out;
     } catch { return []; }

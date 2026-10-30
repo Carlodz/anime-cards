@@ -17,13 +17,15 @@ let homeBusy=false;
 async function loadAHome(){
   const box=$('#ahome');if(!box||homeBusy)return;homeBusy=true;
   try{
-    const [tr,ai,top,se,wa]=await Promise.all([
+    const [tr,ai,top,se,wa,dub]=await Promise.all([
       A('/api/anime/browse?sec=trending'),A('/api/anime/browse?sec=airing'),A('/api/anime/browse?sec=top'),A('/api/anime/browse?sec=season'),
-      A('/api/anime/watching').catch(()=>({items:[]}))]);
+      A('/api/anime/watching').catch(()=>({items:[]})),
+      A('/api/anime/browse?sec=dub').catch(()=>({items:[]}))]);
     const hero=tr.items.find(x=>x.banner)||tr.items[0];
     box.innerHTML=(hero?`<section class="an-hero" style="background-image:url('${E(hero.banner||hero.cover)}')"><div><small>TRENDING NOW</small><h1>${E(hero.title)}</h1><p>${E((hero.genres||[]).slice(0,4).join(' · '))}${hero.episodes?' · '+hero.episodes+' episodes':''}</p><a class="btn p" href="#a-${hero.id}">Watch now</a></div></section>`:'')
       +row('Continue watching',wa.items.map(w=>({id:w.id,title:w.title,cover:w.cover,ep:w.ep})))
-      +row('Trending',tr.items)+row('Airing now',ai.items)+row('This season',se.items)+row('Top rated',top.items);
+      +row('Trending',tr.items)+row('Airing now',ai.items)+row('This season',se.items)+row('Top rated',top.items)
+      +row('مدبلج عربي',dub.items);
   }catch(e){box.innerHTML=e===401?'':'<p class="empty">Could not load anime right now. Try again in a moment.</p>'}
   homeBusy=false;
 }
@@ -31,7 +33,7 @@ async function loadAHome(){
 /* ---------- Browse ---------- */
 const AB={sec:'trending',genre:'',page:1};
 VIEWS.browse=async function(){
-  const secs=[['trending','Trending'],['popular','Popular'],['season','This season'],['airing','Airing now'],['top','Top rated']];
+  const secs=[['trending','Trending'],['popular','Popular'],['season','This season'],['airing','Airing now'],['top','Top rated'],['dub','مدبلج عربي']];
   V.innerHTML=`<h2 style="margin-top:8px">Browse anime</h2><div class="an-tabs">${secs.map(([k,n])=>`<button data-s="${k}" class="${k===AB.sec?'on':''}">${n}</button>`).join('')}<select id="ang"><option value="">All genres</option>${GENRES.map(g=>`<option ${g===AB.genre?'selected':''}>${g}</option>`).join('')}</select></div><div class="an-grid" id="ang2"></div><button class="btn p an-more" id="anm" hidden>Load more</button>`;
   V.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{AB.sec=b.dataset.s;AB.page=1;VIEWS.browse()});
   $('#ang').onchange=e=>{AB.genre=e.target.value;AB.page=1;VIEWS.browse()};

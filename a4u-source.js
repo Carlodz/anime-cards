@@ -38,18 +38,40 @@ function parseCards(html) {
     const m = b.match(/<h3[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i) || b.match(/<a[^>]+href="([^"]*\/anime\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
     if (!m) return null;
     const url = abs(m[1]), name = strip(m[2]);
-    return url && name ? { url, name, dub: DUB_RE.test(name) } : null;
+    const im = b.match(/<img[^>]+src="([^"]+)"/i);
+    const cover = im ? abs(im[1]) : '';
+    return url && name ? { url, name, cover, dub: DUB_RE.test(name) } : null;
   }).filter(Boolean);
 }
 
 function parseEpisodes(html) {
   const seen = new Set(), out = [];
-  for (const b of blocks(html, 'episodes-card')) {
-    const m = b.match(/episodes-card-title[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i) || b.match(/<h3[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
-    if (!m) continue;
+  // New theme: ep_num > a  (الحلقة N)
+  const reEpNum = /<div[^>]+class="[^"]*\bep_num\b[^"]*"[^>]*>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = reEpNum.exec(html))) {
     const url = abs(m[1]), ep = lastNum(strip(m[2]));
-    if (!url || ep == null || seen.has(url)) continue;
+    if (!url || ep == null || seen.has(url) || !/\/episode\//i.test(url)) continue;
     seen.add(url); out.push({ ep, url });
+  }
+  // Fallback: any /episode/ link whose text contains a number
+  if (!out.length) {
+    const reA = /<a[^>]+href="([^"]*\/episode\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+    while ((m = reA.exec(html))) {
+      const url = abs(m[1]), ep = lastNum(strip(m[2]));
+      if (!url || ep == null || seen.has(url)) continue;
+      seen.add(url); out.push({ ep, url });
+    }
+  }
+  // Old theme fallback
+  if (!out.length) {
+    for (const b of blocks(html, 'episodes-card')) {
+      const mm = b.match(/episodes-card-title[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i) || b.match(/<h3[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+      if (!mm) continue;
+      const url = abs(mm[1]), ep = lastNum(strip(mm[2]));
+      if (!url || ep == null || seen.has(url)) continue;
+      seen.add(url); out.push({ ep, url });
+    }
   }
   return out.sort((a, b) => a.ep - b.ep);
 }
@@ -69,11 +91,23 @@ function parseServers(html) {
     const u = urlOf(raw);
     if (!/^https:\/\//i.test(u) || seen.has(u) || BAD.test(u)) return;
     try { if (new URL(u).hostname === host) return; } catch { return; }
-    seen.add(u); out.push({ label: strip(label).slice(0, 40), url: u });
+    let lab = strip(label).slice(0, 40) || 'Server';
+    if (/^embed$/i.test(lab)) {
+      try { lab = new URL(u).hostname.replace(/^www\./, '').split('.')[0] || lab; } catch {}
+    }
+    seen.add(u); out.push({ label: lab, url: u });
   };
   let m;
+  // old attribute
   const reA = /<a[^>]+data-ep-url="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
   while ((m = reA.exec(html))) push(m[2], m[1]);
+  // new theme: li with aria-label + noscript iframe
+  const reLi = /<li[^>]*class="[^"]*watch-server[^"]*"[^>]*>[\s\S]*?<a[^>]*aria-label="([^"]*)"[^>]*>[\s\S]*?<noscript>[\s\S]*?<iframe[^>]+src="([^"]+)"/gi;
+  while ((m = reLi.exec(html))) {
+    const lab = (m[1] || '').replace(/^تشغيل سيرفر\s*/i, '').trim() || 'Server';
+    push(lab, m[2]);
+  }
+  // any iframe fallback
   const reI = /<iframe[^>]+src="([^"]+)"/gi;
   while ((m = reI.exec(html))) push('Embed', m[1]);
   // quality-list (download pages like Mediafire) are skipped: they cannot be embedded in an iframe
@@ -106,6 +140,24 @@ const memo = (key, ttl, fn) => {
 
 async function search(q) { return memo('s:' + q, 30 * 60e3, async () => parseCards(await getHtml('?search_param=animes&s=' + encodeURIComponent(q)))); }
 
+// list Arabic-dubbed anime (from anime4up search مدبلج)
+async function listDubbed(limit = 24) {
+  return memo('dubbed-list', 45 * 60e3, async () => {
+    const cards = await search('مدبلج');
+    const seen = new Set(), out = [];
+    for (const c of cards) {
+      if (!c.dub) continue;
+      const clean = strip(c.name).replace(DUB_RE, '').replace(/\s+/g, ' ').trim();
+      const key = norm(clean);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push({ name: clean, fullName: c.name, url: c.url, cover: c.cover || '' });
+      if (out.length >= limit) break;
+    }
+    return out;
+  });
+}
+
 // returns { sub: url|null, dub: url|null }
 async function match(titles) {
   const qs = [...new Set(titles.filter(Boolean))].slice(0, 2);
@@ -120,6 +172,54 @@ async function match(titles) {
   return { sub: pick(false), dub: pick(true) };
 }
 async function episodes(animeUrl) { return memo('e:' + animeUrl, 15 * 60e3, async () => parseEpisodes(await getHtml(new URL(animeUrl).pathname + new URL(animeUrl).search))); }
+
+// Find one specific episode URL via the site's AJAX search (works for any ep number, not only the first page)
+async function findEpisode(animeUrl, epNum) {
+  const key = 'fe:' + animeUrl + ':' + epNum;
+  return memo(key, 20 * 60e3, async () => {
+    // 1) try already-parsed list first
+    const list = await episodes(animeUrl).catch(() => []);
+    const hit = list.find((x) => String(x.ep) === String(epNum));
+    if (hit) return hit.url;
+
+    // 2) AJAX search by episode number
+    const pageHtml = await getHtml(new URL(animeUrl).pathname + new URL(animeUrl).search);
+    const term = (pageHtml.match(/data-term-id=["'](\d+)/) || [])[1];
+    const nonce = (pageHtml.match(/data-nonce=["']([^"']+)/) || [])[1];
+    const ajaxUrl = (pageHtml.match(/data-ajax-url=["']([^"']+)/) || [])[1] || (base + 'wp-admin/admin-ajax.php');
+    if (!term) return null;
+
+    const form = new URLSearchParams();
+    form.set('action', 'wa_episode_ajax_search');
+    if (nonce) form.set('nonce', nonce);
+    form.set('term_id', term);
+    form.set('order', 'desc');
+    form.set('q', String(epNum));
+
+    let err;
+    for (const h of [base, ...HOSTS.filter((x) => x !== base)]) {
+      try {
+        const ajax = ajaxUrl.startsWith('http') ? ajaxUrl : h + ajaxUrl.replace(/^\//, '');
+        const r = await fetch(ajax, {
+          method: 'POST',
+          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: form.toString(),
+          signal: AbortSignal.timeout(12000)
+        });
+        if (!r.ok) { err = new Error('ajax ' + r.status); continue; }
+        const j = await r.json();
+        const html = (j && j.data && j.data.html) || '';
+        if (!html) { err = new Error('empty ajax'); continue; }
+        const found = parseEpisodes(html);
+        const exact = found.find((x) => String(x.ep) === String(epNum)) || found[0];
+        if (exact) return exact.url;
+      } catch (e) { err = e; }
+    }
+    // 3) last resort: construct common slug patterns (unreliable)
+    return null;
+  });
+}
+
 async function servers(epUrl) { return memo('v:' + epUrl, 10 * 60e3, async () => parseServers(await getHtml(new URL(epUrl).pathname + new URL(epUrl).search))); }
 
-module.exports = { match, episodes, servers, _t: { parseCards, parseEpisodes, parseServers, score, norm } };
+module.exports = { match, episodes, servers, findEpisode, listDubbed, _t: { parseCards, parseEpisodes, parseServers, score, norm } };

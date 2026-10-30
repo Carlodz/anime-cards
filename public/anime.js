@@ -73,13 +73,15 @@ const uniq=eps=>[...new Set(eps.map(e=>e.ep))].sort((a,b)=>a-b);
 async function detailView(id){
   V.innerHTML='<p class="empty">Loading…</p>';
   const d=await A('/api/anime/'+id),a=d.anime,nums=uniq(d.eps);
-  const first=d.last!=null&&nums.includes(d.last)?d.last:nums[0];
-  const total=a.episodes||nums.length;
-  const grid=(nums.length?nums:Array.from({length:Math.min(total||12,200)},(_,i)=>i+1)).map(n=>`<a class="${nums.includes(n)?'':'off'}" href="#p-${id}-${n}">${n}</a>`).join('');
+  const total=Math.max(a.episodes||0, nums.length?Math.max(...nums):0, 12);
+  // Always show clickable episodes 1..total (no more "off" that blocks clicks)
+  const list=Array.from({length:Math.min(total,2000)},(_,i)=>i+1);
+  const first=d.last!=null&&list.includes(+d.last)?+d.last:(nums[0]||1);
+  const grid=list.map(n=>`<a href="#p-${id}-${n}">${n}</a>`).join('');
   V.innerHTML=`<section class="an-det" style="background-image:url('${E(a.banner||a.cover)}')"><div class="an-top"><img src="${img(a.cover)}" alt=""><div>
     <h1>${E(a.title)}</h1><div class="an-meta">${a.score?`<span>★ ${(a.score/10).toFixed(1)}</span>`:''}${a.format?`<span>${E(fmt[a.format]||a.format)}</span>`:''}${a.year?`<span>${a.year}</span>`:''}${a.episodes?`<span>${a.episodes} eps</span>`:''}${a.status?`<span>${E(a.status.replace(/_/g,' '))}</span>`:''}${a.studio?`<span>${E(a.studio)}</span>`:''}</div>
     <div class="an-meta">${a.genres.map(g=>`<span>${E(g)}</span>`).join('')}</div>
-    <div class="an-act">${first!=null?`<a class="btn p" href="#p-${id}-${first}">▶ ${d.last!=null?'Continue ep '+first:'Watch ep '+first}</a>`:'<span class="btn g" style="opacity:.6">No episodes yet</span>'}<button class="btn g" id="anfav">${d.fav?'✓ In my list':'+ Add to list'}</button>${a.trailer?`<a class="btn g" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/watch?v=${E(a.trailer)}">Trailer</a>`:''}</div></div></div>
+    <div class="an-act"><a class="btn p" href="#p-${id}-${first}">▶ ${d.last!=null?'Continue ep '+first:'Watch ep '+first}</a><button class="btn g" id="anfav">${d.fav?'✓ In my list':'+ Add to list'}</button>${a.trailer?`<a class="btn g" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/watch?v=${E(a.trailer)}">Trailer</a>`:''}</div></div></div>
     <p class="an-desc">${E(a.description)}</p></section>
     <h2>Episodes</h2><div class="an-eps">${grid}</div>
     ${a.related.length?row('Related',a.related.map(r=>({id:r.id,title:r.title,cover:r.cover,format:r.rel.replace(/_/g,' ').toLowerCase()}))):''}`;
@@ -90,15 +92,25 @@ let hlsP=null;
 const loadHls=()=>window.Hls?Promise.resolve():hlsP||(hlsP=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)}));
 let curHls=null;
 async function playerView(id,ep){
-  V.innerHTML='<p class="empty">Loading…</p>';
-  const [d,s]=await Promise.all([A('/api/anime/'+id),A(`/api/anime/${id}/ep/${ep}`)]),a=d.anime,nums=uniq(d.eps),i=nums.indexOf(+ep);
-  const prev=nums[i-1],next=nums[i+1];
+  V.innerHTML='<p class="empty">جاري تحميل السيرفرات…</p>';
+  let d,s;
+  try{
+    [d,s]=await Promise.all([A('/api/anime/'+id),A(`/api/anime/${id}/ep/${ep}`)]);
+  }catch(e){
+    V.innerHTML='<p class="empty">فشل التحميل. <a href="#a-'+id+'">رجوع</a></p>';
+    return;
+  }
+  const a=d.anime,nums=uniq(d.eps);
+  const total=Math.max(a.episodes||0, nums.length?Math.max(...nums):0, +ep, 12);
+  const list=Array.from({length:Math.min(total,2000)},(_,i)=>i+1);
+  const i=list.indexOf(+ep);
+  const prev=list[i-1],next=list[i+1];
   const hasSrc=s.sources&&s.sources.length;
-  V.innerHTML=`<div class="an-pl"><div><div class="an-vid" id="anv"><div class="none">${hasSrc?'اختر سيرفر للمشاهدة<br><small style="opacity:.7">Select a server</small>':'لا توجد سيرفرات لهذه الحلقة بعد'}</div></div>
-    <div class="an-bar" id="ansrc">${hasSrc?s.sources.map((x,k)=>`<button data-k="${k}">${E(x.label)}</button>`).join(''):'<span style="opacity:.6;font-size:13px">No servers available</span>'}</div>
+  V.innerHTML=`<div class="an-pl"><div><div class="an-vid" id="anv"><div class="none">${hasSrc?'اختر سيرفر للمشاهدة<br><small style="opacity:.7">Select a server</small>':'لا توجد سيرفرات لهذه الحلقة حالياً<br><small style="opacity:.6">جرّب حلقة أخرى أو أعد المحاولة لاحقاً</small>'}</div></div>
+    <div class="an-bar" id="ansrc">${hasSrc?s.sources.map((x,k)=>`<button data-k="${k}">${E(x.label)}</button>`).join(''):'<button id="anretry" style="opacity:.9">إعادة المحاولة</button>'}</div>
     <h2 style="margin:6px 0"><a href="#a-${id}" style="color:inherit">${E(a.title)}</a> · Episode ${E(ep)}</h2>
     <div class="an-bar">${prev!=null?`<a href="#p-${id}-${prev}">◀ Prev</a>`:''}<a href="#a-${id}">All episodes</a>${next!=null?`<a href="#p-${id}-${next}">Next ▶</a>`:''}</div></div>
-    <aside class="an-side"><h3>Episodes</h3><div class="an-eps">${nums.map(n=>`<a class="${n==ep?'on':''}" href="#p-${id}-${n}">${n}</a>`).join('')}</div></aside></div>`;
+    <aside class="an-side"><h3>Episodes</h3><div class="an-eps">${list.map(n=>`<a class="${n==ep?'on':''}" href="#p-${id}-${n}">${n}</a>`).join('')}</div></aside></div>`;
   P('/api/anime/progress',{id,ep:+ep,title:a.title,cover:a.cover}).catch(()=>{});
   const box=$('#anv');
   const play=async k=>{
@@ -115,8 +127,9 @@ async function playerView(id,ep){
       try{await loadHls();if(Hls.isSupported()){curHls=new Hls();curHls.loadSource(x.url);curHls.attachMedia(v)}else v.src=x.url}catch(e){box.innerHTML='<div class="none">Could not load the player.</div>'}
     }else v.src=x.url;
   };
-  V.querySelectorAll('#ansrc button').forEach(b=>b.onclick=()=>play(+b.dataset.k));
-  // ما نبقاش نشغّلو أوتوماتيك – المستخدم يختار السيرفر
+  V.querySelectorAll('#ansrc button[data-k]').forEach(b=>b.onclick=()=>play(+b.dataset.k));
+  const retry=$('#anretry');
+  if(retry)retry.onclick=()=>playerView(id,ep);
 }
 
 /* ---------- Routing hooks ---------- */

@@ -1,22 +1,24 @@
-# WAYANIME
+# WayAnime (عربي)
+1. ثبّت Node.js
+2. `npm install`
+3. `npm start` للتشغيل
+4. `npm run build` لإنشاء ملف .exe (داخل مجلد dist)
 
-Node + Express site (desktop and mobile) with username/password login.
+- أنمي مترجم/مدبلج بالعربية فقط (مصدر Animeify، نفس مصدر ani-cli-arabic)، روابط مباشرة 1080p / 720p / 480p.
+- مصدر ثاني: WitAnime (منقول من anime_scraper) — يظهر في البحث وآخر الإضافات وقسم «أنمي الموسم»، وسيرفراته تتضاف لنفس الأنمي إذا لقيناه (روابط Mediafire تتشغل داخل التطبيق، الباقي يفتح بالمتصفح).
+- منع التكرار: نفس الأنمي ما يظهر مرتين حتى لو جا من المصدرين أو بـ id مختلف (المقارنة بالعنوان العربي/الإنجليزي).
+- فلاتر: الأقسام (آخر الإضافات، الأكثر شعبية، الأعلى تقييماً، يُعرض حالياً) + النوع (مسلسلات، أفلام، OVA، خاصة) + 34 تصنيف.
+- يحمّل 48 أنمي في كل دفعة، ويكمل تلقائياً عند النزول لآخر الصفحة أو بزر "تحميل المزيد".
+- إذا ما اشتغلش الفيديو، الزر ⟳ يحوّله لصيغة متوافقة عبر ffmpeg.
 
-## Run locally
-    npm install
-    npm start        # http://localhost:3000
+## جديد في هاد النسخة
+- **الخط**: Noto Sans (مجلد `fonts/`) للحروف اللاتينية والأرقام. ملاحظة: Noto Sans ما فيهاش حروف عربية، فالعربي يبقى بخط النظام (Segoe UI/Tahoma).
+- **تحديث تلقائي**: كل 5 دقايق (وكي ترجع للنافذة) يجيب الأنمي الجديد ويحطو فوق مع إشعار.
+- **علامة «جديد»**: على الأنمي اللي ما شفتوش في المرة اللي فاتت.
+- **أنمي تزيدو أنت**: قسم «أنمي أضفته» يقرا ملف `custom.json` (الزر داخل القسم يفتحو؛ فيه مثال في `custom.example.json` بنفس المجلد).
 
-## Deploy (GitHub + Render)
-1. Push this folder to a GitHub repo.
-2. On render.com: New > Blueprint (or Web Service) > pick the repo.
-3. Set DATABASE_URL (free Postgres from Neon or Supabase) so accounts and cards survive redeploys.
-4. SESSION_SECRET is generated automatically by render.yaml.
+- **الخط العربي**: Noto Kufi Arabic من Google Fonts (يحتاج إنترنت أول مرة). للحروف اللاتينية يبقى Noto Sans المحلي. إذا تبغى خط آخر (مثلاً Alexandria) بدّل الاسم في `index.html` (الرابط + كل `"Noto Kufi Arabic"`).
 
-GitHub Pages cannot run this project: it needs a Node server.
-
-## Discord webhook (optional)
-Set `DISCORD_WEBHOOK_URL` (Channel settings > Integrations > Webhooks) and every notification, DM, points gift, Aura card and announcement sent from the admin panel is also posted to that channel. The owner can also paste/remove the URL in the admin panel (Notifications tab).
-
-## Steam on profiles (optional)
-Players link Steam from Settings > Games > Link Steam (Steam OpenID, so nobody can claim someone else's account). Their most played games then show on their profile automatically, with a "Playing on Steam" badge while they play.
-Needs: `BASE_URL` (your site address, e.g. https://yoursite.onrender.com) and `STEAM_API_KEY` (https://steamcommunity.com/dev/apikey) in your host's environment variables, never in the code. The player's Steam privacy must have Game details set to Public.
+## تسجيل الدخول بحساب موقع البطاقات
+عند فتح التطبيق كيطلب اسم المستخدم وكلمة السر ديال موقع البطاقات (نفس الحساب). الجلسة كتتخبا مشفرة فـ مجلد userData.
+**مهم:** بدّل `CARDS_SITE` فـ أول الجزء ديال "حساب موقع البطاقات" فـ `main.js` بعنوان الموقع ديالك (مثلا https://xxx.onrender.com)، أو حطو فـ متغير البيئة `CARDS_SITE`.

@@ -2783,6 +2783,7 @@ app.post('/api/zero-chat', chatRoute(ZERO_SYSTEM, zeroHits, 'zero-chat', 'Here y
 app.post('/api/mira-chat', chatRoute(MIRA_SYSTEM, miraHits, 'mira-chat', 'Here you go.'));
 
 require('./anime-routes')({ app, sessionId, db, store, persist, isAdmin });
+require('./dl-proxy')(app);
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', setHeaders: (res, f) => { if (/\.(html|js|css)$/.test(f)) res.setHeader('Cache-Control', 'no-cache'); } }));
 initStore()
   .then(() => { addAtToOldNames(); return ensureAdminAccount(); })
